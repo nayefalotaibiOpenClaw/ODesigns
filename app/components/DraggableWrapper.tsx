@@ -9,9 +9,11 @@ interface DraggableWrapperProps {
   children: React.ReactNode;
   className?: string;
   id: string;
+  dir?: string;
+  style?: React.CSSProperties;
 }
 
-export default function DraggableWrapper({ children, className = "", id }: DraggableWrapperProps) {
+export default function DraggableWrapper({ children, className = "", id, dir, style }: DraggableWrapperProps) {
   const isEditMode = useContext(EditContext);
 
   return (
@@ -22,8 +24,9 @@ export default function DraggableWrapper({ children, className = "", id }: Dragg
       whileDrag={{ scale: 1.05, zIndex: 100 }}
       whileTap={isEditMode ? { cursor: "grabbing" } : {}}
       onDragStart={() => console.log(`Dragging: ${id}`)}
+      dir={dir}
       className={`relative ${isEditMode ? 'cursor-move' : ''} ${className}`}
-      style={{ touchAction: isEditMode ? 'none' : 'auto' }}
+      style={{ touchAction: isEditMode ? 'none' : 'auto', ...style }}
     >
       {isEditMode && (
         <div className="absolute -inset-2 border-2 border-dashed border-[#B7FF5B]/40 rounded-xl pointer-events-none z-50">

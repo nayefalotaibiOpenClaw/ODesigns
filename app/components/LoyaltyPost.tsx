@@ -12,13 +12,13 @@ export default function LoyaltyPost() {
              
              {/* Floating Stars */}
              <div className="absolute top-12 left-12 animate-pulse-slow">
-                 <Star fill="#FCD34D" stroke="none" size={24} />
+                 <Star fill={t.accentGold} stroke="none" size={24} />
              </div>
              <div className="absolute bottom-24 right-12 animate-pulse-slow delay-300">
-                 <Star fill="#FCD34D" stroke="none" size={16} />
+                 <Star fill={t.accentGold} stroke="none" size={16} />
              </div>
              <div className="absolute top-1/4 right-1/3 animate-pulse-slow delay-150">
-                 <Star fill="#FCD34D" stroke="none" size={12} />
+                 <Star fill={t.accentGold} stroke="none" size={12} />
              </div>
 
 

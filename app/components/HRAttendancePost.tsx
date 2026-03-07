@@ -17,32 +17,32 @@ export default function HRAttendancePost() {
                 
                 {/* Header */}
                 <div className="text-center mt-6">
-                    <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-1 leading-tight text-[#1B4332]">دوامك مضبوط</EditableText>
-                    <EditableText as="p" className="text-[#40916C] text-lg sm:text-xl font-bold">بصمة ذكية للموظفين</EditableText>
+                    <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-1 leading-tight" style={{ color: t.primary }}>دوامك مضبوط</EditableText>
+                    <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accent }}>بصمة ذكية للموظفين</EditableText>
                 </div>
 
                 {/* Central Visual - Phone Check-in */}
                 <div className="w-full flex-1 flex items-center justify-center relative mt-6">
                     
                     {/* Background Circle */}
-                    <div className="absolute w-64 h-64 bg-[#52B788]/20 rounded-full blur-2xl"></div>
+                    <div className="absolute w-64 h-64 rounded-full blur-2xl" style={{ backgroundColor: t.accentLight + '33' }}></div>
 
                     {/* Phone Frame */}
-                    <div className="w-40 h-72 bg-white rounded-[2rem] border-[6px] border-[#1B4332] shadow-2xl relative overflow-hidden z-20 flex flex-col items-center justify-center">
+                    <div className="w-40 h-72 bg-white rounded-[2rem] border-[6px] shadow-2xl relative overflow-hidden z-20 flex flex-col items-center justify-center" style={{ borderColor: t.primary }}>
                          {/* Dynamic Island */}
                          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-3 bg-black rounded-full z-30"></div>
 
                          {/* Screen Content - Successful Scan */}
                          <div className="flex flex-col items-center gap-4 animate-fade-in-up">
-                             <div className="w-16 h-16 bg-[#EAF4EE] rounded-full flex items-center justify-center shadow-inner relative">
-                                 <div className="absolute inset-0 border-4 border-[#40916C] rounded-full border-t-transparent animate-spin"></div>
-                                 <UserCheck size={32} className="text-[#1B4332]" />
+                             <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-inner relative" style={{ backgroundColor: t.primaryLight }}>
+                                 <div className="absolute inset-0 border-4 rounded-full border-t-transparent animate-spin" style={{ borderColor: t.accent, borderTopColor: 'transparent' }}></div>
+                                 <UserCheck size={32} style={{ color: t.primary }} />
                              </div>
                              <div className="text-center">
-                                 <EditableText as="h3" className="text-lg font-black text-[#1B4332]">تم التحضير</EditableText>
+                                 <EditableText as="h3" className="text-lg font-black" style={{ color: t.primary }}>تم التحضير</EditableText>
                                  <p className="text-xs text-gray-500 font-bold">08:59 AM</p>
                              </div>
-                             <div className="bg-[#EAF4EE] px-4 py-1.5 rounded-full text-[10px] font-bold text-[#40916C] flex items-center gap-1">
+                             <div className="px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1" style={{ backgroundColor: t.primaryLight, color: t.accent }}>
                                  <CheckCircle size={10} />
                                  <EditableText>في الموقع</EditableText>
                              </div>
@@ -64,11 +64,11 @@ export default function HRAttendancePost() {
 
                 {/* Feature Tags */}
                 <div className="w-full flex justify-center gap-4 mt-4">
-                    <div className="flex flex-col items-center gap-1 text-[#1B4332]/70">
+                    <div className="flex flex-col items-center gap-1" style={{ color: t.primary + 'b3' }}>
                         <Clock size={20} />
                         <EditableText className="text-[10px] font-bold">بدون تأخير</EditableText>
                     </div>
-                    <div className="flex flex-col items-center gap-1 text-[#1B4332]/70">
+                    <div className="flex flex-col items-center gap-1" style={{ color: t.primary + 'b3' }}>
                         <CalendarDays size={20} />
                         <EditableText className="text-[10px] font-bold">جدول الشفتات</EditableText>
                     </div>

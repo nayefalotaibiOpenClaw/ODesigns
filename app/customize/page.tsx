@@ -3,77 +3,184 @@
 import { useState } from "react";
 import { Check, Copy, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useTheme, useSetTheme, defaultTheme, Theme } from "../components/ThemeContext";
 
 const FONTS = [
-  { name: "Cairo", value: "Cairo", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Tajawal", value: "Tajawal", sample: "أهلاً بالعالم - Hello World" },
-  { name: "IBM Plex Sans Arabic", value: "IBM Plex Sans Arabic", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Noto Sans Arabic", value: "Noto Sans Arabic", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Readex Pro", value: "Readex Pro", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Rubik", value: "Rubik", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Almarai", value: "Almarai", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Changa", value: "Changa", sample: "أهلاً بالعالم - Hello World" },
-  { name: "El Messiri", value: "El Messiri", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Baloo Bhaijaan 2", value: "Baloo Bhaijaan 2", sample: "أهلاً بالعالم - Hello World" },
-  { name: "Inter", value: "Inter", sample: "Hello World - 123" },
-  { name: "Geist", value: "Geist", sample: "Hello World - 123" },
+  { name: "Cairo", value: "'Cairo', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Tajawal", value: "'Tajawal', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "IBM Plex Sans Arabic", value: "'IBM Plex Sans Arabic', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Noto Sans Arabic", value: "'Noto Sans Arabic', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Readex Pro", value: "'Readex Pro', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Rubik", value: "'Rubik', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Almarai", value: "'Almarai', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Changa", value: "'Changa', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "El Messiri", value: "'El Messiri', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Baloo Bhaijaan 2", value: "'Baloo Bhaijaan 2', sans-serif", sample: "أهلاً بالعالم - Hello World" },
+  { name: "Inter", value: "'Inter', sans-serif", sample: "Hello World - 123" },
+  { name: "Geist", value: "'Geist', sans-serif", sample: "Hello World - 123" },
 ];
 
-const PALETTES = [
+const PALETTES: { name: string; theme: Theme }[] = [
   {
-    name: "Sylo Green (Current)",
-    colors: { primary: "#1B4332", secondary: "#40916C", accent: "#52B788", bg: "#EAF4EE", text: "#1B4332" },
+    name: "Sylo Green (Default)",
+    theme: defaultTheme,
   },
   {
     name: "Ocean Blue",
-    colors: { primary: "#1E3A5F", secondary: "#3B82F6", accent: "#60A5FA", bg: "#EFF6FF", text: "#1E3A5F" },
+    theme: {
+      primary: "#1E3A5F",
+      primaryLight: "#EFF6FF",
+      primaryDark: "#0F1D30",
+      accent: "#3B82F6",
+      accentLight: "#60A5FA",
+      accentLime: "#38BDF8",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#2D5A8E",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Royal Purple",
-    colors: { primary: "#3B0764", secondary: "#7C3AED", accent: "#A78BFA", bg: "#F5F3FF", text: "#3B0764" },
+    theme: {
+      primary: "#3B0764",
+      primaryLight: "#F5F3FF",
+      primaryDark: "#1E0334",
+      accent: "#7C3AED",
+      accentLight: "#A78BFA",
+      accentLime: "#C084FC",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#581C87",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Warm Orange",
-    colors: { primary: "#7C2D12", secondary: "#EA580C", accent: "#FB923C", bg: "#FFF7ED", text: "#7C2D12" },
+    theme: {
+      primary: "#7C2D12",
+      primaryLight: "#FFF7ED",
+      primaryDark: "#431407",
+      accent: "#EA580C",
+      accentLight: "#FB923C",
+      accentLime: "#FBBF24",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#9A3412",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Rose Pink",
-    colors: { primary: "#881337", secondary: "#E11D48", accent: "#FB7185", bg: "#FFF1F2", text: "#881337" },
+    theme: {
+      primary: "#881337",
+      primaryLight: "#FFF1F2",
+      primaryDark: "#4C0519",
+      accent: "#E11D48",
+      accentLight: "#FB7185",
+      accentLime: "#FDA4AF",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#9F1239",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Slate Dark",
-    colors: { primary: "#0F172A", secondary: "#475569", accent: "#94A3B8", bg: "#F8FAFC", text: "#0F172A" },
+    theme: {
+      primary: "#0F172A",
+      primaryLight: "#F8FAFC",
+      primaryDark: "#020617",
+      accent: "#475569",
+      accentLight: "#94A3B8",
+      accentLime: "#CBD5E1",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#1E293B",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Teal",
-    colors: { primary: "#134E4A", secondary: "#0D9488", accent: "#2DD4BF", bg: "#F0FDFA", text: "#134E4A" },
+    theme: {
+      primary: "#134E4A",
+      primaryLight: "#F0FDFA",
+      primaryDark: "#042F2E",
+      accent: "#0D9488",
+      accentLight: "#2DD4BF",
+      accentLime: "#5EEAD4",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#115E59",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Gold & Black",
-    colors: { primary: "#1C1917", secondary: "#A16207", accent: "#FBBF24", bg: "#FFFBEB", text: "#1C1917" },
+    theme: {
+      primary: "#1C1917",
+      primaryLight: "#FFFBEB",
+      primaryDark: "#0C0A09",
+      accent: "#A16207",
+      accentLight: "#CA8A04",
+      accentLime: "#FBBF24",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#292524",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Crimson Red",
-    colors: { primary: "#450A0A", secondary: "#DC2626", accent: "#F87171", bg: "#FEF2F2", text: "#450A0A" },
+    theme: {
+      primary: "#450A0A",
+      primaryLight: "#FEF2F2",
+      primaryDark: "#1C0404",
+      accent: "#DC2626",
+      accentLight: "#F87171",
+      accentLime: "#FCA5A5",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#7F1D1D",
+      font: "'Cairo', sans-serif",
+    },
   },
   {
     name: "Forest",
-    colors: { primary: "#14532D", secondary: "#16A34A", accent: "#4ADE80", bg: "#F0FDF4", text: "#14532D" },
+    theme: {
+      primary: "#14532D",
+      primaryLight: "#F0FDF4",
+      primaryDark: "#052E16",
+      accent: "#16A34A",
+      accentLight: "#4ADE80",
+      accentLime: "#86EFAC",
+      accentGold: "#FCD34D",
+      accentOrange: "#F97316",
+      border: "#166534",
+      font: "'Cairo', sans-serif",
+    },
   },
 ];
 
 export default function CustomizePage() {
-  const [selectedFont, setSelectedFont] = useState("Cairo");
-  const [selectedPalette, setSelectedPalette] = useState(0);
+  const currentTheme = useTheme();
+  const setTheme = useSetTheme();
   const [copied, setCopied] = useState(false);
 
-  const config = {
-    font: selectedFont,
-    colors: PALETTES[selectedPalette].colors,
-    paletteName: PALETTES[selectedPalette].name,
+  const selectedPaletteIdx = PALETTES.findIndex(
+    (p) => p.theme.primary === currentTheme.primary && p.theme.primaryLight === currentTheme.primaryLight
+  );
+  const selectedFontIdx = FONTS.findIndex((f) => f.value === currentTheme.font);
+
+  const handleSelectPalette = (idx: number) => {
+    setTheme({ ...PALETTES[idx].theme, font: currentTheme.font });
   };
 
-  const configJSON = JSON.stringify(config, null, 2);
+  const handleSelectFont = (fontValue: string) => {
+    setTheme({ ...currentTheme, font: fontValue });
+  };
+
+  const configJSON = JSON.stringify(currentTheme, null, 2);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(configJSON);
@@ -100,27 +207,23 @@ export default function CustomizePage() {
         <div
           className="rounded-xl p-8 mb-8 shadow-lg text-center"
           style={{
-            backgroundColor: PALETTES[selectedPalette].colors.bg,
-            fontFamily: `'${selectedFont}', sans-serif`,
+            backgroundColor: currentTheme.primaryLight,
+            fontFamily: currentTheme.font,
           }}
         >
-          <h2
-            className="text-4xl font-black mb-2"
-            style={{ color: PALETTES[selectedPalette].colors.primary }}
-          >
+          <h2 className="text-4xl font-black mb-2" style={{ color: currentTheme.primary }}>
             معاينة مباشرة
           </h2>
-          <p
-            className="text-lg font-bold mb-4"
-            style={{ color: PALETTES[selectedPalette].colors.secondary }}
-          >
+          <p className="text-lg font-bold mb-4" style={{ color: currentTheme.accent }}>
             هذا مثال على شكل النصوص
           </p>
-          <div
-            className="inline-block px-6 py-2 rounded-full text-white font-bold"
-            style={{ backgroundColor: PALETTES[selectedPalette].colors.accent }}
-          >
-            زر تجريبي
+          <div className="inline-flex gap-2">
+            <div className="px-6 py-2 rounded-full text-white font-bold" style={{ backgroundColor: currentTheme.accent }}>
+              زر تجريبي
+            </div>
+            <div className="px-6 py-2 rounded-full font-bold" style={{ backgroundColor: currentTheme.accentLime, color: currentTheme.primary }}>
+              لون مميز
+            </div>
           </div>
         </div>
 
@@ -128,28 +231,25 @@ export default function CustomizePage() {
         <section className="mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Fonts</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {FONTS.map((font) => (
+            {FONTS.map((font, i) => (
               <button
                 key={font.value}
-                onClick={() => setSelectedFont(font.value)}
+                onClick={() => handleSelectFont(font.value)}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
-                  selectedFont === font.value
+                  selectedFontIdx === i
                     ? "border-gray-900 bg-white shadow-md"
                     : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-bold text-gray-900">{font.name}</span>
-                  {selectedFont === font.value && (
+                  {selectedFontIdx === i && (
                     <div className="w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
                       <Check size={12} className="text-white" />
                     </div>
                   )}
                 </div>
-                <p
-                  className="text-xl font-bold text-gray-600"
-                  style={{ fontFamily: `'${font.value}', sans-serif` }}
-                >
+                <p className="text-xl font-bold text-gray-600" style={{ fontFamily: font.value }}>
                   {font.sample}
                 </p>
               </button>
@@ -164,29 +264,35 @@ export default function CustomizePage() {
             {PALETTES.map((palette, i) => (
               <button
                 key={palette.name}
-                onClick={() => setSelectedPalette(i)}
+                onClick={() => handleSelectPalette(i)}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
-                  selectedPalette === i
+                  selectedPaletteIdx === i
                     ? "border-gray-900 bg-white shadow-md"
                     : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-bold text-gray-900">{palette.name}</span>
-                  {selectedPalette === i && (
+                  {selectedPaletteIdx === i && (
                     <div className="w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
                       <Check size={12} className="text-white" />
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  {Object.entries(palette.colors).map(([key, color]) => (
-                    <div key={key} className="flex flex-col items-center gap-1">
+                  {[
+                    { key: "primary", color: palette.theme.primary },
+                    { key: "light", color: palette.theme.primaryLight },
+                    { key: "accent", color: palette.theme.accent },
+                    { key: "accentLight", color: palette.theme.accentLight },
+                    { key: "lime", color: palette.theme.accentLime },
+                  ].map((item) => (
+                    <div key={item.key} className="flex flex-col items-center gap-1">
                       <div
                         className="w-10 h-10 rounded-lg shadow-sm border border-black/10"
-                        style={{ backgroundColor: color }}
+                        style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-[10px] text-gray-400 font-bold">{key}</span>
+                      <span className="text-[10px] text-gray-400 font-bold">{item.key}</span>
                     </div>
                   ))}
                 </div>

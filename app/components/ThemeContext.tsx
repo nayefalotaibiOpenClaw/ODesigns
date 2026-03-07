@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 export interface Theme {
   primary: string;
@@ -28,6 +28,17 @@ export const defaultTheme: Theme = {
   font: "'Cairo', sans-serif",
 };
 
+const STORAGE_KEY = "sylo-theme";
+
+function loadTheme(): Theme {
+  if (typeof window === "undefined") return defaultTheme;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return { ...defaultTheme, ...JSON.parse(stored) };
+  } catch {}
+  return defaultTheme;
+}
+
 const ThemeContext = createContext<Theme>(defaultTheme);
 const ThemeSetContext = createContext<(theme: Theme) => void>(() => {});
 
@@ -35,28 +46,23 @@ export const useTheme = () => useContext(ThemeContext);
 export const useSetTheme = () => useContext(ThemeSetContext);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
+
+  useEffect(() => {
+    setThemeState(loadTheme());
+  }, []);
+
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newTheme));
+    } catch {}
+  };
 
   return (
     <ThemeContext.Provider value={theme}>
       <ThemeSetContext.Provider value={setTheme}>
-        <div
-          style={{
-            "--t-primary": theme.primary,
-            "--t-primary-light": theme.primaryLight,
-            "--t-primary-dark": theme.primaryDark,
-            "--t-accent": theme.accent,
-            "--t-accent-light": theme.accentLight,
-            "--t-accent-lime": theme.accentLime,
-            "--t-accent-gold": theme.accentGold,
-            "--t-accent-orange": theme.accentOrange,
-            "--t-border": theme.border,
-            "--t-font": theme.font,
-          } as React.CSSProperties}
-          className="contents"
-        >
-          {children}
-        </div>
+        {children}
       </ThemeSetContext.Provider>
     </ThemeContext.Provider>
   );

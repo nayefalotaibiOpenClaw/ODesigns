@@ -70,17 +70,17 @@ export default function MenuPerformancePost() {
                  <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
 
                  {/* Notch */}
-                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-[#1B4332] rounded-b-xl z-20"></div>
+                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 rounded-b-xl z-20" style={{ backgroundColor: t.primary }}></div>
               </DraggableWrapper>
 
               {/* Floating Stat Card */}
-              <DraggableWrapper id="stat-card-menu" className="absolute -right-8 top-12 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-4 transform -rotate-2 border-2 border-[#EAF4EE] z-30">
-                 <div className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center text-[#B7FF5B]">
+              <DraggableWrapper id="stat-card-menu" className="absolute -right-8 top-12 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-4 transform -rotate-2 border-2 z-30" style={{ borderColor: t.primaryLight }}>
+                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.primary, color: t.accentLime }}>
                     <PieChart size={20} />
                  </div>
                  <div className="flex flex-col leading-none">
                     <span className="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-none">Profit Margin</span>
-                    <span className="text-lg font-black text-[#1B4332] leading-none">80.00%</span>
+                    <span className="text-lg font-black leading-none" style={{ color: t.primary }}>80.00%</span>
                  </div>
               </DraggableWrapper>
            </div>
