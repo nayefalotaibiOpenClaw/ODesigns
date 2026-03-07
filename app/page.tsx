@@ -27,6 +27,7 @@ import WasteReductionPost from "./components/WasteReductionPost";
 import QualityControlPost from "./components/QualityControlPost";
 import IntegratedPaymentsPost from "./components/IntegratedPaymentsPost";
 import RegionalScalabilityPost from "./components/RegionalScalabilityPost";
+import CustomerInsightsPost from "./components/CustomerInsightsPost";
 import PostWrapper from "./components/PostWrapper";
 
 export default function Home() {
@@ -119,6 +120,7 @@ export default function Home() {
         }
         ${editMode ? 'edit-mode' : ''}
       `}>
+          <PostWrapper aspectRatio={aspectRatio} filename="customer-insights"><CustomerInsightsPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="waste-reduction"><WasteReductionPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="quality-control"><QualityControlPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="integrated-payments"><IntegratedPaymentsPost /></PostWrapper>
