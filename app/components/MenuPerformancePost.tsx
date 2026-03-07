@@ -1,8 +1,12 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
+import { useAspectRatio } from './EditContext';
 import { Command, TrendingUp, PieChart } from 'lucide-react';
 
 export default function MenuPerformancePost() {
+  const ratio = useAspectRatio();
+  const isTall = ratio === '9:16' || ratio === '3:4';
   return (
     <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto bg-[#EAF4EE] text-[#1B4332] font-sans" style={{ fontFamily: "'Cairo', sans-serif" }}>
       {/* Background Decor */}
@@ -17,7 +21,7 @@ export default function MenuPerformancePost() {
         
         {/* Header */}
         <div className="flex justify-between items-start">
-          <div className="flex items-center gap-3">
+          <DraggableWrapper id="logo-menu" className="flex items-center gap-3">
              <div className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center">
                 <Command size={24} className="text-[#B7FF5B]" strokeWidth={2.5} />
              </div>
@@ -25,15 +29,15 @@ export default function MenuPerformancePost() {
                 <span className="text-[#1B4332] font-black text-xl tracking-tight">SYLO</span>
                 <span className="text-[9px] text-[#40916C] font-bold uppercase tracking-widest mt-1">ANALYTICS</span>
              </div>
-          </div>
-          <div className="px-4 py-1.5 bg-[#1B4332] rounded-full flex items-center gap-2 shadow-lg">
+          </DraggableWrapper>
+          <DraggableWrapper id="badge-menu" className="px-4 py-1.5 bg-[#1B4332] rounded-full flex items-center gap-2 shadow-lg">
              <TrendingUp size={12} className="text-[#B7FF5B]" />
              <span className="text-[9px] font-black text-white tracking-widest uppercase">MARGIN OPTIMIZER</span>
-          </div>
+          </DraggableWrapper>
         </div>
 
         {/* Headline */}
-        <div className="mt-12 text-right" dir="rtl">
+        <DraggableWrapper id="headline-menu" className="mt-12 text-right z-30" dir="rtl">
            <h2 className="text-6xl font-black leading-[0.95] text-[#1B4332] tracking-tighter">
               <EditableText>هندسة</EditableText> <br/>
               <span className="text-[#40916C] text-7xl"><EditableText>المنيو</EditableText></span> <br/>
@@ -42,21 +46,21 @@ export default function MenuPerformancePost() {
            <p className="text-[#1B4332]/60 font-bold mt-4 text-xl max-w-sm ml-0 mr-auto leading-tight">
               <EditableText>اعرف أكثر الأصناف ربحية، وحلل هوامش الربح لكل منصة توصيل</EditableText>
            </p>
-        </div>
+        </DraggableWrapper>
 
         {/* Visual Section - Mockup at the bottom */}
         <div className="flex-1 flex items-end justify-center relative">
            {/* Ground Shadow */}
            <div className="absolute bottom-16 w-48 h-4 bg-[#1B4332]/10 blur-xl rounded-full"></div>
            
-           <div className="relative w-[260px] h-[360px] z-20 group transform translate-y-24">
+           <div className={`relative z-20 group transform translate-y-24 ${isTall ? 'w-[320px] h-[600px]' : 'w-[260px] h-[360px]'}`}>
               
               {/* Hardware Details */}
               <div className="absolute -left-[6px] top-24 w-[3px] h-10 bg-[#1B4332]/20 rounded-l-md"></div>
               <div className="absolute -right-[6px] top-32 w-[3px] h-14 bg-[#1B4332]/20 rounded-r-md"></div>
 
               {/* iPhone Frame */}
-              <div className="relative h-full w-full rounded-[42px] border-[6px] border-[#1B4332] overflow-hidden shadow-[0_30px_60px_-15px_rgba(27,67,50,0.3)] bg-white">
+              <DraggableWrapper id="mockup-menu" className="relative h-full w-full rounded-[42px] border-[6px] border-[#1B4332] overflow-hidden shadow-[0_30px_60px_-15px_rgba(27,67,50,0.3)] bg-white z-20">
                  <img src="/4.jpg" alt="Analytics" className="w-full h-full object-cover object-top" />
                  
                  {/* Glass Reflection Overlays */}
@@ -65,10 +69,10 @@ export default function MenuPerformancePost() {
 
                  {/* Notch */}
                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-[#1B4332] rounded-b-xl z-20"></div>
-              </div>
+              </DraggableWrapper>
 
               {/* Floating Stat Card */}
-              <div className="absolute -right-8 top-12 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-4 transform -rotate-2 border-2 border-[#EAF4EE]">
+              <DraggableWrapper id="stat-card-menu" className="absolute -right-8 top-12 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-4 transform -rotate-2 border-2 border-[#EAF4EE] z-30">
                  <div className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center text-[#B7FF5B]">
                     <PieChart size={20} />
                  </div>
@@ -76,7 +80,7 @@ export default function MenuPerformancePost() {
                     <span className="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-none">Profit Margin</span>
                     <span className="text-lg font-black text-[#1B4332] leading-none">80.00%</span>
                  </div>
-              </div>
+              </DraggableWrapper>
            </div>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LayoutGrid, List, Pencil, Sparkles, Palette } from "lucide-react";
-import { EditContext } from "./components/EditContext";
+import { EditContext, AspectRatioContext, AspectRatioType } from "./components/EditContext";
 import Link from "next/link";
 import SummerOfferPost from "./components/SummerOffer";
 import RelaxPost from "./components/RelaxPost";
@@ -23,10 +23,12 @@ import MobileDashboardPost from "./components/MobileDashboardPost";
 import StaffManagementPost from "./components/StaffManagementPost";
 import InventoryStockPost from "./components/InventoryStockPost";
 import MenuPerformancePost from "./components/MenuPerformancePost";
+import PostWrapper from "./components/PostWrapper";
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [editMode, setEditMode] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatioType>('1:1');
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -61,6 +63,21 @@ export default function Home() {
             {editMode ? 'Editing' : 'Edit Mode'}
           </button>
           <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 flex gap-1">
+            {(['1:1', '3:4', '4:3', '9:16', '16:9'] as const).map((ratio) => (
+              <button
+                key={ratio}
+                onClick={() => setAspectRatio(ratio)}
+                className={`px-2.5 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  aspectRatio === ratio
+                    ? 'bg-[#1B4332] text-white shadow-sm'
+                    : 'text-gray-400 hover:bg-gray-50'
+                }`}
+              >
+                {ratio}
+              </button>
+            ))}
+          </div>
+          <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 flex gap-1">
           <button
             onClick={() => setViewMode('grid')}
             className={`p-2 rounded-md transition-all ${
@@ -89,64 +106,35 @@ export default function Home() {
 
       {/* Content Grid/List */}
       <EditContext.Provider value={editMode}>
+      <AspectRatioContext.Provider value={aspectRatio}>
       <div className={`
-        max-w-[1920px] mx-auto transition-all duration-500
-        ${viewMode === 'grid' 
-          ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8' 
+        mx-auto transition-all duration-500 justify-center
+        ${viewMode === 'grid'
+          ? 'flex flex-wrap gap-8'
           : 'flex flex-col items-center space-y-12'
         }
       `}>
-          {/* New Neon Series */}
-          <MobileDashboardPost />
-          <StaffManagementPost />
-          <InventoryStockPost />
-          <MenuPerformancePost />
-
-          {/* 12. Inventory Management */}
-          <InventoryPost />
-
-          {/* 13. Accounting */}
-          <AccountingPost />
-
-          {/* 14. AI Insights */}
-          <AIInsightsPost />
-
-          {/* 15. Multi-Branch */}
-          <MultiBranchPost />
-
-          {/* 8. Delivery Integration */}
-          <DeliveryIntegrationPost />
-
-          {/* 9. HR Attendance */}
-          <HRAttendancePost />
-
-          {/* 10. Task Management */}
-          <TaskManagementPost />
-
-          {/* 11. Loyalty System */}
-          <LoyaltyPost />
-
-          {/* 5. Kitchen Display System */}
-          <KitchenDisplayPost />
-
-          {/* 6. Analytics Dashboard */}
-          <AnalyticsPost />
-
-          {/* 7. Online Store */}
-          <OnlineStorePost />
-
-          {/* 3. Offline Mode Post */}
-          <OfflineModePost />
-
-          {/* 4. One Platform Post */}
-          <OnePlatformPost />
-
-          {/* 1. Summer Offer Post */}
-          <SummerOfferPost />
-          
-          {/* 2. Relax Post */}
-          <RelaxPost />
+          <PostWrapper aspectRatio={aspectRatio} filename="mobile-dashboard"><MobileDashboardPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="staff-management"><StaffManagementPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="inventory-stock"><InventoryStockPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="menu-performance"><MenuPerformancePost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="inventory"><InventoryPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="accounting"><AccountingPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="ai-insights"><AIInsightsPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="multi-branch"><MultiBranchPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="delivery-integration"><DeliveryIntegrationPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="hr-attendance"><HRAttendancePost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="task-management"><TaskManagementPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="loyalty"><LoyaltyPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="kitchen-display"><KitchenDisplayPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="analytics"><AnalyticsPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="online-store"><OnlineStorePost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="offline-mode"><OfflineModePost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="one-platform"><OnePlatformPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="summer-offer"><SummerOfferPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="relax"><RelaxPost /></PostWrapper>
       </div>
+      </AspectRatioContext.Provider>
       </EditContext.Provider>
     </main>
   );
