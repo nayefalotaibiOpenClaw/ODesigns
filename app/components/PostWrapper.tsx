@@ -12,6 +12,14 @@ const SIZES: Record<string, { width: number; height: number }> = {
   "16:9": { width: 540, height: 304 },
 };
 
+const ASPECT_RATIOS: Record<string, string> = {
+  "1:1":  "1 / 1",
+  "3:4":  "3 / 4",
+  "4:3":  "4 / 3",
+  "9:16": "9 / 16",
+  "16:9": "16 / 9",
+};
+
 interface PostWrapperProps {
   children: React.ReactNode;
   filename?: string;

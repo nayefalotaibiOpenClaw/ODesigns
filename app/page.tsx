@@ -28,12 +28,17 @@ import QualityControlPost from "./components/QualityControlPost";
 import IntegratedPaymentsPost from "./components/IntegratedPaymentsPost";
 import RegionalScalabilityPost from "./components/RegionalScalabilityPost";
 import CustomerInsightsPost from "./components/CustomerInsightsPost";
+import TableOrderingPost from "./components/TableOrderingPost";
+import MenuManagementPost from "./components/MenuManagementPost";
+import DashboardOverviewPost from "./components/DashboardOverviewPost";
+import ReportsExportPost from "./components/ReportsExportPost";
 import PostWrapper from "./components/PostWrapper";
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const editMode = true;
   const [aspectRatio, setAspectRatio] = useState<AspectRatioType>('1:1');
+  const [gridCols, setGridCols] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const handleSetSelectedId = useCallback((id: string | null) => setSelectedId(id), []);
 
@@ -74,29 +79,44 @@ export default function Home() {
             ))}
           </div>
           <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 flex gap-1">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-md transition-all ${
-              viewMode === 'grid' 
-                ? 'bg-[#1B4332] text-white shadow-sm' 
-                : 'text-gray-400 hover:bg-gray-50'
-            }`}
-            title="Grid View"
-          >
-            <LayoutGrid size={20} />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-all ${
-              viewMode === 'list' 
-                ? 'bg-[#1B4332] text-white shadow-sm' 
-                : 'text-gray-400 hover:bg-gray-50'
-            }`}
-            title="List View"
-          >
-            <List size={20} />
-          </button>
-        </div>
+            {[2, 3, 4].map((cols) => (
+              <button
+                key={cols}
+                onClick={() => { setGridCols(cols); setViewMode('grid'); }}
+                className={`px-2.5 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  viewMode === 'grid' && gridCols === cols
+                    ? 'bg-[#1B4332] text-white shadow-sm'
+                    : 'text-gray-400 hover:bg-gray-50'
+                }`}
+              >
+                {cols}
+              </button>
+            ))}
+          </div>
+          <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 flex gap-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-[#1B4332] text-white shadow-sm'
+                  : 'text-gray-400 hover:bg-gray-50'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'list'
+                  ? 'bg-[#1B4332] text-white shadow-sm'
+                  : 'text-gray-400 hover:bg-gray-50'
+              }`}
+              title="List View"
+            >
+              <List size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -105,14 +125,21 @@ export default function Home() {
       <AspectRatioContext.Provider value={aspectRatio}>
       <SelectedIdContext.Provider value={selectedId}>
       <SetSelectedIdContext.Provider value={handleSetSelectedId}>
-      <div className={`
-        mx-auto transition-all duration-500 justify-center
-        ${viewMode === 'grid'
-          ? 'flex flex-wrap gap-8'
-          : 'flex flex-col items-center space-y-12'
-        }
-        ${editMode ? 'edit-mode' : ''}
-      `}>
+      <div
+        className={`
+          mx-auto transition-all duration-500
+          ${viewMode === 'list' ? 'flex flex-col items-center space-y-12' : 'gap-6'}
+          ${editMode ? 'edit-mode' : ''}
+        `}
+        style={viewMode === 'grid' ? {
+          display: 'grid',
+          gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+        } : undefined}
+      >
+          <PostWrapper aspectRatio={aspectRatio} filename="table-ordering"><TableOrderingPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="menu-management"><MenuManagementPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="dashboard-overview"><DashboardOverviewPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="reports-export"><ReportsExportPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="customer-insights"><CustomerInsightsPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="waste-reduction"><WasteReductionPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="quality-control"><QualityControlPost /></PostWrapper>
