@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { LayoutGrid, List, Sparkles, Palette } from "lucide-react";
+import React, { useState, useCallback, useRef } from "react";
+import { LayoutGrid, List, Sparkles, Palette, ArrowUpDown } from "lucide-react";
 import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext } from "./components/EditContext";
 import Link from "next/link";
 import SummerOfferPost from "./components/SummerOffer";
@@ -34,6 +34,37 @@ import DashboardOverviewPost from "./components/DashboardOverviewPost";
 import ReportsExportPost from "./components/ReportsExportPost";
 import PostWrapper from "./components/PostWrapper";
 
+const POST_REGISTRY: { id: string; filename: string; component: React.ComponentType }[] = [
+  { id: "table-ordering", filename: "table-ordering", component: TableOrderingPost },
+  { id: "menu-management", filename: "menu-management", component: MenuManagementPost },
+  { id: "dashboard-overview", filename: "dashboard-overview", component: DashboardOverviewPost },
+  { id: "reports-export", filename: "reports-export", component: ReportsExportPost },
+  { id: "customer-insights", filename: "customer-insights", component: CustomerInsightsPost },
+  { id: "waste-reduction", filename: "waste-reduction", component: WasteReductionPost },
+  { id: "quality-control", filename: "quality-control", component: QualityControlPost },
+  { id: "integrated-payments", filename: "integrated-payments", component: IntegratedPaymentsPost },
+  { id: "regional-scalability", filename: "regional-scalability", component: RegionalScalabilityPost },
+  { id: "mobile-dashboard", filename: "mobile-dashboard", component: MobileDashboardPost },
+  { id: "staff-management", filename: "staff-management", component: StaffManagementPost },
+  { id: "inventory-stock", filename: "inventory-stock", component: InventoryStockPost },
+  { id: "menu-performance", filename: "menu-performance", component: MenuPerformancePost },
+  { id: "inventory", filename: "inventory", component: InventoryPost },
+  { id: "accounting", filename: "accounting", component: AccountingPost },
+  { id: "ai-insights", filename: "ai-insights", component: AIInsightsPost },
+  { id: "multi-branch", filename: "multi-branch", component: MultiBranchPost },
+  { id: "delivery-integration", filename: "delivery-integration", component: DeliveryIntegrationPost },
+  { id: "hr-attendance", filename: "hr-attendance", component: HRAttendancePost },
+  { id: "task-management", filename: "task-management", component: TaskManagementPost },
+  { id: "loyalty", filename: "loyalty", component: LoyaltyPost },
+  { id: "kitchen-display", filename: "kitchen-display", component: KitchenDisplayPost },
+  { id: "analytics", filename: "analytics", component: AnalyticsPost },
+  { id: "online-store", filename: "online-store", component: OnlineStorePost },
+  { id: "offline-mode", filename: "offline-mode", component: OfflineModePost },
+  { id: "one-platform", filename: "one-platform", component: OnePlatformPost },
+  { id: "summer-offer", filename: "summer-offer", component: SummerOfferPost },
+  { id: "relax", filename: "relax", component: RelaxPost },
+];
+
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const editMode = true;
@@ -41,6 +72,22 @@ export default function Home() {
   const [gridCols, setGridCols] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const handleSetSelectedId = useCallback((id: string | null) => setSelectedId(id), []);
+  const [postOrder, setPostOrder] = useState(() => POST_REGISTRY.map(p => p.id));
+  const [reorderMode, setReorderMode] = useState(false);
+  const dragItem = useRef<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  const handleDragEnter = useCallback((targetId: string) => {
+    if (!dragItem.current || dragItem.current === targetId) return;
+    setPostOrder(prev => {
+      const newOrder = [...prev];
+      const fromIdx = newOrder.indexOf(dragItem.current!);
+      const toIdx = newOrder.indexOf(targetId);
+      newOrder.splice(fromIdx, 1);
+      newOrder.splice(toIdx, 0, dragItem.current!);
+      return newOrder;
+    });
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-50 p-8" onClick={() => editMode && setSelectedId(null)}>
@@ -63,6 +110,17 @@ export default function Home() {
             <Palette size={16} />
             Theme
           </Link>
+          <button
+            onClick={() => setReorderMode(!reorderMode)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold border shadow-sm transition-all ${
+              reorderMode
+                ? 'bg-[#1B4332] text-white border-[#1B4332]'
+                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <ArrowUpDown size={16} />
+            Reorder
+          </button>
           <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 flex gap-1">
             {(['1:1', '3:4', '4:3', '9:16', '16:9'] as const).map((ratio) => (
               <button
@@ -136,34 +194,44 @@ export default function Home() {
           gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
         } : undefined}
       >
-          <PostWrapper aspectRatio={aspectRatio} filename="table-ordering"><TableOrderingPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="menu-management"><MenuManagementPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="dashboard-overview"><DashboardOverviewPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="reports-export"><ReportsExportPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="customer-insights"><CustomerInsightsPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="waste-reduction"><WasteReductionPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="quality-control"><QualityControlPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="integrated-payments"><IntegratedPaymentsPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="regional-scalability"><RegionalScalabilityPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="mobile-dashboard"><MobileDashboardPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="staff-management"><StaffManagementPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="inventory-stock"><InventoryStockPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="menu-performance"><MenuPerformancePost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="inventory"><InventoryPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="accounting"><AccountingPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="ai-insights"><AIInsightsPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="multi-branch"><MultiBranchPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="delivery-integration"><DeliveryIntegrationPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="hr-attendance"><HRAttendancePost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="task-management"><TaskManagementPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="loyalty"><LoyaltyPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="kitchen-display"><KitchenDisplayPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="analytics"><AnalyticsPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="online-store"><OnlineStorePost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="offline-mode"><OfflineModePost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="one-platform"><OnePlatformPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="summer-offer"><SummerOfferPost /></PostWrapper>
-          <PostWrapper aspectRatio={aspectRatio} filename="relax"><RelaxPost /></PostWrapper>
+          {postOrder.map((id) => {
+            const post = POST_REGISTRY.find(p => p.id === id);
+            if (!post) return null;
+            const PostComponent = post.component;
+            return (
+              <div
+                key={id}
+                draggable={reorderMode}
+                onDragStart={reorderMode ? (e) => {
+                  dragItem.current = id;
+                  setDraggingId(id);
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', id);
+                } : undefined}
+                onDragOver={reorderMode ? (e) => {
+                  e.preventDefault();
+                } : undefined}
+                onDragEnter={reorderMode ? () => {
+                  handleDragEnter(id);
+                } : undefined}
+                onDragEnd={reorderMode ? () => {
+                  dragItem.current = null;
+                  setDraggingId(null);
+                } : undefined}
+                className="relative"
+                style={{
+                  opacity: draggingId === id ? 0.4 : 1,
+                  transition: 'opacity 0.2s',
+                  cursor: reorderMode ? 'grab' : undefined,
+                }}
+              >
+                <PostWrapper aspectRatio={aspectRatio} filename={post.filename}>
+                  <PostComponent />
+                </PostWrapper>
+                {reorderMode && <div className="absolute inset-0 z-10 rounded-xl border-2 border-dashed border-transparent hover:border-[#1B4332]/30 transition-colors" />}
+              </div>
+            );
+          })}
       </div>
       </SetSelectedIdContext.Provider>
       </SelectedIdContext.Provider>
