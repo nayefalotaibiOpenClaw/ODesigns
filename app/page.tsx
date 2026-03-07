@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { LayoutGrid, List, Pencil, Sparkles, Palette } from "lucide-react";
-import { EditContext, AspectRatioContext, AspectRatioType } from "./components/EditContext";
+import { useState, useCallback } from "react";
+import { LayoutGrid, List, Sparkles, Palette } from "lucide-react";
+import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext } from "./components/EditContext";
 import Link from "next/link";
 import SummerOfferPost from "./components/SummerOffer";
 import RelaxPost from "./components/RelaxPost";
@@ -32,11 +32,13 @@ import PostWrapper from "./components/PostWrapper";
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [editMode, setEditMode] = useState(false);
+  const editMode = true;
   const [aspectRatio, setAspectRatio] = useState<AspectRatioType>('1:1');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const handleSetSelectedId = useCallback((id: string | null) => setSelectedId(id), []);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
+    <main className="min-h-screen bg-gray-50 p-8" onClick={() => editMode && setSelectedId(null)}>
       {/* Controls Header */}
       <div className="max-w-[1920px] mx-auto flex justify-between items-center mb-12">
         <h1 className="text-2xl font-black text-[#1B4332]">Social Media Kit</h1>
@@ -56,17 +58,6 @@ export default function Home() {
             <Palette size={16} />
             Theme
           </Link>
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-              editMode
-                ? 'bg-yellow-400 text-yellow-900 shadow-md'
-                : 'bg-white text-gray-500 border border-gray-200 shadow-sm hover:bg-gray-50'
-            }`}
-          >
-            <Pencil size={16} />
-            {editMode ? 'Editing' : 'Edit Mode'}
-          </button>
           <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 flex gap-1">
             {(['1:1', '3:4', '4:3', '9:16', '16:9'] as const).map((ratio) => (
               <button
@@ -112,6 +103,8 @@ export default function Home() {
       {/* Content Grid/List */}
       <EditContext.Provider value={editMode}>
       <AspectRatioContext.Provider value={aspectRatio}>
+      <SelectedIdContext.Provider value={selectedId}>
+      <SetSelectedIdContext.Provider value={handleSetSelectedId}>
       <div className={`
         mx-auto transition-all duration-500 justify-center
         ${viewMode === 'grid'
@@ -145,6 +138,8 @@ export default function Home() {
           <PostWrapper aspectRatio={aspectRatio} filename="summer-offer"><SummerOfferPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="relax"><RelaxPost /></PostWrapper>
       </div>
+      </SetSelectedIdContext.Provider>
+      </SelectedIdContext.Provider>
       </AspectRatioContext.Provider>
       </EditContext.Provider>
     </main>

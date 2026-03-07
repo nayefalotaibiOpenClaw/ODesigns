@@ -2,7 +2,7 @@
 
 import React, { useContext, useCallback, useEffect } from 'react';
 import { motion, useMotionValue, useDragControls } from 'framer-motion';
-import { EditContext } from './EditContext';
+import { EditContext, useSelectedId, useSetSelectedId, ParentSelectedContext } from './EditContext';
 import { Move } from 'lucide-react';
 
 const STORAGE_KEY = "sylo-drag-positions";
@@ -32,6 +32,9 @@ interface DraggableWrapperProps {
 
 export default function DraggableWrapper({ children, className = "", id, dir, style }: DraggableWrapperProps) {
   const isEditMode = useContext(EditContext);
+  const selectedId = useSelectedId();
+  const setSelectedId = useSetSelectedId();
+  const isSelected = isEditMode && selectedId === id;
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const dragControls = useDragControls();
@@ -48,20 +51,27 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
     savePosition(id, x.get(), y.get());
   }, [id, x, y]);
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (!isEditMode) return;
+    e.stopPropagation();
+    setSelectedId(isSelected ? null : id);
+  }, [isEditMode, isSelected, id, setSelectedId]);
+
   return (
     <motion.div
-      drag={isEditMode}
+      drag={isSelected}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}
       dragTransition={{ power: 0 }}
-      style={{ x, y, touchAction: isEditMode ? 'none' : 'auto', ...style }}
+      style={{ x, y, touchAction: isSelected ? 'none' : 'auto', ...style }}
       whileDrag={{ scale: 1.05, zIndex: 100 }}
       onDragEnd={handleDragEnd}
+      onClick={handleClick}
       dir={dir}
       className={`${className}`}
     >
-      {isEditMode && (
+      {isSelected && (
         <div className="absolute -inset-2 border-2 border-dashed border-[#B7FF5B]/40 rounded-xl pointer-events-none z-50">
           <div
             className="absolute -top-3 -left-3 bg-[#B7FF5B] text-[#1B4332] p-1 rounded-md shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing pointer-events-auto z-50"
@@ -72,7 +82,9 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
         </div>
       )}
 
-      {children}
+      <ParentSelectedContext.Provider value={isSelected}>
+        {children}
+      </ParentSelectedContext.Provider>
     </motion.div>
   );
 }
