@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useContext, useCallback, useEffect } from 'react';
-import { motion, useMotionValue } from 'framer-motion';
+import { motion, useMotionValue, useDragControls } from 'framer-motion';
 import { EditContext } from './EditContext';
 import { Move } from 'lucide-react';
 
@@ -34,6 +34,7 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
   const isEditMode = useContext(EditContext);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const dragControls = useDragControls();
 
   useEffect(() => {
     const saved = loadPosition(id);
@@ -49,19 +50,23 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
 
   return (
     <motion.div
-      drag
-      dragListener={isEditMode}
+      drag={isEditMode}
+      dragControls={dragControls}
+      dragListener={false}
       dragMomentum={false}
       dragTransition={{ power: 0 }}
       style={{ x, y, touchAction: isEditMode ? 'none' : 'auto', ...style }}
       whileDrag={{ scale: 1.05, zIndex: 100 }}
       onDragEnd={handleDragEnd}
       dir={dir}
-      className={`${isEditMode ? 'cursor-move' : ''} ${className}`}
+      className={`${className}`}
     >
       {isEditMode && (
         <div className="absolute -inset-2 border-2 border-dashed border-[#B7FF5B]/40 rounded-xl pointer-events-none z-50">
-          <div className="absolute -top-3 -left-3 bg-[#B7FF5B] text-[#1B4332] p-1 rounded-md shadow-lg flex items-center justify-center">
+          <div
+            className="absolute -top-3 -left-3 bg-[#B7FF5B] text-[#1B4332] p-1 rounded-md shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing pointer-events-auto z-50"
+            onPointerDown={(e) => dragControls.start(e)}
+          >
              <Move size={14} />
           </div>
         </div>
