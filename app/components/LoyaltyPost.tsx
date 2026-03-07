@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { Gift, Heart, Star, QrCode } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -26,13 +27,13 @@ export default function LoyaltyPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
                 
                 {/* Header */}
-                <div className="text-center mt-6">
+                <DraggableWrapper id="headline-loyalty" className="text-center mt-6">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-1 leading-tight" style={{ color: t.primary }}>حبّهم يرجع لك</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accent }}>نظام ولاء متكامل لعملائك</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Points Card */}
-                <div className="w-full max-w-sm flex items-center justify-center relative mt-6 transform rotate-[-3deg] hover:rotate-0 transition-transform duration-500">
+                <DraggableWrapper id="visual-loyalty" className="w-full max-w-sm flex items-center justify-center relative mt-6 transform rotate-[-3deg] hover:rotate-0 transition-transform duration-500">
                     
                     {/* Loyalty Card */}
                     <div className="w-full rounded-2xl p-6 shadow-2xl relative overflow-hidden text-white flex flex-col justify-between h-56" style={{ backgroundColor: t.primary }}>
@@ -78,7 +79,7 @@ export default function LoyaltyPost() {
                          <Heart fill="#EF4444" stroke="none" size={24} className="animate-beat" />
                     </div>
 
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

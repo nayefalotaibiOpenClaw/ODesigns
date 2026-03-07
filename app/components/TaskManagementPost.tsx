@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { ClipboardCheck, CheckCircle2, User, Clock } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -16,16 +17,16 @@ export default function TaskManagementPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center p-8">
 
                 {/* Header */}
-                <div className="text-center mt-4 mb-6">
+                <DraggableWrapper id="headline-taskmanagement" className="text-center mt-4 mb-6">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-1 leading-tight" style={{ color: t.primaryLight }}>المهام واضحة</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accentLight }}>لا تضيّع وقت فريقك</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Task List */}
                 <div className="w-full max-w-sm flex flex-col gap-3 relative">
 
                     {/* Task 1 (Done) */}
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl flex items-center justify-between opacity-60">
+                    <DraggableWrapper id="card-taskmanagement-1" className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl flex items-center justify-between opacity-60">
                         <div className="flex items-center gap-3">
                              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: t.accentLight, color: t.primary }}>
                                  <CheckCircle2 size={16} />
@@ -35,10 +36,10 @@ export default function TaskManagementPost() {
                         <div className="w-8 h-8 rounded-full bg-blue-200 border-2 border-white/50 flex items-center justify-center text-blue-800 text-xs font-bold">
                             MK
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Task 2 (Active) */}
-                    <div className="bg-white shadow-xl transform scale-105 p-5 rounded-xl flex flex-col gap-3 border-r-8 z-20" style={{ borderColor: t.accent }}>
+                    <DraggableWrapper id="card-taskmanagement-2" className="bg-white shadow-xl transform scale-105 p-5 rounded-xl flex flex-col gap-3 border-r-8 z-20" style={{ borderColor: t.accent }}>
                          <div className="flex justify-between items-start">
                              <div className="flex flex-col">
                                  <EditableText className="text-xs font-black uppercase mb-1" style={{ color: t.accent }}>أولوية عالية</EditableText>
@@ -58,10 +59,10 @@ export default function TaskManagementPost() {
                                  جاري العمل
                              </div>
                          </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Task 3 (Pending) */}
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl flex items-center justify-between opacity-80 mt-1">
+                    <DraggableWrapper id="card-taskmanagement-3" className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl flex items-center justify-between opacity-80 mt-1">
                         <div className="flex items-center gap-3">
                              <div className="w-6 h-6 border-2 border-white/30 rounded-full"></div>
                              <EditableText className="text-sm font-bold text-white">تنظيف منطقة الكاشير</EditableText>
@@ -69,7 +70,7 @@ export default function TaskManagementPost() {
                         <div className="w-8 h-8 rounded-full bg-red-200 border-2 border-white/50 flex items-center justify-center text-red-800 text-xs font-bold">
                             AA
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Floating Icons */}
                     <div className="absolute -right-4 top-1/2 -translate-y-1/2 p-2 rounded-full shadow-lg transform rotate-12" style={{ backgroundColor: t.accentLight }}>

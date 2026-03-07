@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { Smartphone, CheckCircle, Globe, ShoppingCart } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -15,22 +16,22 @@ export default function OnlineStorePost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
 
                 {/* Header */}
-                <div className="text-center mt-6">
+                <DraggableWrapper id="headline-onlinestore" className="text-center mt-6">
                     <h2 className="text-4xl sm:text-5xl font-black mb-2 leading-tight" style={{ color: t.accentLight }}>
                         موقعك
                         <br/>
                         <span className="text-white">باسمك</span>
                     </h2>
                     <EditableText as="p" className="text-gray-400 text-lg sm:text-xl font-bold">بدون عمولات منصات التوصيل</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Phone Mockup */}
-                <div className="w-full max-w-xs relative flex justify-center">
+                <DraggableWrapper id="visual-onlinestore" className="w-full max-w-xs relative flex justify-center">
 
                     {/* Floating Bubble - Commission */}
-                    <div className="absolute -top-4 -right-4 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-black shadow-lg z-20 transform rotate-6 border-2 border-white/20">
+                    <DraggableWrapper id="badge-onlinestore" className="absolute -top-4 -right-4 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-black shadow-lg z-20 transform rotate-6 border-2 border-white/20">
                         0% عمولة
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Phone Frame */}
                     <div className="w-48 h-80 bg-black rounded-[2rem] border-[6px] border-gray-800 shadow-2xl relative overflow-hidden z-10 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
@@ -74,10 +75,10 @@ export default function OnlineStorePost() {
 
                     {/* Background Circle */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border rounded-full animate-spin-slow-reverse" style={{ borderColor: t.accent + '33' }}></div>
-                </div>
+                </DraggableWrapper>
 
                 {/* Features Footer */}
-                <div className="flex gap-4 sm:gap-6 mt-4 opacity-90 text-sm font-bold">
+                <DraggableWrapper id="footer-onlinestore" className="flex gap-4 sm:gap-6 mt-4 opacity-90 text-sm font-bold">
                     <div className="flex items-center gap-1.5" style={{ color: t.accentLight }}>
                         <Globe size={16} />
                         <EditableText>دومين خاص</EditableText>
@@ -90,7 +91,7 @@ export default function OnlineStorePost() {
                         <CheckCircle size={16} />
                         <EditableText>دفع آمن</EditableText>
                     </div>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

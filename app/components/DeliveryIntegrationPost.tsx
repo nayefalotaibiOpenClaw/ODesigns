@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { Truck, CheckCircle } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -25,13 +26,13 @@ export default function DeliveryIntegrationPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
                 
                 {/* Header */}
-                <div className="text-center mt-4 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-100">
+                <DraggableWrapper id="headline-delivery" className="text-center mt-4 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-100">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-1 leading-tight" style={{ color: t.primary }}>شاشة وحدة</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accent }}>لكل طلبات التوصيل</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Merging Logos */}
-                <div className="flex-1 w-full flex items-center justify-center relative mt-8">
+                <DraggableWrapper id="visual-delivery" className="flex-1 w-full flex items-center justify-center relative mt-8">
                     
                     {/* Sylo Tablet - The Destination */}
                     <div className="relative z-20 w-48 h-32 rounded-xl shadow-2xl flex items-center justify-center border-b-8 transform scale-110" style={{ backgroundColor: t.primary, borderColor: t.primaryDark }}>
@@ -74,13 +75,13 @@ export default function DeliveryIntegrationPost() {
                         <path d="M500 250 Q 420 300 380 300" fill="none" stroke={t.primary} strokeWidth="2" strokeDasharray="4 4" />
                     </svg>
 
-                </div>
+                </DraggableWrapper>
 
                 {/* Footer Benefit */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mt-4 shadow-sm" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
+                <DraggableWrapper id="footer-delivery" className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mt-4 shadow-sm" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
                     <CheckCircle size={16} />
                     <EditableText>توقف عن استخدام ٥ تابلتات</EditableText>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

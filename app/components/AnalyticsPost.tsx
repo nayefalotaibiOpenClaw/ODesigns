@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { MousePointer2, TrendingUp, BarChart3, PieChart } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -17,13 +18,13 @@ export default function AnalyticsPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
 
                 {/* Header */}
-                <div className="text-center mt-6">
+                <DraggableWrapper id="headline-analytics" className="text-center mt-6">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-2 tracking-tight" style={{ color: t.primaryLight }}>أرقامك بذكاء</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accentLight }}>كل بياناتك في شاشة واحدة</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Dashboard UI */}
-                <div className="w-full max-w-sm bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                <DraggableWrapper id="visual-analytics" className="w-full max-w-sm bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500">
 
                     {/* Top Stat Row */}
                     <div className="flex justify-between items-center mb-6">
@@ -75,12 +76,12 @@ export default function AnalyticsPost() {
                         <MousePointer2 size={24} fill={t.primary} />
                     </div>
 
-                </div>
+                </DraggableWrapper>
 
                 {/* Footer Text */}
-                <div className="text-center opacity-80 mt-4">
+                <DraggableWrapper id="footer-analytics" className="text-center opacity-80 mt-4">
                     <EditableText as="p" className="text-xs font-bold tracking-widest" style={{ color: t.accentLight }}>SYLO ANALYTICS</EditableText>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

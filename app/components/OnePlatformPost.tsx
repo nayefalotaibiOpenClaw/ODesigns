@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { ShoppingBag, TrendingUp, Users, FileText, Truck, Brain } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -17,60 +18,60 @@ export default function OnePlatformPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
 
                 {/* Central Hub */}
-                <div className="relative z-20 w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-12 border" style={{ borderColor: t.accent + '1a' }}>
+                <DraggableWrapper id="logo-oneplatform" className="relative z-20 w-32 h-32 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-12 border" style={{ borderColor: t.accent + '1a' }}>
                      <span className="font-black text-2xl tracking-widest" style={{ color: t.primary }}>SYLO</span>
-                </div>
+                </DraggableWrapper>
 
                 {/* Orbiting Icons */}
                 <div className="absolute inset-0 w-full h-full pointer-events-none">
                     
                     {/* Top Center - POS */}
-                    <div className="absolute top-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5">
+                    <DraggableWrapper id="card-oneplatform-1" className="absolute top-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5">
                         <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg text-white animate-bounce-slow" style={{ backgroundColor: t.primary }}>
                             <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <EditableText className="text-xs sm:text-sm font-black tracking-wide" style={{ color: t.primary }}>الكاشير</EditableText>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Top Right - Delivery */}
-                    <div className="absolute top-[28%] right-[12%] sm:right-[15%] flex flex-col items-center gap-1.5">
+                    <DraggableWrapper id="card-oneplatform-2" className="absolute top-[28%] right-[12%] sm:right-[15%] flex flex-col items-center gap-1.5">
                         <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg text-white animate-pulse-slow" style={{ backgroundColor: t.accent }}>
                             <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                          <EditableText className="text-[10px] sm:text-xs font-black tracking-wide" style={{ color: t.primary }}>توصيل</EditableText>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Bottom Right - Finance */}
-                    <div className="absolute bottom-[28%] right-[12%] sm:right-[15%] flex flex-col items-center gap-1.5">
+                    <DraggableWrapper id="card-oneplatform-3" className="absolute bottom-[28%] right-[12%] sm:right-[15%] flex flex-col items-center gap-1.5">
                         <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg text-white animate-pulse-slow" style={{ backgroundColor: t.accentLight }}>
                             <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                          <EditableText className="text-[10px] sm:text-xs font-black tracking-wide" style={{ color: t.primary }}>محاسبة</EditableText>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Bottom Center - Analytics */}
-                    <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5">
+                    <DraggableWrapper id="card-oneplatform-4" className="absolute bottom-[18%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5">
                         <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-lg text-white animate-bounce-slow" style={{ backgroundColor: t.primary }}>
                             <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                          <EditableText className="text-xs sm:text-sm font-black tracking-wide" style={{ color: t.primary }}>تقارير</EditableText>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Bottom Left - AI */}
-                    <div className="absolute bottom-[28%] left-[12%] sm:left-[15%] flex flex-col items-center gap-1.5">
+                    <DraggableWrapper id="card-oneplatform-5" className="absolute bottom-[28%] left-[12%] sm:left-[15%] flex flex-col items-center gap-1.5">
                         <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg text-white animate-pulse-slow" style={{ backgroundColor: t.accent }}>
                             <Brain className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                          <EditableText className="text-[10px] sm:text-xs font-black tracking-wide" style={{ color: t.primary }}>ذكاء</EditableText>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Top Left - HR */}
-                    <div className="absolute top-[28%] left-[12%] sm:left-[15%] flex flex-col items-center gap-1.5">
+                    <DraggableWrapper id="card-oneplatform-6" className="absolute top-[28%] left-[12%] sm:left-[15%] flex flex-col items-center gap-1.5">
                         <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg text-white animate-pulse-slow" style={{ backgroundColor: t.accentLight }}>
                             <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                          <EditableText className="text-[10px] sm:text-xs font-black tracking-wide" style={{ color: t.primary }}>موظفين</EditableText>
-                    </div>
+                    </DraggableWrapper>
 
                 </div>
 
@@ -89,10 +90,10 @@ export default function OnePlatformPost() {
             </div>
 
             {/* Bottom Text */}
-             <div className="absolute bottom-6 w-full text-center z-30 font-bold" dir="rtl">
+             <DraggableWrapper id="headline-oneplatform" className="absolute bottom-6 w-full text-center z-30 font-bold" dir="rtl">
                 <EditableText as="h2" className="text-4xl font-black mb-1 tracking-tight" style={{ color: t.primary }}>منصة واحدة.</EditableText>
                 <EditableText as="p" className="text-lg font-bold" style={{ color: t.accent }}>إمكانيات لا محدودة.</EditableText>
-            </div>
+            </DraggableWrapper>
 
       </div>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { Palmtree, Sun, Plus, Apple, Play } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -18,7 +19,7 @@ export default function SummerOfferPost() {
             {/* --- Top Decor: Summer Vibes --- */}
             <div className="absolute top-0 w-full h-32 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
             
-            <div className="relative z-10 text-center mb-4 w-full px-2">
+            <DraggableWrapper id="headline-summeroffer" className="relative z-10 text-center mb-4 w-full px-2">
             <div className="flex items-center justify-center gap-4 sm:gap-6 mb-2">
                 <Palmtree className="w-8 h-8 sm:w-10 sm:h-10 rotate-[-15deg] mt-4" strokeWidth={2.5} style={{ color: t.accent }} />
                 <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.1] text-center" style={{ color: t.primary }}>
@@ -31,10 +32,10 @@ export default function SummerOfferPost() {
                 </h1>
                 <Palmtree className="w-8 h-8 sm:w-10 sm:h-10 rotate-[15deg] mt-4" strokeWidth={2.5} style={{ color: t.accent }} />
             </div>
-            </div>
+            </DraggableWrapper>
 
             {/* --- Pricing Pill --- */}
-            <div className="relative z-10 flex items-center gap-4 sm:gap-6 mb-6 mt-2 scale-90 sm:scale-100">
+            <DraggableWrapper id="badge-summeroffer" className="relative z-10 flex items-center gap-4 sm:gap-6 mb-6 mt-2 scale-90 sm:scale-100">
                 {/* Old Price */}
                 <div className="relative pt-2">
                     <span className="text-2xl sm:text-3xl font-bold text-gray-400 line-through decoration-4 decoration-red-400/60">400 KD</span>
@@ -48,19 +49,19 @@ export default function SummerOfferPost() {
                         <span className="text-xs sm:text-sm opacity-90 font-medium whitespace-nowrap">بالسنة</span>
                     </div>
                 </div>
-            </div>
+            </DraggableWrapper>
 
             {/* --- Features --- */}
-            <div className="flex items-center justify-center w-full gap-2 sm:gap-4 text-lg sm:text-2xl font-bold mb-6 px-2 flex-wrap sm:flex-nowrap" style={{ color: t.primary }}>
+            <DraggableWrapper id="card-summeroffer-1" className="flex items-center justify-center w-full gap-2 sm:gap-4 text-lg sm:text-2xl font-bold mb-6 px-2 flex-wrap sm:flex-nowrap" style={{ color: t.primary }}>
                 <EditableText className="whitespace-nowrap">موقع الكتروني</EditableText>
                 <div className="rounded-full p-1 shrink-0" style={{ backgroundColor: t.accent + '1a' }}>
                     <Plus className="w-4 h-4 sm:w-6 sm:h-6" strokeWidth={4} style={{ color: t.accent }} />
                 </div>
                 <EditableText className="whitespace-nowrap">نظام نقطة البيع</EditableText>
-            </div>
+            </DraggableWrapper>
 
             {/* --- Device Mockups (CSS Only) --- */}
-            <div className="flex items-end justify-center mt-auto relative w-full px-4 pb-0 h-[180px] sm:h-[220px]">
+            <DraggableWrapper id="visual-summeroffer" className="flex items-end justify-center mt-auto relative w-full px-4 pb-0 h-[180px] sm:h-[220px]">
                 
                 {/* POS Screen (Left) - Using Screenshot */}
                 <div className="relative z-20 transform translate-x-8 sm:translate-x-12 translate-y-4 scale-100 sm:scale-110">
@@ -101,10 +102,10 @@ export default function SummerOfferPost() {
                     </div>
                 </div>
 
-            </div>
+            </DraggableWrapper>
 
             {/* --- App Store Badges (Bottom Right Floating) --- */}
-            <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex flex-col gap-1.5 sm:gap-2 z-30 scale-75 origin-bottom-right sm:scale-100">
+            <DraggableWrapper id="card-summeroffer-2" className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex flex-col gap-1.5 sm:gap-2 z-30 scale-75 origin-bottom-right sm:scale-100">
                 <div className="bg-black/90 text-white px-3 py-1.5 rounded-md flex items-center gap-2 w-[130px] border border-white/20 shadow-lg backdrop-blur-sm">
                     <Apple size={18} fill="white" className="shrink-0" />
                     <div className="flex flex-col leading-none">
@@ -119,14 +120,14 @@ export default function SummerOfferPost() {
                         <span className="text-[11px] font-bold tracking-wide">Google Play</span>
                     </div>
                 </div>
-            </div>
+            </DraggableWrapper>
 
             {/* --- Queue Branding (Bottom Left) --- */}
-            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-30">
+            <DraggableWrapper id="logo-summeroffer" className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-30">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-lg border-2" style={{ backgroundColor: t.primary, borderColor: t.primaryLight }}>
                     <span className="text-white font-bold text-xs sm:text-sm">Q</span>
                 </div>
-            </div>
+            </DraggableWrapper>
 
         </div>
       </div>

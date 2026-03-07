@@ -23,6 +23,10 @@ import MobileDashboardPost from "./components/MobileDashboardPost";
 import StaffManagementPost from "./components/StaffManagementPost";
 import InventoryStockPost from "./components/InventoryStockPost";
 import MenuPerformancePost from "./components/MenuPerformancePost";
+import WasteReductionPost from "./components/WasteReductionPost";
+import QualityControlPost from "./components/QualityControlPost";
+import IntegratedPaymentsPost from "./components/IntegratedPaymentsPost";
+import RegionalScalabilityPost from "./components/RegionalScalabilityPost";
 import PostWrapper from "./components/PostWrapper";
 
 export default function Home() {
@@ -113,7 +117,12 @@ export default function Home() {
           ? 'flex flex-wrap gap-8'
           : 'flex flex-col items-center space-y-12'
         }
+        ${editMode ? 'edit-mode' : ''}
       `}>
+          <PostWrapper aspectRatio={aspectRatio} filename="waste-reduction"><WasteReductionPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="quality-control"><QualityControlPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="integrated-payments"><IntegratedPaymentsPost /></PostWrapper>
+          <PostWrapper aspectRatio={aspectRatio} filename="regional-scalability"><RegionalScalabilityPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="mobile-dashboard"><MobileDashboardPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="staff-management"><StaffManagementPost /></PostWrapper>
           <PostWrapper aspectRatio={aspectRatio} filename="inventory-stock"><InventoryStockPost /></PostWrapper>

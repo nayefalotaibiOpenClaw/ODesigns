@@ -1,16 +1,18 @@
 import React from 'react';
 import EditableText from './EditableText';
 import DraggableWrapper from './DraggableWrapper';
-import { useAspectRatio } from './EditContext';
+import { useEditMode, useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
 import { Command, Clock, ShieldCheck, Zap } from 'lucide-react';
 
 export default function StaffManagementPost() {
+  const isEditMode = useEditMode();
   const ratio = useAspectRatio();
   const t = useTheme();
   const isTall = ratio === '9:16' || ratio === '3:4';
+
   return (
-    <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary, fontFamily: t.font }}>
+    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Background with Subtle Pattern */}
       <div className="absolute inset-0" style={{ backgroundColor: t.primaryLight }}></div>
       <div className="absolute inset-0 opacity-[0.03]"
@@ -32,7 +34,7 @@ export default function StaffManagementPost() {
              </div>
           </DraggableWrapper>
           <DraggableWrapper id="badge-staff" className="px-4 py-1.5 rounded-full flex items-center gap-2 shadow-md" style={{ backgroundColor: t.primary }}>
-             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: t.accentLime }}></div>
+             <div className={`w-1.5 h-1.5 rounded-full ${isEditMode ? '' : 'animate-pulse'}`} style={{ backgroundColor: t.accentLime }}></div>
              <span className="text-[9px] font-black text-white tracking-widest uppercase">LIVE TRACKING</span>
           </DraggableWrapper>
         </div>
@@ -45,7 +47,7 @@ export default function StaffManagementPost() {
                  <EditableText>فريقك..</EditableText> <br/>
                  <span style={{ color: t.accent }}><EditableText>بنظرة وحدة</EditableText></span>
               </h2>
-              <p className="font-bold mt-1 text-lg" style={{ color: t.primary + '99' }}>
+              <p className="font-bold mt-1 text-lg opacity-60" style={{ color: t.primary }}>
                  <EditableText>نظام متكامل لمتابعة حضور وانصراف الموظفين</EditableText>
               </p>
            </DraggableWrapper>
@@ -53,18 +55,17 @@ export default function StaffManagementPost() {
            {/* Visual Section */}
            <div className="flex-1 flex items-center gap-6">
               {/* iPhone Mockup (Left) - Draggable */}
-              <DraggableWrapper id="mockup-staff" className={`relative shrink-0 transform -rotate-2 z-20 ${isTall ? 'w-[280px] h-[540px]' : 'w-[210px] h-[320px]'}`}>
+              <DraggableWrapper id="mockup-staff" className={`relative shrink-0 z-20 transition-all duration-500 ${isTall ? 'w-[280px] h-[540px]' : 'w-[210px] h-[320px]'} ${isEditMode ? '' : 'transform -rotate-2'}`}>
                  {/* Shadows */}
                  <div className="absolute -bottom-2 w-full h-4 bg-black/10 blur-xl rounded-full"></div>
                  
                  {/* Hardware Buttons */}
-                 <div className="absolute -left-[6px] top-16 w-[2px] h-10 rounded-l-md" style={{ backgroundColor: t.primary + '33' }}></div>
-                 <div className="absolute -right-[6px] top-24 w-[2px] h-14 rounded-r-md" style={{ backgroundColor: t.primary + '33' }}></div>
+                 <div className="absolute -left-[6px] top-16 w-[2px] h-10 opacity-20 rounded-l-md" style={{ backgroundColor: t.primary }}></div>
+                 <div className="absolute -right-[6px] top-24 w-[2px] h-14 opacity-20 rounded-r-md" style={{ backgroundColor: t.primary }}></div>
 
                  <div className="relative h-full w-full rounded-[40px] border-[6px] overflow-hidden shadow-2xl" style={{ borderColor: t.primary }}>
                     <div className="absolute inset-0 bg-white">
                         <img src="/2.jpg" alt="Staff List" className="w-full h-full object-cover object-top" />
-                        {/* Glass Reflections */}
                         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none"></div>
                         <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
                     </div>
@@ -80,7 +81,7 @@ export default function StaffManagementPost() {
                     { id: 'card-staff-2', icon: ShieldCheck, text: "تقارير الحضور والغياب" },
                     { id: 'card-staff-3', icon: Zap, text: "إدارة الإجازات فوراً" }
                  ].map((item, i) => (
-                    <DraggableWrapper key={item.id} id={item.id} className="bg-white border-2 p-3 rounded-2xl flex items-center gap-3 shadow-sm transform transition-transform hover:translate-x-[-4px]" style={{ borderColor: t.primary + '0d' }}>
+                    <DraggableWrapper key={item.id} id={item.id} className="bg-white border-2 p-3 rounded-2xl flex items-center gap-3 shadow-sm transform transition-transform hover:translate-x-[-4px]" style={{ borderColor: `${t.primary}0D` }}>
                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
                           <item.icon size={20} />
                        </div>
@@ -92,7 +93,7 @@ export default function StaffManagementPost() {
         </div>
 
         {/* Brand Label */}
-        <DraggableWrapper id="label-staff" className="mt-4 pt-4 border-t text-center" style={{ borderColor: t.primary + '1a' }}>
+        <DraggableWrapper id="label-staff" className="mt-4 pt-4 border-t text-center" style={{ borderTopColor: `${t.primary}1A` }}>
            <span className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: t.accent }}>TEAM MANAGEMENT REDEFINED</span>
         </DraggableWrapper>
 

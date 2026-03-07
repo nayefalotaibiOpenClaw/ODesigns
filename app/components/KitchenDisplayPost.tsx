@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { ChefHat, Printer, Clock, CheckCircle } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -15,16 +16,16 @@ export default function KitchenDisplayPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
                 
                 {/* Header */}
-                <div className="text-center mt-4">
+                <DraggableWrapper id="headline-kitchen" className="text-center mt-4">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-2" style={{ color: t.primary }}>المطبخ الذكي</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accent }}>نظّم طلباتك بدون ورق</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - KDS Cards */}
                 <div className="w-full flex flex-col gap-4 items-center">
                     
                     {/* Ticket 1 (Completed) */}
-                    <div className="w-full max-w-sm bg-white rounded-xl shadow-lg border-r-4 p-4 opacity-60 scale-95 transform translate-y-2" style={{ borderColor: t.accent }}>
+                    <DraggableWrapper id="card-kitchen-1" className="w-full max-w-sm bg-white rounded-xl shadow-lg border-r-4 p-4 opacity-60 scale-95 transform translate-y-2" style={{ borderColor: t.accent }}>
                         <div className="flex justify-between items-center mb-2 text-gray-400">
                              <span className="font-bold">#1023</span>
                              <span className="text-xs">منذ 12 دقيقة</span>
@@ -33,10 +34,10 @@ export default function KitchenDisplayPost() {
                             <span className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-xs">1</span>
                             <span>برجر دجاج كلاسيك</span>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Ticket 2 (Active/Focus) */}
-                    <div className="w-full max-w-sm bg-white rounded-xl shadow-2xl border-r-8 p-6 transform scale-105 z-20 relative" style={{ borderColor: t.primary }}>
+                    <DraggableWrapper id="card-kitchen-2" className="w-full max-w-sm bg-white rounded-xl shadow-2xl border-r-8 p-6 transform scale-105 z-20 relative" style={{ borderColor: t.primary }}>
                         {/* Status Badge */}
                         <div className="absolute -top-3 -right-3 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md" style={{ backgroundColor: t.primary }}>
                             جاري التحضير
@@ -74,10 +75,10 @@ export default function KitchenDisplayPost() {
                                  ملاحظة: بدون مخلل للبرجر
                              </div>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                      {/* Ticket 3 (Next) */}
-                    <div className="w-full max-w-sm bg-white rounded-xl shadow-lg border-r-4 p-4 opacity-80 scale-95 transform -translate-y-2" style={{ borderColor: t.accentLight }}>
+                    <DraggableWrapper id="card-kitchen-3" className="w-full max-w-sm bg-white rounded-xl shadow-lg border-r-4 p-4 opacity-80 scale-95 transform -translate-y-2" style={{ borderColor: t.accentLight }}>
                          <div className="flex justify-between items-center mb-2">
                              <span className="font-bold" style={{ color: t.primary }}>#1025</span>
                              <span className="text-xs text-gray-500">جديد</span>
@@ -86,12 +87,12 @@ export default function KitchenDisplayPost() {
                             <span className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold" style={{ backgroundColor: t.primaryLight, color: t.primary }}>3</span>
                             <span className="text-sm font-bold" style={{ color: t.primary }}>بيبسي وسط</span>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                 </div>
 
                 {/* Footer Icon Group */}
-                <div className="flex gap-8 opacity-60 mt-4">
+                <DraggableWrapper id="footer-kitchen" className="flex gap-8 opacity-60 mt-4">
                     <div className="flex flex-col items-center gap-1">
                         <Printer size={24} />
                         <EditableText className="text-xs font-bold">بدون طابعة</EditableText>
@@ -100,7 +101,7 @@ export default function KitchenDisplayPost() {
                         <ChefHat size={24} />
                         <EditableText className="text-xs font-bold">للطهاة</EditableText>
                     </div>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

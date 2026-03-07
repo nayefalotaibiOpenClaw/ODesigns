@@ -33,6 +33,11 @@ body {
   aspect-ratio: auto !important;
 }
 
+/* Disable all animations in edit mode so they don't fight with drag transforms */
+.edit-mode * {
+  animation: none !important;
+}
+
 @layer utilities {
   .animate-spin-slow {
     animation: spin 12s linear infinite;

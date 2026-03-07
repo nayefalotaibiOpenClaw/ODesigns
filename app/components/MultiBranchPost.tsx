@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { useTheme } from './ThemeContext';
 import { MapPin, Store, ArrowLeftRight, Eye } from 'lucide-react';
 
@@ -21,10 +22,10 @@ export default function MultiBranchPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
 
                 {/* Header */}
-                <div className="text-center mt-4">
+                <DraggableWrapper id="headline-multibranch" className="text-center mt-4">
                     <h2 className="text-4xl sm:text-5xl font-black mb-2 leading-tight" style={{ color: t.primary }}>كل فروعك<br/><EditableText style={{ color: t.accent }}>بنظرة وحدة</EditableText></h2>
                     <EditableText as="p" className="text-gray-500 text-lg font-bold">تحكّم من مكان واحد</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Branch Cards */}
                 <div className="w-full max-w-sm relative mt-2">
@@ -37,18 +38,18 @@ export default function MultiBranchPost() {
                     </svg>
 
                     {/* Main HQ Badge */}
-                    <div className="flex justify-center mb-6 relative z-10">
+                    <DraggableWrapper id="badge-multibranch" className="flex justify-center mb-6 relative z-10">
                         <div className="text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 border-2" style={{ backgroundColor: t.primary, borderColor: t.accentLight + '4d' }}>
                             <Eye size={20} />
                             <EditableText className="font-black text-lg">لوحة التحكم</EditableText>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Branch Cards Grid */}
                     <div className="grid grid-cols-2 gap-3 relative z-10">
 
                         {/* Branch 1 */}
-                        <div className="bg-white rounded-xl shadow-lg p-4 flex flex-col gap-2 border-t-4" style={{ borderColor: t.primary }}>
+                        <DraggableWrapper id="card-multibranch-1" className="bg-white rounded-xl shadow-lg p-4 flex flex-col gap-2 border-t-4" style={{ borderColor: t.primary }}>
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: t.primaryLight }}>
                                     <Store size={16} style={{ color: t.primary }} />
@@ -63,10 +64,10 @@ export default function MultiBranchPost() {
                                 <span className="text-lg font-black" style={{ color: t.primary }}>KD 920</span>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: t.primaryLight, color: t.accent }}>مفتوح</span>
                             </div>
-                        </div>
+                        </DraggableWrapper>
 
                         {/* Branch 2 */}
-                        <div className="bg-white rounded-xl shadow-lg p-4 flex flex-col gap-2 border-t-4" style={{ borderColor: t.accent }}>
+                        <DraggableWrapper id="card-multibranch-2" className="bg-white rounded-xl shadow-lg p-4 flex flex-col gap-2 border-t-4" style={{ borderColor: t.accent }}>
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: t.primaryLight }}>
                                     <Store size={16} style={{ color: t.accent }} />
@@ -81,10 +82,10 @@ export default function MultiBranchPost() {
                                 <span className="text-lg font-black" style={{ color: t.primary }}>KD 1,150</span>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ backgroundColor: t.primaryLight, color: t.accent }}>مفتوح</span>
                             </div>
-                        </div>
+                        </DraggableWrapper>
 
                         {/* Branch 3 - Spans full width */}
-                        <div className="col-span-2 bg-white rounded-xl shadow-lg p-4 flex items-center justify-between border-t-4" style={{ borderColor: t.accentLight }}>
+                        <DraggableWrapper id="card-multibranch-3" className="col-span-2 bg-white rounded-xl shadow-lg p-4 flex items-center justify-between border-t-4" style={{ borderColor: t.accentLight }}>
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: t.primaryLight }}>
                                     <Store size={16} style={{ color: t.accentLight }} />
@@ -101,16 +102,16 @@ export default function MultiBranchPost() {
                                 <span className="text-lg font-black" style={{ color: t.primary }}>KD 680</span>
                                 <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">مغلق</span>
                             </div>
-                        </div>
+                        </DraggableWrapper>
 
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mt-4 shadow-sm" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
+                <DraggableWrapper id="footer-multibranch" className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mt-4 shadow-sm" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
                     <ArrowLeftRight size={16} />
                     <EditableText>تنقّل بين الفروع بضغطة</EditableText>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

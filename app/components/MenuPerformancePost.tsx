@@ -1,16 +1,18 @@
 import React from 'react';
 import EditableText from './EditableText';
 import DraggableWrapper from './DraggableWrapper';
-import { useAspectRatio } from './EditContext';
+import { useEditMode, useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
 import { Command, TrendingUp, PieChart } from 'lucide-react';
 
 export default function MenuPerformancePost() {
+  const isEditMode = useEditMode();
   const ratio = useAspectRatio();
   const t = useTheme();
   const isTall = ratio === '9:16' || ratio === '3:4';
+
   return (
-    <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary, fontFamily: t.font }}>
+    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Background Decor */}
       <div className="absolute inset-0" style={{ backgroundColor: t.primaryLight }}></div>
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] opacity-[0.1] blur-[100px] rounded-full translate-x-1/2 translate-y-1/2" style={{ backgroundColor: t.accentLime }}></div>
@@ -24,7 +26,7 @@ export default function MenuPerformancePost() {
         {/* Header */}
         <div className="flex justify-between items-start">
           <DraggableWrapper id="logo-menu" className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.primary }}>
+             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: t.primary }}>
                 <Command size={24} style={{ color: t.accentLime }} strokeWidth={2.5} />
              </div>
              <div className="flex flex-col leading-none">
@@ -33,7 +35,7 @@ export default function MenuPerformancePost() {
              </div>
           </DraggableWrapper>
           <DraggableWrapper id="badge-menu" className="px-4 py-1.5 rounded-full flex items-center gap-2 shadow-lg" style={{ backgroundColor: t.primary }}>
-             <TrendingUp size={12} style={{ color: t.accentLime }} />
+             <TrendingUp size={12} className={`${isEditMode ? '' : 'animate-pulse'}`} style={{ color: t.accentLime }} />
              <span className="text-[9px] font-black text-white tracking-widest uppercase">MARGIN OPTIMIZER</span>
           </DraggableWrapper>
         </div>
@@ -45,7 +47,7 @@ export default function MenuPerformancePost() {
               <span className="text-7xl" style={{ color: t.accent }}><EditableText>المنيو</EditableText></span> <br/>
               <EditableText>الذكية</EditableText>
            </h2>
-           <p className="font-bold mt-4 text-xl max-w-sm ml-0 mr-auto leading-tight" style={{ color: t.primary + '99' }}>
+           <p className="font-bold mt-4 text-xl max-w-sm ml-0 mr-auto leading-tight opacity-60" style={{ color: t.primary }}>
               <EditableText>اعرف أكثر الأصناف ربحية، وحلل هوامش الربح لكل منصة توصيل</EditableText>
            </p>
         </DraggableWrapper>
@@ -53,16 +55,16 @@ export default function MenuPerformancePost() {
         {/* Visual Section - Mockup at the bottom */}
         <div className="flex-1 flex items-end justify-center relative">
            {/* Ground Shadow */}
-           <div className="absolute bottom-16 w-48 h-4 blur-xl rounded-full" style={{ backgroundColor: t.primary + '1a' }}></div>
+           <div className="absolute bottom-16 w-48 h-4 bg-black/10 blur-xl rounded-full"></div>
            
-           <div className={`relative z-20 group transform translate-y-24 ${isTall ? 'w-[320px] h-[600px]' : 'w-[260px] h-[360px]'}`}>
+           <div className={`relative z-20 group transform translate-y-24 transition-all duration-500 ${isTall ? 'w-[300px] h-[580px]' : 'w-[260px] h-[360px]'}`}>
               
-              {/* Hardware Details */}
-              <div className="absolute -left-[6px] top-24 w-[3px] h-10 rounded-l-md" style={{ backgroundColor: t.primary + '33' }}></div>
-              <div className="absolute -right-[6px] top-32 w-[3px] h-14 rounded-r-md" style={{ backgroundColor: t.primary + '33' }}></div>
+              {/* Hardware Buttons */}
+              <div className="absolute -left-[6px] top-24 w-[3px] h-10 opacity-20 rounded-l-md" style={{ backgroundColor: t.primary }}></div>
+              <div className="absolute -right-[6px] top-32 w-[3px] h-14 opacity-20 rounded-r-md" style={{ backgroundColor: t.primary }}></div>
 
               {/* iPhone Frame */}
-              <DraggableWrapper id="mockup-menu" className="relative h-full w-full rounded-[42px] border-[6px] overflow-hidden shadow-[0_30px_60px_-15px_rgba(27,67,50,0.3)] bg-white z-20" style={{ borderColor: t.primary }}>
+              <DraggableWrapper id="mockup-menu" className="relative h-full w-full rounded-[42px] border-[6px] overflow-hidden shadow-2xl bg-white z-20" style={{ borderColor: t.primary }}>
                  <img src="/4.jpg" alt="Analytics" className="w-full h-full object-cover object-top" />
                  
                  {/* Glass Reflection Overlays */}
@@ -74,13 +76,13 @@ export default function MenuPerformancePost() {
               </DraggableWrapper>
 
               {/* Floating Stat Card */}
-              <DraggableWrapper id="stat-card-menu" className="absolute -right-8 top-12 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-4 transform -rotate-2 border-2 z-30" style={{ borderColor: t.primaryLight }}>
+              <DraggableWrapper id="stat-card-menu" className={`absolute -right-8 top-12 bg-white p-3 rounded-2xl shadow-xl flex items-center gap-4 border-2 z-30 ${isEditMode ? '' : 'animate-bounce-slow transform -rotate-2'}`} style={{ borderColor: t.primaryLight }}>
                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.primary, color: t.accentLime }}>
                     <PieChart size={20} />
                  </div>
                  <div className="flex flex-col leading-none">
                     <span className="text-[8px] text-gray-400 font-bold uppercase mb-1 leading-none">Profit Margin</span>
-                    <span className="text-lg font-black leading-none" style={{ color: t.primary }}>80.00%</span>
+                    <span className="text-lg font-black" style={{ color: t.primary }}>80.00%</span>
                  </div>
               </DraggableWrapper>
            </div>

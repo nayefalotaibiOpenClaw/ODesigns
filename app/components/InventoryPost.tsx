@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { useTheme } from './ThemeContext';
 import { Package, AlertTriangle, ArrowDownUp, CheckCircle } from 'lucide-react';
 
@@ -15,16 +16,16 @@ export default function InventoryPost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
 
                 {/* Header */}
-                <div className="text-center mt-4">
+                <DraggableWrapper id="headline-inventory" className="text-center mt-4">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-2" style={{ color: t.primary }}>مخزونك تحت السيطرة</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accent }}>تتبّع كل صنف بلحظته</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Inventory Cards */}
                 <div className="w-full max-w-sm flex flex-col gap-3 relative mt-4">
 
                     {/* Item 1 - Low Stock Warning */}
-                    <div className="bg-white rounded-xl shadow-lg p-4 flex items-center justify-between border-r-4 border-orange-400">
+                    <DraggableWrapper id="card-inventory-1" className="bg-white rounded-xl shadow-lg p-4 flex items-center justify-between border-r-4 border-orange-400">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                                 <AlertTriangle size={20} className="text-orange-500" />
@@ -38,10 +39,10 @@ export default function InventoryPost() {
                             <span className="text-2xl font-black text-orange-500">3</span>
                             <EditableText className="text-[10px] text-gray-400 font-bold">كرتون</EditableText>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Item 2 - Good Stock */}
-                    <div className="bg-white rounded-xl shadow-2xl p-5 flex items-center justify-between border-r-8 transform scale-105 z-10" style={{ borderColor: t.accent }}>
+                    <DraggableWrapper id="card-inventory-2" className="bg-white rounded-xl shadow-2xl p-5 flex items-center justify-between border-r-8 transform scale-105 z-10" style={{ borderColor: t.accent }}>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: t.primaryLight }}>
                                 <Package size={20} style={{ color: t.primary }} />
@@ -58,10 +59,10 @@ export default function InventoryPost() {
                             <span className="text-2xl font-black" style={{ color: t.primary }}>48</span>
                             <EditableText className="text-[10px] text-gray-400 font-bold">كرتون</EditableText>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                     {/* Item 3 - Out of Stock */}
-                    <div className="bg-white rounded-xl shadow-lg p-4 flex items-center justify-between border-r-4 border-red-400 opacity-70">
+                    <DraggableWrapper id="card-inventory-3" className="bg-white rounded-xl shadow-lg p-4 flex items-center justify-between border-r-4 border-red-400 opacity-70">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
                                 <Package size={20} className="text-red-400" />
@@ -75,12 +76,12 @@ export default function InventoryPost() {
                             <span className="text-2xl font-black text-red-400">0</span>
                             <EditableText className="text-[10px] text-gray-400 font-bold">علبة</EditableText>
                         </div>
-                    </div>
+                    </DraggableWrapper>
 
                 </div>
 
                 {/* Footer */}
-                <div className="flex gap-6 mt-4 opacity-70">
+                <DraggableWrapper id="footer-inventory" className="flex gap-6 mt-4 opacity-70">
                     <div className="flex flex-col items-center gap-1">
                         <ArrowDownUp size={20} style={{ color: t.primary }} />
                         <EditableText className="text-[10px] font-bold">جرد تلقائي</EditableText>
@@ -89,7 +90,7 @@ export default function InventoryPost() {
                         <AlertTriangle size={20} style={{ color: t.primary }} />
                         <EditableText className="text-[10px] font-bold">تنبيهات ذكية</EditableText>
                     </div>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>

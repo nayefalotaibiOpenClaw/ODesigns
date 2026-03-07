@@ -1,5 +1,6 @@
 import React from 'react';
 import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
 import { UserCheck, Clock, CalendarDays, CheckCircle } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 
@@ -16,13 +17,13 @@ export default function HRAttendancePost() {
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
                 
                 {/* Header */}
-                <div className="text-center mt-6">
+                <DraggableWrapper id="headline-hrattendance" className="text-center mt-6">
                     <EditableText as="h2" className="text-4xl sm:text-5xl font-black mb-1 leading-tight" style={{ color: t.primary }}>دوامك مضبوط</EditableText>
                     <EditableText as="p" className="text-lg sm:text-xl font-bold" style={{ color: t.accent }}>بصمة ذكية للموظفين</EditableText>
-                </div>
+                </DraggableWrapper>
 
                 {/* Central Visual - Phone Check-in */}
-                <div className="w-full flex-1 flex items-center justify-center relative mt-6">
+                <DraggableWrapper id="visual-hrattendance" className="w-full flex-1 flex items-center justify-center relative mt-6">
                     
                     {/* Background Circle */}
                     <div className="absolute w-64 h-64 rounded-full blur-2xl" style={{ backgroundColor: t.accentLight + '33' }}></div>
@@ -60,10 +61,10 @@ export default function HRAttendancePost() {
                         SA
                     </div>
 
-                </div>
+                </DraggableWrapper>
 
                 {/* Feature Tags */}
-                <div className="w-full flex justify-center gap-4 mt-4">
+                <DraggableWrapper id="footer-hrattendance" className="w-full flex justify-center gap-4 mt-4">
                     <div className="flex flex-col items-center gap-1" style={{ color: t.primary + 'b3' }}>
                         <Clock size={20} />
                         <EditableText className="text-[10px] font-bold">بدون تأخير</EditableText>
@@ -72,7 +73,7 @@ export default function HRAttendancePost() {
                         <CalendarDays size={20} />
                         <EditableText className="text-[10px] font-bold">جدول الشفتات</EditableText>
                     </div>
-                </div>
+                </DraggableWrapper>
 
             </div>
       </div>
