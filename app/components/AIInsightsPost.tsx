@@ -1,0 +1,89 @@
+import React from 'react';
+import EditableText from './EditableText';
+import { Brain, Sparkles, TrendingUp, Lightbulb, Zap } from 'lucide-react';
+
+export default function AIInsightsPost() {
+  return (
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto bg-[#1B4332] text-white font-sans">
+
+            {/* Background Glow */}
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#52B788]/20 rounded-full blur-[120px]"></div>
+            <div className="absolute bottom-0 right-0 w-[200px] h-[200px] bg-purple-500/10 rounded-full blur-[80px]"></div>
+
+            {/* Content Container */}
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-between p-8">
+
+                {/* Header */}
+                <div className="text-center mt-6">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                        <Sparkles size={20} className="text-[#FCD34D]" fill="#FCD34D" />
+                        <EditableText className="text-xs font-bold tracking-widest text-[#FCD34D] uppercase">Powered by AI</EditableText>
+                        <Sparkles size={20} className="text-[#FCD34D]" fill="#FCD34D" />
+                    </div>
+                    <h2 className="text-4xl sm:text-5xl font-black mb-2 leading-tight">
+                        <EditableText className="text-[#52B788]">قرارات</EditableText> أذكى
+                    </h2>
+                    <EditableText as="p" className="text-gray-400 text-lg sm:text-xl font-bold">الذكاء الاصطناعي يشتغل لك</EditableText>
+                </div>
+
+                {/* Central Visual - AI Suggestion Cards */}
+                <div className="w-full max-w-sm flex flex-col gap-3 mt-4 relative">
+
+                    {/* Brain Icon Floating */}
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-14 h-14 bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-full flex items-center justify-center shadow-lg shadow-[#52B788]/30 z-20 border-2 border-white/20">
+                        <Brain size={28} className="text-white" />
+                    </div>
+
+                    {/* Suggestion 1 */}
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 flex items-start gap-3 mt-4">
+                        <div className="w-8 h-8 bg-[#52B788]/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            <TrendingUp size={16} className="text-[#52B788]" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <EditableText className="text-sm font-black text-white">مبيعات البرجر ترتفع الخميس</EditableText>
+                            <EditableText className="text-xs text-gray-400 font-bold">ننصح بزيادة المخزون 20% يوم الأربعاء</EditableText>
+                        </div>
+                        <div className="bg-[#52B788]/20 px-2 py-0.5 rounded text-[10px] font-bold text-[#52B788] shrink-0">
+                            اقتراح
+                        </div>
+                    </div>
+
+                    {/* Suggestion 2 - Highlighted */}
+                    <div className="bg-white shadow-2xl rounded-xl p-5 flex items-start gap-3 transform scale-105 border-r-4 border-[#FCD34D]">
+                        <div className="w-8 h-8 bg-[#FCD34D]/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            <Lightbulb size={16} className="text-[#FCD34D]" fill="#FCD34D" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <EditableText className="text-sm font-black text-[#1B4332]">وفّر 15% من تكلفة المواد</EditableText>
+                            <EditableText className="text-xs text-gray-500 font-bold">3 أصناف ممكن تشتريها من مورد أرخص</EditableText>
+                        </div>
+                        <div className="bg-[#FCD34D]/20 px-2 py-0.5 rounded text-[10px] font-bold text-[#92400E] shrink-0">
+                            توفير
+                        </div>
+                    </div>
+
+                    {/* Suggestion 3 */}
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 flex items-start gap-3">
+                        <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            <Zap size={16} className="text-purple-400" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <EditableText className="text-sm font-black text-white">ساعات الذروة: 1-3 مساءً</EditableText>
+                            <EditableText className="text-xs text-gray-400 font-bold">أضف موظف إضافي لتسريع الخدمة</EditableText>
+                        </div>
+                        <div className="bg-purple-500/20 px-2 py-0.5 rounded text-[10px] font-bold text-purple-300 shrink-0">
+                            تنبيه
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Footer */}
+                <div className="text-center mt-4">
+                    <EditableText as="p" className="text-xs font-bold tracking-widest text-[#52B788]">SYLO AI INSIGHTS</EditableText>
+                </div>
+
+            </div>
+      </div>
+  );
+}
