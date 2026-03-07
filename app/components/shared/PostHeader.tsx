@@ -2,6 +2,7 @@
 
 import React from "react";
 import DraggableWrapper from "../DraggableWrapper";
+import EditableText from "../EditableText";
 import { useTheme } from "../ThemeContext";
 import { Command } from "lucide-react";
 
@@ -49,19 +50,21 @@ export default function PostHeader({
           />
         </div>
         <div className="flex flex-col leading-none">
-          <span
+          <EditableText
+            as="span"
             className="font-black text-xl tracking-tight"
             style={{ color: isDark ? t.primaryLight : t.primary }}
           >
             {title}
-          </span>
+          </EditableText>
           {subtitle && (
-            <span
+            <EditableText
+              as="span"
               className="text-[9px] font-bold uppercase tracking-widest mt-1"
               style={{ color: isDark ? t.accentLight : t.accent }}
             >
               {subtitle}
-            </span>
+            </EditableText>
           )}
         </div>
       </DraggableWrapper>

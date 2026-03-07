@@ -45,12 +45,13 @@ export default function PostFooter({
       dir="rtl"
     >
       <DraggableWrapper id={`footer-text-${id}`} className="flex flex-col gap-1">
-        <span
+        <EditableText
+          as="span"
           className="text-[9px] font-black uppercase tracking-[0.3em]"
           style={{ color: isDark ? t.accentLight : t.accent }}
         >
           {label}
-        </span>
+        </EditableText>
         <EditableText
           className="text-sm font-bold"
           style={{ color: isDark ? t.primaryLight : t.primary }}
