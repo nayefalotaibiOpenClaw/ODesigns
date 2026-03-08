@@ -351,6 +351,33 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Edit Colors */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Edit Colors</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { key: 'primary', label: 'Primary' },
+                      { key: 'primaryLight', label: 'Light BG' },
+                      { key: 'accent', label: 'Accent' },
+                      { key: 'accentLight', label: 'Accent Light' },
+                      { key: 'accentLime', label: 'Highlight' },
+                      { key: 'accentGold', label: 'Gold' },
+                      { key: 'border', label: 'Border' },
+                      { key: 'primaryDark', label: 'Dark' },
+                    ] as { key: keyof Theme; label: string }[]).map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-gray-100 cursor-pointer hover:border-gray-300 transition-colors">
+                        <input
+                          type="color"
+                          value={currentTheme[key]}
+                          onChange={(e) => setTheme({ ...currentTheme, [key]: e.target.value })}
+                          className="w-6 h-6 rounded border-0 cursor-pointer bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border-0"
+                        />
+                        <span className="text-[10px] font-semibold text-gray-500">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Font Selector */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Font</label>
