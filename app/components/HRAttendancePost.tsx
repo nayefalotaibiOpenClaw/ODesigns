@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function HRAttendancePost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
             {/* Background Grid */}
             <div className="absolute inset-0 opacity-5 pointer-events-none"
                  style={{backgroundImage: `linear-gradient(${t.primary} 0.5px, transparent 0.5px), linear-gradient(90deg, ${t.primary} 0.5px, transparent 0.5px)`, backgroundSize: '20px 20px'}}>

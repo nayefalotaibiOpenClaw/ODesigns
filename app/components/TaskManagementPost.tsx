@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function TaskManagementPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
             {/* Background Pattern */}
              <div className="absolute inset-0 opacity-10"
                   style={{backgroundImage: `radial-gradient(${t.accentLight} 1px, transparent 1px)`, backgroundSize: '20px 20px'}}>

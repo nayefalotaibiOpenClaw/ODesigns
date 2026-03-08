@@ -13,7 +13,7 @@ export default function DualScreenPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans"
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Dot pattern */}
       <div className="absolute inset-0 opacity-[0.04]"
@@ -45,12 +45,12 @@ export default function DualScreenPost() {
           <div className="absolute bottom-12 w-72 h-5 bg-black/15 blur-xl rounded-full" />
 
           {/* Desktop Mockup (Back) */}
-          <DraggableWrapper id="mockup-dual-desktop" className={`relative z-10 transition-all duration-500 ${isTall ? 'w-[420px] h-[280px]' : 'w-[320px] h-[220px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-2'}`}>
+          <DraggableWrapper id="mockup-dual-desktop" variant="mockup" className={`relative z-10 transition-all duration-500 ${isTall ? 'w-[420px] h-[280px]' : 'w-[320px] h-[220px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-2'}`}>
             <DesktopMockup src="/1.jpg" alt="Admin Dashboard" />
           </DraggableWrapper>
 
           {/* iPad Mockup (Front) */}
-          <DraggableWrapper id="mockup-dual-ipad" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[360px] h-[260px]' : 'w-[280px] h-[200px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-3'} -mt-20 transform translate-x-12 translate-y-4`}>
+          <DraggableWrapper id="mockup-dual-ipad" variant="mockup" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[360px] h-[260px]' : 'w-[280px] h-[200px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-3'} -mt-20 transform translate-x-12 translate-y-4`}>
             <IPadMockup src="/pos-screen.jpg" alt="POS Tablet" />
           </DraggableWrapper>
         </div>

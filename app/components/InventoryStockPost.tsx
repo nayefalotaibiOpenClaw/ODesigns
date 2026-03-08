@@ -13,7 +13,7 @@ export default function InventoryStockPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}>
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}>
       {/* Background Texture */}
       <div className="absolute inset-0" style={{ background: `linear-gradient(to top right, ${t.primary}, ${t.primaryDark})` }}></div>
       <div className="absolute inset-0 opacity-[0.05]"
@@ -47,7 +47,7 @@ export default function InventoryStockPost() {
 
            <div className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[280px] h-[540px]' : 'w-[230px] h-[330px]'} transform translate-y-4`}>
 
-              <DraggableWrapper id="mockup-inv" className="absolute inset-0 z-20">
+              <DraggableWrapper id="mockup-inv" variant="mockup" className="absolute inset-0 z-20">
                  <IPhoneMockup src="/3.jpg" alt="Inventory" notch="notch" />
               </DraggableWrapper>
 

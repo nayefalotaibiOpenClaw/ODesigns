@@ -12,7 +12,7 @@ export default function MobileDashboardPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}>
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}>
       {/* Background with Theme Gradient */}
       <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${t.primary}, ${t.primaryDark})` }}></div>
 
@@ -39,7 +39,7 @@ export default function MobileDashboardPost() {
            {/* Ground Shadow */}
            <div className="absolute bottom-4 w-48 h-4 bg-black/40 blur-xl rounded-full"></div>
 
-           <DraggableWrapper id="mockup-mobile" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}`}>
+           <DraggableWrapper id="mockup-mobile" variant="mockup" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}`}>
               <IPhoneMockup src="/1.jpg" alt="Dashboard" />
            </DraggableWrapper>
 

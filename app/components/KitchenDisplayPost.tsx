@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function KitchenDisplayPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
             {/* Background Decor */}
              <div className="absolute top-0 right-0 w-64 h-64 rounded-bl-full" style={{ backgroundColor: t.accent + '1a' }}></div>
              <div className="absolute bottom-0 left-0 w-48 h-48 rounded-tr-full" style={{ backgroundColor: t.accentLight + '1a' }}></div>

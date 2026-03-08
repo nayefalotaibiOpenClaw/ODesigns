@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function AnalyticsPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
             {/* Background Grid */}
              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${t.primary}, ${t.primaryDark})` }}></div>
              <div className="absolute inset-0 opacity-10"

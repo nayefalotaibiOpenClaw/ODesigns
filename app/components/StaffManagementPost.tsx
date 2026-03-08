@@ -13,7 +13,7 @@ export default function StaffManagementPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Background with Subtle Pattern */}
       <div className="absolute inset-0" style={{ backgroundColor: t.primaryLight }}></div>
       <div className="absolute inset-0 opacity-[0.03]"
@@ -46,7 +46,7 @@ export default function StaffManagementPost() {
            {/* Visual Section */}
            <div className="flex-1 flex items-center gap-6">
               {/* iPhone Mockup (Left) - Draggable */}
-              <DraggableWrapper id="mockup-staff" className={`relative shrink-0 z-20 transition-all duration-500 ${isTall ? 'w-[280px] h-[540px]' : 'w-[210px] h-[320px]'} ${isEditMode ? '' : 'transform -rotate-2'}`}>
+              <DraggableWrapper id="mockup-staff" variant="mockup" className={`relative shrink-0 z-20 transition-all duration-500 ${isTall ? 'w-[280px] h-[540px]' : 'w-[210px] h-[320px]'} ${isEditMode ? '' : 'transform -rotate-2'}`}>
                  {/* Shadows */}
                  <div className="absolute -bottom-2 w-full h-4 bg-black/10 blur-xl rounded-full"></div>
                  <IPhoneMockup src="/2.jpg" alt="Staff List" notch="notch" />

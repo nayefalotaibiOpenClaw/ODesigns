@@ -12,7 +12,7 @@ export default function MenuManagementPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans"
+    <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Background */}
       <div className="absolute inset-0 opacity-[0.03]"
@@ -38,7 +38,7 @@ export default function MenuManagementPost() {
 
         {/* iPad Mockup - Portrait */}
         <div className="flex-1 flex items-center justify-center relative mt-4">
-          <DraggableWrapper id="mockup-menu-mgmt" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[240px] h-[340px]' : 'w-[200px] h-[280px]'}`}>
+          <DraggableWrapper id="mockup-menu-mgmt" variant="mockup" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[240px] h-[340px]' : 'w-[200px] h-[280px]'}`}>
             <IPadMockup src="/pos-screen.jpg" orientation="portrait" />
           </DraggableWrapper>
 

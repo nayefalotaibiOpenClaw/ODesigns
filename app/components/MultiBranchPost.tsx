@@ -7,7 +7,7 @@ import { MapPin, Store, ArrowLeftRight, Eye } from 'lucide-react';
 export default function MultiBranchPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto bg-[#F9FAFB] font-sans" style={{ color: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto bg-[#F9FAFB] font-sans" style={{ color: t.primary }}>
 
             {/* Background Map Dots */}
             <div className="absolute inset-0 opacity-10 pointer-events-none"

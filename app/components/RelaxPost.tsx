@@ -11,7 +11,7 @@ export default function RelaxPost() {
   const t = useTheme();
   return (
       /* Post Container - Responsive Wrapper */
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto">
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto">
         <div 
             className="absolute inset-0 flex flex-col justify-between p-6 sm:p-12 font-sans"
             style={{ background: `linear-gradient(to bottom right, ${t.primaryLight}, #d4eadd)`, color: t.primary, fontFamily: t.font }}

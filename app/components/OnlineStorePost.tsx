@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function OnlineStorePost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
 
             {/* Background Blob */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full blur-[100px]" style={{ backgroundColor: t.accent + '4d' }}></div>

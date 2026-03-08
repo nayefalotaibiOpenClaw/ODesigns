@@ -7,7 +7,7 @@ import { Brain, Sparkles, TrendingUp, Lightbulb, Zap } from 'lucide-react';
 export default function AIInsightsPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto text-white font-sans" style={{ backgroundColor: t.primary }}>
 
             {/* Background Glow */}
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full blur-[120px]" style={{ backgroundColor: t.accentLight + '33' }}></div>

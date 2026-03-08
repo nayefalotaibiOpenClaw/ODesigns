@@ -13,7 +13,7 @@ export default function SmartWorkflowsPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans"
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-[0.03]"
@@ -38,7 +38,7 @@ export default function SmartWorkflowsPost() {
 
         {/* Visual area */}
         <div className="flex-1 flex items-center justify-center relative mt-4">
-          <DraggableWrapper id="mockup-workflows" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[440px] h-[330px]' : 'w-[340px] h-[240px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-2'}`}>
+          <DraggableWrapper id="mockup-workflows" variant="mockup" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[440px] h-[330px]' : 'w-[340px] h-[240px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-2'}`}>
             <IPadMockup src="/pos-screen.jpg" />
           </DraggableWrapper>
           

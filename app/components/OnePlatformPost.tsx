@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function OnePlatformPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
         
             {/* Background Grid */}
             <div className="absolute inset-0 opacity-10 pointer-events-none" 

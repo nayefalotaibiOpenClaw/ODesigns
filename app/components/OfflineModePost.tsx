@@ -7,7 +7,7 @@ import { useTheme } from './ThemeContext';
 export default function OfflineModePost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto">
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto">
         <div
             className="absolute inset-0 flex flex-col items-center justify-between p-8 font-sans"
             style={{ backgroundColor: t.primaryLight, color: t.primary, fontFamily: t.font }}

@@ -53,26 +53,20 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
     }
   };
 
-  const size = SIZES[aspectRatio] || SIZES["1:1"];
-  const ar = ASPECT_RATIOS[aspectRatio] || ASPECT_RATIOS["1:1"];
-
   const handleDownloadVideo = async () => {
     if (!ref.current) return;
     setRecording(true);
     setRecordProgress(0);
 
-    // Give browser a moment to render the recording UI
-    await new Promise(r => setTimeout(r, 100));
-
     try {
       const { Muxer, ArrayBufferTarget } = await import("mp4-muxer");
 
-      const fps = 30;
+      const fps = 15;
       const duration = 4;
       const totalFrames = fps * duration;
-      const pxRatio = 1.5;
-      const w = size.width * pxRatio;
-      const h = size.height * pxRatio;
+      const pixelRatio = 2;
+      const w = size.width * pixelRatio;
+      const h = size.height * pixelRatio;
 
       const muxer = new Muxer({
         target: new ArrayBufferTarget(),
@@ -93,23 +87,14 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
         codec: "avc1.640028",
         width: w,
         height: h,
-        bitrate: 5_000_000,
+        bitrate: 8_000_000,
         framerate: fps,
       });
 
-      // Force a redraw/reset of animations if possible by toggling a class
-      ref.current.classList.add('recording-active');
-
       for (let i = 0; i < totalFrames; i++) {
-        // Wait for exactly one frame's worth of time to let the browser's 
-        // internal clock advance the CSS animations naturally.
-        await new Promise(r => setTimeout(r, 1000 / fps));
-
         const frameCanvas = await toCanvas(ref.current, {
-          pixelRatio: pxRatio,
+          pixelRatio,
           cacheBust: true,
-          // Optimization: skip features that slow down per-frame capture
-          skipFonts: true, 
         });
 
         const frame = new VideoFrame(frameCanvas, {
@@ -117,13 +102,11 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
           duration: 1_000_000 / fps,
         });
 
-        encoder.encode(frame, { keyFrame: i % fps === 0 });
+        encoder.encode(frame, { keyFrame: i % (fps * 2) === 0 });
         frame.close();
 
         setRecordProgress(Math.round(((i + 1) / totalFrames) * 100));
       }
-
-      ref.current.classList.remove('recording-active');
 
       await encoder.flush();
       encoder.close();
@@ -139,12 +122,14 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Failed to export video:", err);
-      if (ref.current) ref.current.classList.remove('recording-active');
     } finally {
       setRecording(false);
       setRecordProgress(0);
     }
   };
+
+  const size = SIZES[aspectRatio] || SIZES["1:1"];
+  const ar = ASPECT_RATIOS[aspectRatio] || ASPECT_RATIOS["1:1"];
 
   useEffect(() => {
     const el = containerRef.current;
@@ -166,7 +151,7 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
       >
         <div
           ref={ref}
-          className="overflow-hidden rounded-xl post-wrapper"
+          className="overflow-hidden post-wrapper"
           style={{ width: size.width, height: size.height }}
         >
           {children}
@@ -190,7 +175,7 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
           className="bg-white/90 backdrop-blur-sm text-gray-700 p-2.5 rounded-xl shadow-lg border border-gray-200 hover:bg-white hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
           title="Download as MP4 Video"
         >
-          {recording ? <Loader2 size={18} className="animate-spin" /> : <Video size={18} />}
+          <Video size={18} />
         </button>
         <button
           onClick={handleDownload}

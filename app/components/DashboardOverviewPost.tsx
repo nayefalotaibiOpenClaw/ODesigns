@@ -12,7 +12,7 @@ export default function DashboardOverviewPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans"
+    <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primary, fontFamily: t.font }}>
       {/* Background */}
       <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${t.primaryDark}, ${t.primary})` }} />
@@ -39,7 +39,7 @@ export default function DashboardOverviewPost() {
 
         {/* Desktop Mockup */}
         <div className="flex-1 flex items-center justify-center relative mt-4">
-          <DraggableWrapper id="mockup-dashboard" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-full h-[320px]' : 'w-[360px] h-[240px]'}`}>
+          <DraggableWrapper id="mockup-dashboard" variant="mockup" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-full h-[320px]' : 'w-[360px] h-[240px]'}`}>
             <DesktopMockup src="/1.jpg" />
           </DraggableWrapper>
 

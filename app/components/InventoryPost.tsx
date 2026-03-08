@@ -7,7 +7,7 @@ import { Package, AlertTriangle, ArrowDownUp, CheckCircle } from 'lucide-react';
 export default function InventoryPost() {
   const t = useTheme();
   return (
-      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
+      <div className="relative w-full max-w-[600px] aspect-square shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, color: t.primary }}>
             {/* Background Decor */}
             <div className="absolute top-0 left-0 w-72 h-72 rounded-br-full" style={{ backgroundColor: t.accentLight + '1a' }}></div>
             <div className="absolute bottom-0 right-0 w-56 h-56 rounded-tl-full" style={{ backgroundColor: t.accent + '1a' }}></div>

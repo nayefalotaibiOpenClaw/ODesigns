@@ -13,7 +13,7 @@ export default function IntegratedPaymentsPost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans"
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primaryDark, fontFamily: t.font }}>
       {/* Background with Theme Gradient */}
       <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${t.primaryDark}, ${t.primary})` }} />
@@ -38,7 +38,7 @@ export default function IntegratedPaymentsPost() {
 
         {/* Mockup area */}
         <div className="flex-1 flex items-center justify-center relative mt-4">
-          <DraggableWrapper id="mockup-pay" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-2'}`}>
+          <DraggableWrapper id="mockup-pay" variant="mockup" className={`relative z-20 transition-all duration-500 ${isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'} ${isEditMode ? '' : 'animate-zoom-in animate-stagger-2'}`}>
             <IPhoneMockup src="/1.jpg" />
           </DraggableWrapper>
           

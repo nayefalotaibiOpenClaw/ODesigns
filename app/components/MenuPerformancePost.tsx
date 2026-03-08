@@ -13,7 +13,7 @@ export default function MenuPerformancePost() {
   const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
-    <div className="relative w-full h-full shadow-2xl rounded-xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
       {/* Background Decor */}
       <div className="absolute inset-0" style={{ backgroundColor: t.primaryLight }}></div>
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] opacity-[0.1] blur-[100px] rounded-full translate-x-1/2 translate-y-1/2" style={{ backgroundColor: t.accentLime }}></div>
@@ -50,7 +50,7 @@ export default function MenuPerformancePost() {
 
            <div className={`relative z-20 group transform translate-y-24 transition-all duration-500 ${isTall ? 'w-[300px] h-[580px]' : 'w-[260px] h-[360px]'}`}>
 
-              <DraggableWrapper id="mockup-menu" className="relative h-full w-full z-20">
+              <DraggableWrapper id="mockup-menu" variant="mockup" className="relative h-full w-full z-20">
                  <IPhoneMockup src="/4.jpg" alt="Analytics" notch="notch" />
               </DraggableWrapper>
 
