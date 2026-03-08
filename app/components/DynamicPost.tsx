@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { transform } from "sucrase";
 import EditableText from "./EditableText";
 import DraggableWrapper from "./DraggableWrapper";
-import { useAspectRatio } from "./EditContext";
+import { useAspectRatio, useEditMode } from "./EditContext";
 import { useTheme } from "./ThemeContext";
 import { IPhoneMockup, PostHeader, PostFooter, FloatingCard, IPadMockup, DesktopMockup } from "./shared";
 import * as LucideIcons from "lucide-react";
@@ -24,7 +24,10 @@ export default function DynamicPost({ code }: DynamicPostProps) {
       // Remove import statements - we provide everything via scope
       const codeWithoutImports = code
         .replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '')
-        .replace(/^export\s+default\s+/m, 'const __Component__ = ');
+        .replace(/^export\s+default\s+function\s+(\w+)/m, 'const __Component__ = function $1')
+        .replace(/^export\s+default\s+/m, 'const __Component__ = ')
+        .replace(/^export\s+\{[^}]*\};?\s*$/gm, '')
+        .replace(/^export\s+function\s+(\w+)/m, 'const __Component__ = function $1');
 
       // Transpile JSX to JS
       const { code: jsCode } = transform(codeWithoutImports, {
@@ -41,6 +44,7 @@ export default function DynamicPost({ code }: DynamicPostProps) {
         "EditableText",
         "DraggableWrapper",
         "useAspectRatio",
+        "useEditMode",
         "useTheme",
         "IPhoneMockup",
         "PostHeader",
@@ -61,6 +65,7 @@ export default function DynamicPost({ code }: DynamicPostProps) {
         EditableText,
         DraggableWrapper,
         useAspectRatio,
+        useEditMode,
         useTheme,
         IPhoneMockup,
         PostHeader,

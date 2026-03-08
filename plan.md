@@ -1,10 +1,11 @@
 # Sylo Social Posts — Convex Database & Auth Plan
 
-## Auth: Clerk + Convex
+## Auth: Convex Auth (built-in)
 
-- Clerk handles authentication (Google, email sign-in)
-- Convex `users` table synced via Clerk webhook
-- All queries/mutations check auth via `ctx.auth.getUserIdentity()`
+- Convex Auth handles authentication natively (Google OAuth)
+- Users table managed by Convex Auth (auto-created on sign-in)
+- All queries/mutations check auth via `auth.getUserId(ctx)`
+- No external auth service needed (no Clerk)
 
 ---
 
@@ -32,14 +33,17 @@ Post (source)
 
 ### `users`
 
-| Field     | Type   | Description              |
-|-----------|--------|--------------------------|
-| clerkId   | string | Clerk user ID (unique)   |
-| name      | string | Display name             |
-| email     | string | Email address            |
-| avatarUrl | string | Profile image URL (optional) |
-| plan      | string | `"free"` or `"pro"`      |
-| createdAt | number | Timestamp                |
+Managed by Convex Auth. Custom fields added on top.
+
+| Field                 | Type    | Description                          |
+|-----------------------|---------|--------------------------------------|
+| name                  | string? | Display name (from OAuth)            |
+| email                 | string? | Email address (from OAuth)           |
+| image                 | string? | Profile image URL (from OAuth)       |
+| emailVerificationTime | number? | When email was verified              |
+| isAnonymous           | boolean?| Anonymous user flag                  |
+| plan                  | string? | `"free"` or `"pro"` (custom)         |
+| createdAt             | number? | Timestamp (custom)                   |
 
 ---
 
@@ -277,12 +281,13 @@ AI generation history. Track prompts, configs, and results.
 
 ## Implementation Steps
 
-### Phase 1: Auth & Core Schema
-1. Install & configure Clerk (`@clerk/nextjs`)
-2. Set up Clerk + Convex integration (JWT template, webhook)
-3. Create Convex schema (`convex/schema.ts`) with all tables above
-4. Create `users` sync mutation (triggered by Clerk webhook)
-5. Wrap app with `ClerkProvider` + `ConvexProviderWithClerk`
+### Phase 1: Auth & Core Schema ✅
+1. ~~Install & configure Convex Auth (`@convex-dev/auth`)~~ ✅
+2. ~~Set up Google OAuth provider in `convex/auth.ts`~~ ✅
+3. ~~Create Convex schema (`convex/schema.ts`) with all tables~~ ✅
+4. ~~Add `ConvexAuthNextjsServerProvider` + middleware~~ ✅
+5. ~~Wire up login page with Google sign-in~~ ✅
+6. Set Google OAuth credentials (AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET) ⬅️ pending
 
 ### Phase 2: Workspaces & Branding
 6. CRUD mutations for workspaces

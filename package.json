@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@auth/core": "^0.37.4",
+    "@convex-dev/auth": "^0.0.91",
     "@google/generative-ai": "^0.24.1",
     "convex": "^1.32.0",
     "framer-motion": "^12.35.1",

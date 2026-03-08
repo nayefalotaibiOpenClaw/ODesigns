@@ -1,89 +1,18 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { LayoutGrid, List, Sparkles, Palette, ArrowUpDown, Pencil, Settings, Upload, Image as ImageIcon, X, Check, MousePointer2, Download, Loader2, Code, Eye } from "lucide-react";
+import { LayoutGrid, List, Sparkles, Palette, ArrowUpDown, Pencil, Settings, Upload, Image as ImageIcon, X, Check, MousePointer2, Download, Loader2, Code, Eye, ArrowLeft, FolderOpen, Globe, RefreshCw, Trash2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext } from "../components/EditContext";
 import { useTheme, useSetTheme, Theme, defaultTheme } from "../components/ThemeContext";
 import DynamicPost from "../components/DynamicPost";
-import Link from "next/link";
-import SummerOfferPost from "../components/SummerOffer";
-import RelaxPost from "../components/RelaxPost";
-import OfflineModePost from "../components/OfflineModePost";
-import OnePlatformPost from "../components/OnePlatformPost";
-import KitchenDisplayPost from "../components/KitchenDisplayPost";
-import AnalyticsPost from "../components/AnalyticsPost";
-import OnlineStorePost from "../components/OnlineStorePost";
-import DeliveryIntegrationPost from "../components/DeliveryIntegrationPost";
-import HRAttendancePost from "../components/HRAttendancePost";
-import TaskManagementPost from "../components/TaskManagementPost";
-import LoyaltyPost from "../components/LoyaltyPost";
-import InventoryPost from "../components/InventoryPost";
-import AccountingPost from "../components/AccountingPost";
-import AIInsightsPost from "../components/AIInsightsPost";
-import MultiBranchPost from "../components/MultiBranchPost";
-import MobileDashboardPost from "../components/MobileDashboardPost";
-import StaffManagementPost from "../components/StaffManagementPost";
-import InventoryStockPost from "../components/InventoryStockPost";
-import MenuPerformancePost from "../components/MenuPerformancePost";
-import WasteReductionPost from "../components/WasteReductionPost";
-import QualityControlPost from "../components/QualityControlPost";
-import IntegratedPaymentsPost from "../components/IntegratedPaymentsPost";
-import RegionalScalabilityPost from "../components/RegionalScalabilityPost";
-import CustomerInsightsPost from "../components/CustomerInsightsPost";
-import TableOrderingPost from "../components/TableOrderingPost";
-import MenuManagementPost from "../components/MenuManagementPost";
-import DashboardOverviewPost from "../components/DashboardOverviewPost";
-import ReportsExportPost from "../components/ReportsExportPost";
-import ProfitCenterPost from "../components/ProfitCenterPost";
-import SmartWorkflowsPost from "../components/SmartWorkflowsPost";
-import OnlineOrderingPost from "../components/OnlineOrderingPost";
-import SmartMenuPost from "../components/SmartMenuPost";
-import DualScreenPost from "../components/DualScreenPost";
-import LiveTrackingPost from "../components/LiveTrackingPost";
 import PostWrapper from "../components/PostWrapper";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useConvexAuth, useQuery, useMutation, useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 
-const POST_REGISTRY: { id: string; filename: string; component: React.ComponentType }[] = [
-  { id: "smart-menu", filename: "smart-menu", component: SmartMenuPost },
-  { id: "dual-screen", filename: "dual-screen", component: DualScreenPost },
-  { id: "live-tracking", filename: "live-tracking", component: LiveTrackingPost },
-  { id: "profit-center", filename: "profit-center", component: ProfitCenterPost },
-  { id: "smart-workflows", filename: "smart-workflows", component: SmartWorkflowsPost },
-  { id: "online-ordering", filename: "online-ordering", component: OnlineOrderingPost },
-  { id: "table-ordering", filename: "table-ordering", component: TableOrderingPost },
-  { id: "menu-management", filename: "menu-management", component: MenuManagementPost },
-  { id: "dashboard-overview", filename: "dashboard-overview", component: DashboardOverviewPost },
-  { id: "reports-export", filename: "reports-export", component: ReportsExportPost },
-  { id: "customer-insights", filename: "customer-insights", component: CustomerInsightsPost },
-  { id: "waste-reduction", filename: "waste-reduction", component: WasteReductionPost },
-  { id: "quality-control", filename: "quality-control", component: QualityControlPost },
-  { id: "integrated-payments", filename: "integrated-payments", component: IntegratedPaymentsPost },
-  { id: "regional-scalability", filename: "regional-scalability", component: RegionalScalabilityPost },
-  { id: "mobile-dashboard", filename: "mobile-dashboard", component: MobileDashboardPost },
-  { id: "staff-management", filename: "staff-management", component: StaffManagementPost },
-  { id: "inventory-stock", filename: "inventory-stock", component: InventoryStockPost },
-  { id: "menu-performance", filename: "menu-performance", component: MenuPerformancePost },
-  { id: "inventory", filename: "inventory", component: InventoryPost },
-  { id: "accounting", filename: "accounting", component: AccountingPost },
-  { id: "ai-insights", filename: "ai-insights", component: AIInsightsPost },
-  { id: "multi-branch", filename: "multi-branch", component: MultiBranchPost },
-  { id: "delivery-integration", filename: "delivery-integration", component: DeliveryIntegrationPost },
-  { id: "hr-attendance", filename: "hr-attendance", component: HRAttendancePost },
-  { id: "task-management", filename: "task-management", component: TaskManagementPost },
-  { id: "loyalty", filename: "loyalty", component: LoyaltyPost },
-  { id: "kitchen-display", filename: "kitchen-display", component: KitchenDisplayPost },
-  { id: "analytics", filename: "analytics", component: AnalyticsPost },
-  { id: "online-store", filename: "online-store", component: OnlineStorePost },
-  { id: "offline-mode", filename: "offline-mode", component: OfflineModePost },
-  { id: "one-platform", filename: "one-platform", component: OnePlatformPost },
-  { id: "summer-offer", filename: "summer-offer", component: SummerOfferPost },
-  { id: "relax", filename: "relax", component: RelaxPost },
-];
-
-const STATIC_IMAGES = [
-  "/1.jpg", "/2.jpg", "/3.jpg", "/4.jpg",
-  "/pos-screen.jpg", "/sylo-logo.jpg", "/mockup.png",
-];
 
 const FONTS = [
   { name: "Cairo", value: "'Cairo', sans-serif" },
@@ -113,23 +42,84 @@ const PALETTES: { name: string; theme: Theme }[] = [
   { name: "Forest", theme: { ...defaultTheme, primary: "#14532D", primaryLight: "#F0FDF4", primaryDark: "#052E16", accent: "#16A34A", accentLight: "#4ADE80", accentLime: "#86EFAC", border: "#166534" } },
 ];
 
-type SidebarTab = 'settings' | 'theme' | 'uploads' | 'generate' | null;
+type SidebarTab = 'settings' | 'theme' | 'assets' | 'generate' | null;
+
+const ASSET_TYPES = [
+  { value: "screenshot", label: "Screenshot" },
+  { value: "product", label: "Product" },
+  { value: "background", label: "Background" },
+  { value: "logo", label: "Logo" },
+  { value: "icon", label: "Icon" },
+  { value: "iphone", label: "iPhone" },
+  { value: "ipad", label: "iPad" },
+  { value: "desktop", label: "Desktop" },
+  { value: "android_phone", label: "Android Phone" },
+  { value: "android_tablet", label: "Android Tablet" },
+  { value: "other", label: "Other" },
+] as const;
 
 const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number }>; label: string }[] = [
   { id: 'settings', icon: Settings, label: 'Settings' },
   { id: 'theme', icon: Palette, label: 'Theme' },
-  { id: 'uploads', icon: Upload, label: 'Uploads' },
+  { id: 'assets', icon: Upload, label: 'Assets' },
   { id: 'generate', icon: Sparkles, label: 'Generate' },
 ];
 
 export default function DesignPage() {
+  const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspace") as Id<"workspaces"> | null;
+  const collectionIdParam = searchParams.get("collection") as Id<"collections"> | null;
+
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const user = useQuery(api.users.currentUser);
+
+  // Fetch workspace data
+  const collections = useQuery(
+    api.collections.listByWorkspace,
+    workspaceId ? { workspaceId } : "skip"
+  );
+
+  // Use first collection if none specified
+  const activeCollectionId = collectionIdParam ?? collections?.[0]?._id ?? null;
+
+  const posts = useQuery(
+    api.posts.listByCollection,
+    activeCollectionId ? { collectionId: activeCollectionId } : "skip"
+  );
+
+  const updatePostCode = useMutation(api.posts.updateCode);
+  const reorderPosts = useMutation(api.posts.reorder);
+  const removePost = useMutation(api.posts.remove);
+  const createPost = useMutation(api.posts.create);
+  const createCollection = useMutation(api.collections.create);
+
+  // Workspace & branding data for generate context
+  const workspace = useQuery(
+    api.workspaces.get,
+    workspaceId ? { id: workspaceId } : "skip"
+  );
+  const branding = useQuery(
+    api.branding.getByWorkspace,
+    workspaceId ? { workspaceId } : "skip"
+  );
+  const updateWebsiteInfo = useMutation(api.workspaces.updateWebsiteInfo);
+
+  // Assets
+  const generateUploadUrl = useMutation(api.assets.generateUploadUrl);
+  const createAsset = useMutation(api.assets.create);
+  const removeAsset = useMutation(api.assets.remove);
+  const analyzeImage = useAction(api.assets.analyzeImage);
+  const assets = useQuery(
+    api.assets.listForWorkspace,
+    workspaceId && user ? { workspaceId, userId: user._id } : "skip"
+  );
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [editMode, setEditMode] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<AspectRatioType>('1:1');
   const [gridCols, setGridCols] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const handleSetSelectedId = useCallback((id: string | null) => setSelectedId(id), []);
-  const [postOrder, setPostOrder] = useState(() => POST_REGISTRY.map(p => p.id));
   const [reorderMode, setReorderMode] = useState(false);
   const dragItem = useRef<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -138,14 +128,30 @@ export default function DesignPage() {
   const [downloading, setDownloading] = useState(false);
   const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [activeTab, setActiveTab] = useState<SidebarTab>(null);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadingAsset, setUploadingAsset] = useState(false);
+  const [assetTypeSelect, setAssetTypeSelect] = useState<typeof ASSET_TYPES[number]["value"]>("screenshot");
+  const [assetScope, setAssetScope] = useState<"workspace" | "global">("workspace");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [showAssetUploadDialog, setShowAssetUploadDialog] = useState(false);
   const currentTheme = useTheme();
   const setTheme = useSetTheme();
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedPosts, setGeneratedPosts] = useState<{ id: string; code: string }[]>([]);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateCount, setGenerateCount] = useState(2);
   const [codeViewPosts, setCodeViewPosts] = useState<Set<string>>(new Set());
+  const [fetchingWebsite, setFetchingWebsite] = useState(false);
+  const [websiteScreenshot, setWebsiteScreenshot] = useState<string | null>(null);
+  const websiteScreenshotRef = useRef<HTMLInputElement>(null);
+
+  // Local order state for drag-and-drop (syncs with Convex)
+  const [localOrder, setLocalOrder] = useState<string[]>([]);
+  useEffect(() => {
+    if (posts) {
+      setLocalOrder(posts.map(p => p._id));
+    }
+  }, [posts]);
 
   const toggleCodeView = (id: string) => {
     setCodeViewPosts(prev => {
@@ -156,8 +162,57 @@ export default function DesignPage() {
     });
   };
 
-  const updateGeneratedCode = (id: string, newCode: string) => {
-    setGeneratedPosts(prev => prev.map(p => p.id === id ? { ...p, code: newCode } : p));
+  const handleRetryWebsiteFetch = async () => {
+    if (!workspaceId || !workspace?.website || fetchingWebsite) return;
+    setFetchingWebsite(true);
+    try {
+      const res = await fetch('/api/fetch-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: workspace.website, ...(websiteScreenshot ? { screenshotBase64: websiteScreenshot } : {}) }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      await updateWebsiteInfo({
+        id: workspaceId,
+        websiteInfo: {
+          companyName: data.companyName || "",
+          description: data.description || "",
+          industry: data.industry || "",
+          features: data.features || [],
+          targetAudience: data.targetAudience || undefined,
+          tone: data.tone || undefined,
+          contact: data.contact ? {
+            phone: data.contact.phone || undefined,
+            email: data.contact.email || undefined,
+            address: data.contact.address || undefined,
+            socialMedia: data.contact.socialMedia || undefined,
+          } : undefined,
+          ogImage: data.ogImage || undefined,
+          rawContent: data.rawContent || "",
+          fetchedAt: Date.now(),
+        },
+      });
+    } catch {
+      // will stay as pending, user can retry again
+    } finally {
+      setFetchingWebsite(false);
+    }
+  };
+
+  const handleWebsiteScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip the data URL prefix to get raw base64
+      const base64 = result.split(",")[1] || result;
+      setWebsiteScreenshot(base64);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be selected again
+    e.target.value = "";
   };
 
   const handleGenerate = async () => {
@@ -165,16 +220,86 @@ export default function DesignPage() {
     setGenerating(true);
     setGenerateError(null);
     try {
+      // Build context from workspace, branding, and assets
+      const context = {
+        brandName: branding?.brandName || workspace?.name,
+        tagline: branding?.tagline,
+        website: workspace?.website,
+        industry: workspace?.industry,
+        language: workspace?.defaultLanguage || 'ar' as const,
+        logoUrl: assets?.find(a => a.type === 'logo')?.url || undefined,
+        websiteInfo: workspace?.websiteInfo ? (() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const wi = workspace.websiteInfo as any;
+          return {
+            companyName: wi.companyName || wi.title || "",
+            description: wi.description || "",
+            industry: wi.industry || "",
+            features: wi.features || [],
+            targetAudience: wi.targetAudience,
+            tone: wi.tone,
+            contact: wi.contact,
+            content: wi.rawContent || wi.content || "",
+          };
+        })() : undefined,
+        assets: (assets || [])
+          .filter(a => a.url)
+          .map(a => ({
+            id: a._id,
+            url: a.url || '',
+            type: a.type,
+            label: a.label || a.fileName,
+            description: a.description,
+            aiAnalysis: a.aiAnalysis,
+          })),
+      };
+
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: generatePrompt }),
+        body: JSON.stringify({ prompt: generatePrompt, context, count: generateCount }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Generation failed');
-      const newId = `generated-${Date.now()}`;
-      setGeneratedPosts(prev => [{ id: newId, code: data.code }, ...prev]);
-      setPostOrder(prev => [newId, ...prev]);
+
+      const codes: string[] = data.codes || [data.code];
+
+      // Save generated posts to Convex
+      if (workspaceId && user) {
+        let collectionId = activeCollectionId;
+
+        // Auto-create a collection if none exists
+        if (!collectionId) {
+          collectionId = await createCollection({
+            workspaceId,
+            userId: user._id,
+            name: "Generated Posts",
+            mode: "social_grid",
+            language: workspace?.defaultLanguage || "ar",
+            aspectRatio: "1:1",
+          });
+        }
+
+        for (let i = 0; i < codes.length; i++) {
+          await createPost({
+            collectionId,
+            workspaceId,
+            userId: user._id,
+            title: `${generatePrompt.slice(0, 80)} (${i + 1}/${codes.length})`,
+            componentCode: codes[i],
+            language: workspace?.defaultLanguage || "ar",
+            device: "none",
+            order: (posts ? posts.length : 0) + i,
+          });
+        }
+      } else {
+        // Fallback to local state if not authenticated
+        for (const code of codes) {
+          const newId = `generated-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+          setGeneratedPosts(prev => [{ id: newId, code }, ...prev]);
+          setLocalOrder(prev => [newId, ...prev]);
+        }
+      }
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : 'Generation failed');
     } finally {
@@ -184,7 +309,7 @@ export default function DesignPage() {
 
   const handleDragEnter = useCallback((targetId: string) => {
     if (!dragItem.current || dragItem.current === targetId) return;
-    setPostOrder(prev => {
+    setLocalOrder(prev => {
       const newOrder = [...prev];
       const fromIdx = newOrder.indexOf(dragItem.current!);
       const toIdx = newOrder.indexOf(targetId);
@@ -194,18 +319,69 @@ export default function DesignPage() {
     });
   }, []);
 
+  const handleDragEnd = useCallback(async () => {
+    dragItem.current = null;
+    setDraggingId(null);
+    // Persist new order to Convex
+    if (posts) {
+      const reorderData = localOrder
+        .map((id, index) => ({ id: id as Id<"posts">, order: index }))
+        .filter(item => posts.some(p => p._id === item.id));
+      if (reorderData.length > 0) {
+        await reorderPosts({ posts: reorderData });
+      }
+    }
+  }, [localOrder, posts, reorderPosts]);
+
   const handleTabClick = (tab: SidebarTab) => {
     setActiveTab(prev => prev === tab ? null : tab);
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const url = URL.createObjectURL(file);
-      setUploadedImages(prev => [url, ...prev]);
-    });
+    if (!files || files.length === 0) return;
+    setPendingFiles(Array.from(files));
+    setShowAssetUploadDialog(true);
     e.target.value = '';
+  };
+
+  const handleAssetUpload = async () => {
+    if (!workspaceId || !user || pendingFiles.length === 0) return;
+    setUploadingAsset(true);
+    try {
+      for (const file of pendingFiles) {
+        const uploadUrl = await generateUploadUrl();
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        const { storageId } = await result.json();
+
+        const assetId = await createAsset({
+          workspaceId: assetScope === "workspace" ? workspaceId : undefined,
+          userId: user._id,
+          scope: assetScope,
+          fileId: storageId,
+          fileName: file.name,
+          type: assetTypeSelect,
+        });
+
+        // Trigger AI vision analysis in the background
+        analyzeImage({
+          assetId,
+          storageId,
+          fileName: file.name,
+          assetType: assetTypeSelect,
+        }).catch((err) => console.error("Background analysis failed:", err));
+      }
+      setPendingFiles([]);
+      setShowAssetUploadDialog(false);
+    } catch (err) {
+      console.error("Failed to upload asset:", err);
+    } finally {
+      setUploadingAsset(false);
+    }
   };
 
   const togglePostSelection = useCallback((id: string) => {
@@ -233,8 +409,8 @@ export default function DesignPage() {
           skipFonts: true,
         });
         const base64 = dataUrl.split(",")[1];
-        const post = POST_REGISTRY.find(p => p.id === id);
-        zip.file(`${i + 1}-${post?.filename || id}.png`, base64, { base64: true });
+        const post = posts?.find(p => p._id === id);
+        zip.file(`${i + 1}-${post?.title || id}.png`, base64, { base64: true });
       }
 
       const blob = await zip.generateAsync({ type: "blob" });
@@ -249,15 +425,62 @@ export default function DesignPage() {
     } finally {
       setDownloading(false);
     }
-  }, [selectedPosts]);
+  }, [selectedPosts, posts]);
 
   const panelOpen = activeTab !== null;
+
+  // Redirect unauthenticated users
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      window.location.href = "/login";
+    }
+  }, [authLoading, isAuthenticated]);
+
+  // Loading state (user === undefined means query still loading, null means not found)
+  if (authLoading || user === undefined) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+      </div>
+    );
+  }
+
+  // Not authenticated or no user record
+  if (!user) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+      </div>
+    );
+  }
+
+  // No workspace selected
+  if (!workspaceId) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <FolderOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-gray-700 mb-2">No workspace selected</h2>
+          <p className="text-sm text-gray-400 mb-6">Select a workspace to view your posts</p>
+          <Link
+            href="/workspaces"
+            className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:scale-105 transition-all active:scale-95"
+          >
+            Go to Workspaces
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Build combined list: Convex posts + generated (unsaved) posts
+  const allPostIds = localOrder.length > 0 ? localOrder : (posts?.map(p => p._id) ?? []);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Icon Rail */}
       <div className="w-[72px] bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-1 shrink-0">
-        <Link href="/" className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center mb-4">
+        <Link href={`/workspaces`} className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center mb-4" title="Back to Workspaces">
           <span className="text-white font-black text-sm">S</span>
         </Link>
         {SIDEBAR_ITEMS.map(({ id, icon: Icon, label }) => (
@@ -295,7 +518,6 @@ export default function DesignPage() {
             {/* Settings Panel */}
             {activeTab === 'settings' && (
               <div className="space-y-6">
-                {/* Edit & Reorder */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Mode</label>
                   <div className="flex gap-2">
@@ -335,7 +557,6 @@ export default function DesignPage() {
                   </button>
                 </div>
 
-                {/* Aspect Ratio */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Aspect Ratio</label>
                   <div className="flex gap-1">
@@ -355,11 +576,10 @@ export default function DesignPage() {
                   </div>
                 </div>
 
-                {/* Grid Columns */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Grid Columns</label>
                   <div className="flex gap-1">
-                    {[2, 3, 4].map((cols) => (
+                    {[1, 2, 3, 4].map((cols) => (
                       <button
                         key={cols}
                         onClick={() => { setGridCols(cols); setViewMode('grid'); }}
@@ -375,7 +595,6 @@ export default function DesignPage() {
                   </div>
                 </div>
 
-                {/* View Mode */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">View</label>
                   <div className="flex gap-1">
@@ -404,9 +623,31 @@ export default function DesignPage() {
                   </div>
                 </div>
 
-                {/* Post Count */}
+                {/* Collection Selector */}
+                {collections && collections.length > 1 && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Collection</label>
+                    <div className="space-y-1">
+                      {collections.map((col) => (
+                        <Link
+                          key={col._id}
+                          href={`/design?workspace=${workspaceId}&collection=${col._id}`}
+                          className={`w-full flex items-center justify-between p-2.5 rounded-lg border transition-all text-left text-xs font-bold ${
+                            col._id === activeCollectionId
+                              ? 'border-gray-900 bg-white shadow-sm text-gray-900'
+                              : 'border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-500'
+                          }`}
+                        >
+                          {col.name}
+                          {col._id === activeCollectionId && <Check size={14} />}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-3 border-t border-gray-100">
-                  <p className="text-xs text-gray-400">{postOrder.length} posts</p>
+                  <p className="text-xs text-gray-400">{posts?.length ?? 0} posts</p>
                 </div>
               </div>
             )}
@@ -414,7 +655,6 @@ export default function DesignPage() {
             {/* Theme Panel */}
             {activeTab === 'theme' && (
               <div className="space-y-5">
-                {/* Live Preview */}
                 <div className="rounded-lg p-4 text-center" style={{ backgroundColor: currentTheme.primaryLight, fontFamily: currentTheme.font }}>
                   <p className="text-lg font-black" style={{ color: currentTheme.primary }}>معاينة مباشرة</p>
                   <p className="text-xs font-bold" style={{ color: currentTheme.accent }}>هذا مثال على شكل النصوص</p>
@@ -424,11 +664,10 @@ export default function DesignPage() {
                   </div>
                 </div>
 
-                {/* Color Palettes */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Color Palette</label>
                   <div className="space-y-1.5">
-                    {PALETTES.map((palette, i) => {
+                    {PALETTES.map((palette) => {
                       const isSelected = palette.theme.primary === currentTheme.primary && palette.theme.primaryLight === currentTheme.primaryLight;
                       return (
                         <button
@@ -451,7 +690,6 @@ export default function DesignPage() {
                   </div>
                 </div>
 
-                {/* Edit Colors */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Edit Colors</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -478,7 +716,6 @@ export default function DesignPage() {
                   </div>
                 </div>
 
-                {/* Font Selector */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Font</label>
                   <div className="space-y-1.5">
@@ -502,62 +739,354 @@ export default function DesignPage() {
               </div>
             )}
 
-            {/* Uploads Panel */}
-            {activeTab === 'uploads' && (
+            {/* Assets Panel */}
+            {activeTab === 'assets' && (
               <div className="space-y-4">
                 <label className="block w-full cursor-pointer">
                   <div className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold bg-[#1B4332] text-white hover:bg-[#2D6A4F] transition-colors">
                     <Upload size={16} />
-                    Upload Files
+                    Upload Assets
                   </div>
-                  <input type="file" multiple accept="image/*" onChange={handleUpload} className="hidden" />
+                  <input type="file" multiple accept="image/*" onChange={handleFileSelect} className="hidden" />
                 </label>
 
-                {uploadedImages.length > 0 && (
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Your Uploads</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {uploadedImages.map((src, i) => (
-                        <div key={i} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                          <img src={src} alt="" className="w-full h-full object-cover" />
+                {/* Upload Dialog */}
+                {showAssetUploadDialog && pendingFiles.length > 0 && (
+                  <div className="p-3 rounded-lg border border-[#1B4332] bg-[#EAF4EE] space-y-3">
+                    <p className="text-xs font-bold text-gray-700">{pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} selected</p>
+
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {pendingFiles.map((file, i) => (
+                        <div key={i} className="aspect-square rounded-md overflow-hidden bg-white border border-gray-200">
+                          <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
                         </div>
                       ))}
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Asset Type</label>
+                      <select
+                        value={assetTypeSelect}
+                        onChange={(e) => setAssetTypeSelect(e.target.value as typeof assetTypeSelect)}
+                        className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:border-[#1B4332]"
+                      >
+                        {ASSET_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Scope</label>
+                      <div className="flex gap-1.5">
+                        {(["workspace", "global"] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setAssetScope(s)}
+                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                              assetScope === s
+                                ? 'bg-[#1B4332] text-white'
+                                : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            {s === "workspace" ? "This Project" : "All Projects"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setPendingFiles([]); setShowAssetUploadDialog(false); }}
+                        className="flex-1 py-2 rounded-lg text-xs font-bold text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAssetUpload}
+                        disabled={uploadingAsset}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold bg-[#1B4332] text-white hover:bg-[#2D6A4F] transition-colors disabled:opacity-50"
+                      >
+                        {uploadingAsset ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                        {uploadingAsset ? 'Uploading...' : 'Upload'}
+                      </button>
                     </div>
                   </div>
                 )}
 
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Project Images</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {STATIC_IMAGES.map((src) => (
-                      <div key={src} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                        <img src={src} alt="" className="w-full h-full object-cover" />
+                {/* Asset List grouped by type */}
+                {assets && assets.length > 0 ? (
+                  (() => {
+                    const grouped = assets.reduce((acc, asset) => {
+                      const type = asset.type;
+                      if (!acc[type]) acc[type] = [];
+                      acc[type].push(asset);
+                      return acc;
+                    }, {} as Record<string, typeof assets>);
+
+                    return Object.entries(grouped).map(([type, items]) => (
+                      <div key={type}>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                          {ASSET_TYPES.find(t => t.value === type)?.label || type} ({items.length})
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {items.map((asset) => (
+                            <div key={asset._id} className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200" title={asset.description || asset.fileName}>
+                              {asset.url ? (
+                                <img src={asset.url} alt={asset.fileName} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <ImageIcon size={20} className="text-gray-300" />
+                                </div>
+                              )}
+                              {/* Analysis status indicator */}
+                              {asset.analyzingStatus === "pending" && (
+                                <div className="absolute top-1 left-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                                  <Loader2 size={10} className="animate-spin text-yellow-800" />
+                                </div>
+                              )}
+                              {asset.analyzingStatus === "done" && (
+                                <div className="absolute top-1 left-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                  <Check size={10} className="text-white" />
+                                </div>
+                              )}
+                              {asset.analyzingStatus === "failed" && (
+                                <button
+                                  onClick={() => {
+                                    analyzeImage({
+                                      assetId: asset._id,
+                                      storageId: asset.fileId,
+                                      fileName: asset.fileName,
+                                      assetType: asset.type,
+                                    }).catch(console.error);
+                                  }}
+                                  className="absolute top-1 left-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600"
+                                  title="Analysis failed — click to retry"
+                                >
+                                  <RefreshCw size={10} className="text-white" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => removeAsset({ id: asset._id })}
+                                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X size={10} />
+                              </button>
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-[9px] text-white truncate font-medium">{asset.description || asset.fileName}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    ));
+                  })()
+                ) : assets && assets.length === 0 ? (
+                  <div className="text-center py-6">
+                    <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">No assets yet. Upload images for AI to use.</p>
                   </div>
-                </div>
+                ) : null}
+
               </div>
             )}
 
             {/* Generate Panel */}
             {activeTab === 'generate' && (
               <div className="space-y-4">
-                <p className="text-sm text-gray-500">Describe the post you want and AI will generate it live.</p>
+                {/* Workspace context summary */}
+                {(workspace || branding) && (
+                  <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Context</label>
+                    <div className="flex items-center gap-2">
+                      {assets?.find(a => a.type === 'logo')?.url && (
+                        <img src={assets.find(a => a.type === 'logo')!.url!} alt="" className="w-6 h-6 rounded object-contain" />
+                      )}
+                      <span className="text-sm font-bold text-gray-800">{branding?.brandName || workspace?.name}</span>
+                    </div>
+                    {branding?.tagline && (
+                      <p className="text-[11px] text-gray-500">{branding.tagline}</p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {workspace?.industry && (
+                        <span className="text-[10px] font-semibold text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">{workspace.industry}</span>
+                      )}
+                      {workspace?.defaultLanguage && (
+                        <span className="text-[10px] font-semibold text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">{workspace.defaultLanguage === 'ar' ? 'Arabic' : 'English'}</span>
+                      )}
+                      {assets && assets.filter(a => a.analyzingStatus === 'done').length > 0 && (
+                        <span className="text-[10px] font-semibold text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200">{assets.filter(a => a.analyzingStatus === 'done').length} assets</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hidden file input for website screenshot */}
+                <input
+                  ref={websiteScreenshotRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleWebsiteScreenshot}
+                  className="hidden"
+                />
+
+                {/* Website info (fetched at workspace creation) */}
+                {workspace?.websiteInfo && (
+                  <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 space-y-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <Globe size={12} className="text-blue-400 shrink-0" />
+                      <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Website Info</span>
+                      <div className="ml-auto flex items-center gap-1.5">
+                        <Check size={12} className="text-green-500 shrink-0" />
+                        <button
+                          onClick={() => websiteScreenshotRef.current?.click()}
+                          className="text-blue-400 hover:text-blue-600"
+                          title="Upload website screenshot for better AI analysis"
+                        >
+                          <ImageIcon size={12} />
+                        </button>
+                        <button
+                          onClick={handleRetryWebsiteFetch}
+                          disabled={fetchingWebsite}
+                          className="text-blue-400 hover:text-blue-600 disabled:opacity-50"
+                          title="Refresh website info"
+                        >
+                          {fetchingWebsite ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {websiteScreenshot && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded">
+                        <ImageIcon size={10} />
+                        <span>Screenshot attached — click Refresh to re-analyze</span>
+                        <button onClick={() => setWebsiteScreenshot(null)} className="ml-auto text-green-400 hover:text-red-500">
+                          <X size={10} />
+                        </button>
+                      </div>
+                    )}
+
+                    {workspace.websiteInfo.companyName && (
+                      <p className="text-xs font-bold text-blue-900">{workspace.websiteInfo.companyName}</p>
+                    )}
+                    {workspace.websiteInfo.industry && (
+                      <span className="inline-block text-[10px] font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">{workspace.websiteInfo.industry}</span>
+                    )}
+                    {workspace.websiteInfo.description && (
+                      <p className="text-[11px] text-blue-700 leading-relaxed">{workspace.websiteInfo.description}</p>
+                    )}
+
+                    {workspace.websiteInfo.features && workspace.websiteInfo.features.length > 0 && (
+                      <div>
+                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Features</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {workspace.websiteInfo.features.slice(0, 8).map((f, i) => (
+                            <span key={i} className="text-[10px] font-medium text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">{f}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {workspace.websiteInfo.targetAudience && (
+                      <div>
+                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Audience</span>
+                        <p className="text-[10px] text-blue-600 mt-0.5">{workspace.websiteInfo.targetAudience}</p>
+                      </div>
+                    )}
+
+                    {workspace.websiteInfo.tone && (
+                      <div>
+                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Tone</span>
+                        <p className="text-[10px] text-blue-600 mt-0.5">{workspace.websiteInfo.tone}</p>
+                      </div>
+                    )}
+
+                    {workspace.websiteInfo.contact && (
+                      <div>
+                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Contact</span>
+                        <div className="text-[10px] text-blue-600 mt-0.5 space-y-0.5">
+                          {workspace.websiteInfo.contact.phone && <p>{workspace.websiteInfo.contact.phone}</p>}
+                          {workspace.websiteInfo.contact.email && <p>{workspace.websiteInfo.contact.email}</p>}
+                          {workspace.websiteInfo.contact.address && <p>{workspace.websiteInfo.contact.address}</p>}
+                          {workspace.websiteInfo.contact.socialMedia && workspace.websiteInfo.contact.socialMedia.length > 0 && (
+                            <p>{workspace.websiteInfo.contact.socialMedia.join(' · ')}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {workspace?.website && !workspace?.websiteInfo && (
+                  <div className="rounded-lg bg-amber-50 border border-amber-100 p-2.5 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Globe size={12} className="text-amber-400 shrink-0" />
+                      <p className="text-[10px] text-amber-600 truncate flex-1">{workspace.website}</p>
+                      <button
+                        onClick={() => websiteScreenshotRef.current?.click()}
+                        className="text-amber-500 hover:text-amber-700 shrink-0"
+                        title="Upload website screenshot (optional)"
+                      >
+                        <ImageIcon size={12} />
+                      </button>
+                      <button
+                        onClick={handleRetryWebsiteFetch}
+                        disabled={fetchingWebsite}
+                        className="flex items-center gap-1 text-[10px] font-bold text-amber-600 hover:text-amber-800 disabled:opacity-50 shrink-0"
+                      >
+                        {fetchingWebsite ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={12} />
+                        )}
+                        {fetchingWebsite ? 'Fetching...' : 'Analyze'}
+                      </button>
+                    </div>
+                    {websiteScreenshot && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded">
+                        <ImageIcon size={10} />
+                        <span>Screenshot attached</span>
+                        <button onClick={() => setWebsiteScreenshot(null)} className="ml-auto text-green-400 hover:text-red-500">
+                          <X size={10} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <p className="text-sm text-gray-500">Describe the post you want and AI will generate it with your brand context.</p>
                 <textarea
                   value={generatePrompt}
                   onChange={(e) => setGeneratePrompt(e.target.value)}
                   placeholder="e.g. A post about our new delivery tracking feature with a phone mockup showing live order status"
-                  className="w-full h-28 px-3 py-2.5 rounded-lg border border-gray-200 text-sm resize-none focus:outline-none focus:border-[#1B4332] focus:ring-1 focus:ring-[#1B4332] placeholder:text-gray-500"
+                  className="w-full h-28 px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-900 resize-none focus:outline-none focus:border-[#1B4332] focus:ring-1 focus:ring-[#1B4332] placeholder:text-gray-400"
                 />
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Number of posts</label>
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setGenerateCount(n)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                          generateCount === n
+                            ? 'bg-[#1B4332] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <button
                   onClick={handleGenerate}
                   disabled={generating || !generatePrompt.trim()}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold bg-[#1B4332] text-white hover:bg-[#2D6A4F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generating ? (
-                    <><Loader2 size={16} className="animate-spin" /> Generating...</>
+                    <><Loader2 size={16} className="animate-spin" /> Generating {generateCount} post{generateCount > 1 ? 's' : ''}...</>
                   ) : (
-                    <><Sparkles size={16} /> Generate Post</>
+                    <><Sparkles size={16} /> Generate {generateCount} Post{generateCount > 1 ? 's' : ''}</>
                   )}
                 </button>
                 {generateError && (
@@ -575,7 +1104,7 @@ export default function DesignPage() {
                           <button
                             onClick={() => {
                               setGeneratedPosts(prev => prev.filter(p => p.id !== gp.id));
-                              setPostOrder(prev => prev.filter(id => id !== gp.id));
+                              setLocalOrder(prev => prev.filter(id => id !== gp.id));
                             }}
                             className="text-gray-400 hover:text-red-500 shrink-0"
                           >
@@ -601,98 +1130,143 @@ export default function DesignPage() {
           setSelectedId(null);
         }}
       >
-        <EditContext.Provider value={editMode}>
-        <AspectRatioContext.Provider value={aspectRatio}>
-        <SelectedIdContext.Provider value={selectedId}>
-        <SetSelectedIdContext.Provider value={handleSetSelectedId}>
-        <div
-          className={`
-            mx-auto transition-all duration-500
-            ${viewMode === 'list' ? 'flex flex-col items-center space-y-12' : 'gap-6'}
-            ${editMode ? 'edit-mode' : ''}
-          `}
-          style={viewMode === 'grid' ? {
-            display: 'grid',
-            gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-          } : undefined}
-        >
-            {postOrder.map((id, index) => {
-              const post = POST_REGISTRY.find(p => p.id === id);
-              const generatedPost = generatedPosts.find(gp => gp.id === id);
-              if (!post && !generatedPost) return null;
-              const PostComponent = post?.component;
-              const selectionIndex = selectedPosts.indexOf(id);
-              const isSelected = selectionIndex !== -1;
-              return (
-                <div
-                  key={id}
-                  ref={(el) => { if (el) postRefs.current.set(id, el); else postRefs.current.delete(id); }}
-                  draggable={reorderMode}
-                  onDragStart={reorderMode ? (e) => {
-                    dragItem.current = id;
-                    setDraggingId(id);
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', id);
-                  } : undefined}
-                  onDragOver={reorderMode ? (e) => {
-                    e.preventDefault();
-                  } : undefined}
-                  onDragEnter={reorderMode ? () => {
-                    handleDragEnter(id);
-                  } : undefined}
-                  onDragEnd={reorderMode ? () => {
-                    dragItem.current = null;
-                    setDraggingId(null);
-                  } : undefined}
-                  onClick={selectMode ? (e) => { e.stopPropagation(); togglePostSelection(id); } : undefined}
-                  className="relative"
-                  style={{
-                    opacity: draggingId === id ? 0.4 : 1,
-                    transition: 'opacity 0.2s',
-                    cursor: reorderMode ? 'grab' : selectMode ? 'pointer' : undefined,
-                  }}
-                >
-                  {generatedPost && codeViewPosts.has(id) ? (
-                    <div className="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-[#1e1e1e]" style={{ aspectRatio: aspectRatio.replace(':', ' / ') }}>
-                      <textarea
-                        value={generatedPost.code}
-                        onChange={(e) => updateGeneratedCode(id, e.target.value)}
-                        className="w-full h-full p-4 text-xs font-mono text-green-400 bg-transparent resize-none focus:outline-none leading-relaxed"
-                        spellCheck={false}
-                      />
-                    </div>
-                  ) : (
-                    <PostWrapper aspectRatio={aspectRatio} filename={post?.filename || id}>
-                      {PostComponent ? <PostComponent /> : generatedPost ? <DynamicPost code={generatedPost.code} /> : null}
-                    </PostWrapper>
-                  )}
-                  {generatedPost && (
-                    <button
-                      onClick={() => toggleCodeView(id)}
-                      className="absolute top-3 left-3 z-30 bg-white/90 backdrop-blur-sm text-gray-700 p-2 rounded-lg shadow-md border border-gray-200 hover:bg-white hover:scale-105 active:scale-95 transition-all"
-                      title={codeViewPosts.has(id) ? 'Show Preview' : 'Show Code'}
-                    >
-                      {codeViewPosts.has(id) ? <Eye size={16} /> : <Code size={16} />}
-                    </button>
-                  )}
-                  {reorderMode && <div className="absolute inset-0 z-10 border-2 border-dashed border-transparent hover:border-[#1B4332]/30 transition-colors" />}
-                  {selectMode && (
-                    <div className={`absolute inset-0 z-20 rounded-xl transition-all ${isSelected ? 'ring-4 ring-blue-500 bg-blue-500/10' : 'hover:bg-black/5'}`}>
-                      <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${
-                        isSelected ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/80 backdrop-blur-sm text-gray-400 border-2 border-gray-300'
-                      }`}>
-                        {isSelected ? selectionIndex + 1 : ''}
+        {collections !== undefined && collections.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <FolderOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h2 className="text-lg font-bold text-gray-500 mb-2">No collections yet</h2>
+              <p className="text-sm text-gray-400">Create a collection in your workspace to get started</p>
+            </div>
+          </div>
+        ) : posts === undefined ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-8 h-8 text-gray-300 animate-spin" />
+          </div>
+        ) : posts.length === 0 && generatedPosts.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h2 className="text-lg font-bold text-gray-500 mb-2">No posts yet</h2>
+              <p className="text-sm text-gray-400">Use the Generate panel to create your first post</p>
+            </div>
+          </div>
+        ) : (
+          <EditContext.Provider value={editMode}>
+          <AspectRatioContext.Provider value={aspectRatio}>
+          <SelectedIdContext.Provider value={selectedId}>
+          <SetSelectedIdContext.Provider value={handleSetSelectedId}>
+          <div
+            className={`
+              mx-auto transition-all duration-500
+              ${viewMode === 'list' ? 'flex flex-col items-center space-y-12' : 'gap-6'}
+              ${editMode ? 'edit-mode' : ''}
+            `}
+            style={viewMode === 'grid' ? {
+              display: 'grid',
+              gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+            } : undefined}
+          >
+              {allPostIds.map((id) => {
+                const post = posts?.find(p => p._id === id);
+                const generatedPost = generatedPosts.find(gp => gp.id === id);
+                if (!post && !generatedPost) return null;
+
+                const code = post?.componentCode ?? generatedPost?.code;
+                if (!code) return null;
+
+                const selectionIndex = selectedPosts.indexOf(id);
+                const isSelected = selectionIndex !== -1;
+
+                return (
+                  <div
+                    key={id}
+                    ref={(el) => { if (el) postRefs.current.set(id, el); else postRefs.current.delete(id); }}
+                    draggable={reorderMode}
+                    onDragStart={reorderMode ? (e) => {
+                      dragItem.current = id;
+                      setDraggingId(id);
+                      e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setData('text/plain', id);
+                    } : undefined}
+                    onDragOver={reorderMode ? (e) => {
+                      e.preventDefault();
+                    } : undefined}
+                    onDragEnter={reorderMode ? () => {
+                      handleDragEnter(id);
+                    } : undefined}
+                    onDragEnd={reorderMode ? () => {
+                      handleDragEnd();
+                    } : undefined}
+                    onClick={selectMode ? (e) => { e.stopPropagation(); togglePostSelection(id); } : undefined}
+                    className="relative group"
+                    style={{
+                      opacity: draggingId === id ? 0.4 : 1,
+                      transition: 'opacity 0.2s',
+                      cursor: reorderMode ? 'grab' : selectMode ? 'pointer' : undefined,
+                    }}
+                  >
+                    {codeViewPosts.has(id) ? (
+                      <div className="relative w-full rounded-xl overflow-hidden border border-gray-200 bg-[#1e1e1e]" style={{ aspectRatio: aspectRatio.replace(':', ' / ') }}>
+                        <textarea
+                          value={code}
+                          onChange={(e) => {
+                            if (post) {
+                              updatePostCode({ id: post._id, componentCode: e.target.value });
+                            } else if (generatedPost) {
+                              setGeneratedPosts(prev => prev.map(p => p.id === id ? { ...p, code: e.target.value } : p));
+                            }
+                          }}
+                          className="w-full h-full p-4 text-xs font-mono text-green-400 bg-transparent resize-none focus:outline-none leading-relaxed"
+                          spellCheck={false}
+                        />
                       </div>
+                    ) : (
+                      <PostWrapper aspectRatio={aspectRatio} filename={post?.title || id}>
+                        <DynamicPost code={code} />
+                      </PostWrapper>
+                    )}
+                    {/* Code toggle & delete buttons - visible on hover */}
+                    <div className="absolute top-2 left-2 z-30 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => toggleCodeView(id)}
+                        className="bg-white/90 backdrop-blur-sm text-gray-600 p-1.5 rounded-md shadow-sm border border-gray-200 hover:bg-white hover:scale-105 active:scale-95 transition-all"
+                        title={codeViewPosts.has(id) ? 'Show Preview' : 'Show Code'}
+                      >
+                        {codeViewPosts.has(id) ? <Eye size={12} /> : <Code size={12} />}
+                      </button>
+                      {post && (
+                        <button
+                          onClick={() => {
+                            if (confirm('Delete this post?')) {
+                              removePost({ id: post._id });
+                            }
+                          }}
+                          className="bg-white/90 backdrop-blur-sm text-red-400 p-1.5 rounded-md shadow-sm border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:scale-105 active:scale-95 transition-all"
+                          title="Delete post"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-        </div>
-        </SetSelectedIdContext.Provider>
-        </SelectedIdContext.Provider>
-        </AspectRatioContext.Provider>
-        </EditContext.Provider>
+                    {reorderMode && <div className="absolute inset-0 z-10 border-2 border-dashed border-transparent hover:border-[#1B4332]/30 transition-colors" />}
+                    {selectMode && (
+                      <div className={`absolute inset-0 z-20 rounded-xl transition-all ${isSelected ? 'ring-4 ring-blue-500 bg-blue-500/10' : 'hover:bg-black/5'}`}>
+                        <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${
+                          isSelected ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/80 backdrop-blur-sm text-gray-400 border-2 border-gray-300'
+                        }`}>
+                          {isSelected ? selectionIndex + 1 : ''}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+          </SetSelectedIdContext.Provider>
+          </SelectedIdContext.Provider>
+          </AspectRatioContext.Provider>
+          </EditContext.Provider>
+        )}
       </main>
 
       {/* Floating download bar */}

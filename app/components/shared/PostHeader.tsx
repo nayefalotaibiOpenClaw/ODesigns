@@ -13,25 +13,30 @@ interface PostHeaderProps {
   badge?: React.ReactNode;
   /** "dark" = light text on dark bg, "light" = dark text on light bg */
   variant?: "dark" | "light";
+  /** URL to a brand logo image. If provided, replaces the default icon. */
+  logoUrl?: string;
 }
 
 /**
- * Reusable post header with SYLO logo + optional badge.
+ * Reusable post header with brand logo + optional badge.
  *
  * Usage:
  *   <PostHeader
  *     id="header-mypost"
+ *     title="Seasons"
  *     subtitle="ANALYTICS"
  *     badge={<><TrendingUp size={12} /> MARGIN OPTIMIZER</>}
  *     variant="light"
+ *     logoUrl="/logo.png"
  *   />
  */
 export default function PostHeader({
   id,
-  title = "SYLO",
+  title = "Brand",
   subtitle,
   badge,
   variant = "dark",
+  logoUrl,
 }: PostHeaderProps) {
   const t = useTheme();
   const isDark = variant === "dark";
@@ -39,6 +44,9 @@ export default function PostHeader({
   return (
     <div className="flex justify-between items-start">
       <DraggableWrapper id={`logo-${id}`} variant="card" className="flex items-center gap-3">
+        {logoUrl ? (
+          <img src={logoUrl} alt={`${title} logo`} className="w-10 h-10 rounded-xl object-contain shadow-lg" />
+        ) : (
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
           style={{ backgroundColor: isDark ? t.accentLime : t.primary }}
@@ -49,6 +57,7 @@ export default function PostHeader({
             style={{ color: isDark ? t.primary : t.accentLime }}
           />
         </div>
+        )}
         <div className="flex flex-col leading-none">
           <EditableText
             as="span"
