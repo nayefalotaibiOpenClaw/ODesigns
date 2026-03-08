@@ -1,121 +1,312 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
-// ─── V1: Freestyle (AI builds everything from scratch) ──────────────────────
+// ─── FEW-SHOT EXAMPLES (real components stripped to essentials) ───────────────
+// These teach the AI by showing REAL working code, not abstract descriptions.
 
-const STATIC_PROMPT_V1 = `You are an expert React component generator for social media posts. Generate a SINGLE visually stunning, UNIQUE React component. Be wildly creative — every post must look completely different.
-
-## IMPORTS
+const EXAMPLE_DARK_MOCKUP = `// EXAMPLE A: Dark bg + iPhone mockup + floating stats
 import React from 'react';
 import EditableText from './EditableText';
 import DraggableWrapper from './DraggableWrapper';
 import { useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
-// Only import device mockups if you have matching assets:
-// import { IPhoneMockup, IPadMockup, DesktopMockup } from './shared';
-// Import only the lucide-react icons you use:
-// import { Heart, Star, Flower2, Gift, Truck } from 'lucide-react';
+import { IPhoneMockup, PostHeader, PostFooter, FloatingCard } from './shared';
+import { Cloud, Zap, Globe } from 'lucide-react';
 
-## THEME (MANDATORY - never hardcode colors)
-const t = useTheme();
-t.primary (dark), t.primaryLight (light bg), t.primaryDark (darkest), t.accent (medium), t.accentLight, t.accentLime (bright), t.accentGold, t.accentOrange, t.border, t.font (font family)
-Apply via style props ONLY: style={{ backgroundColor: t.primary, color: t.primaryLight }}
-NEVER use Tailwind color classes like bg-[#1B4332]. NEVER hardcode hex colors.
+export default function CloudPOSPost() {
+  const ratio = useAspectRatio();
+  const t = useTheme();
+  const isTall = ratio === '9:16' || ratio === '3:4';
 
-## ASPECT RATIO (MANDATORY)
-const ratio = useAspectRatio();
-const isTall = ratio === '9:16' || ratio === '3:4';
+  return (
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
+         style={{ backgroundColor: t.primary, fontFamily: t.font }}>
+      <div className="absolute inset-0" style={{ background: \`linear-gradient(to bottom right, \${t.primary}, \${t.primaryDark})\` }} />
+      <div className="absolute inset-0 opacity-[0.05]"
+        style={{backgroundImage: \`radial-gradient(\${t.primaryLight} 1px, transparent 1px)\`, backgroundSize: '30px 30px'}} />
+      <div className="absolute -top-20 -left-20 w-[300px] h-[300px] opacity-[0.1] blur-[80px] rounded-full"
+        style={{ backgroundColor: t.accentLime }} />
+      <div className="absolute -bottom-20 -right-20 w-[300px] h-[300px] opacity-[0.1] blur-[80px] rounded-full"
+        style={{ backgroundColor: t.accent }} />
 
-## CORE COMPONENTS
+      <div className="relative z-10 w-full h-full flex flex-col p-8">
+        <PostHeader id="cloud-pos" subtitle="CLOUD TECHNOLOGY" badge={<><Cloud size={12}/> LIVE SYNC</>} variant="dark" />
 
-**<EditableText>** — MANDATORY: wrap ALL visible text. Props: as ("h2"|"p"|"span"|"h3"), className, style. Default renders as span.
-**<DraggableWrapper>** — MANDATORY: wrap every content block so user can reposition. Props: id (unique string), className, variant ("mockup" for devices), dir ("rtl" for Arabic)
+        <DraggableWrapper id="headline" className="mt-8 text-right z-30" dir="rtl">
+          <h2 className="text-5xl font-black leading-tight" style={{ color: t.primaryLight }}>
+            <EditableText>نظامك السحابي</EditableText><br/>
+            <span style={{ color: t.accentLime }}><EditableText>في كل مكان</EditableText></span>
+          </h2>
+        </DraggableWrapper>
 
-## DEVICE MOCKUPS (only when matching assets exist)
-Import from './shared'. Always wrap in a sized div:
+        <div className="flex-1 flex items-center justify-center relative mt-4">
+          <DraggableWrapper id="mockup" className={\`relative z-20 \${isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}\`}>
+            <IPhoneMockup src="/pos-screen.jpg" />
+          </DraggableWrapper>
+          <FloatingCard id="stat1" icon={<Zap size={16} style={{ color: t.accentLime }} />} label="السرعة" value="100%" className="absolute -left-4 top-20" rotate={-5} />
+          <FloatingCard id="stat2" icon={<Globe size={16} style={{ color: t.accent }} />} label="وصول عالمي" value="24/7" className="absolute -right-8 bottom-32" rotate={8} />
+        </div>
 
-**<IPhoneMockup>** — src (image URL), alt, notch ("pill"|"notch")
-Size: isTall ? 'w-[200px] h-[400px]' : 'w-[180px] h-[340px]'
+        <PostFooter id="cloud-pos" label="SYLO POS" text="أدر مطعمك من أي مكان في العالم" variant="dark" />
+      </div>
+    </div>
+  );
+}`;
 
-**<IPadMockup>** — src, alt, orientation ("landscape"|"portrait")
-Size landscape: isTall ? 'w-[320px] h-[230px]' : 'w-[280px] h-[200px]'
-Size portrait: isTall ? 'w-[200px] h-[280px]' : 'w-[180px] h-[250px]'
+const EXAMPLE_HERO_IMAGE = `// EXAMPLE B: Full-bleed image + cinematic gradient + bottom text
+import React from 'react';
+import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
+import { useAspectRatio } from './EditContext';
+import { useTheme } from './ThemeContext';
+import { PostHeader, PostFooter } from './shared';
+import { Heart, Sparkles } from 'lucide-react';
 
-**<DesktopMockup>** — src, alt, url (shown in browser bar), trafficLights (boolean)
-Size: isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]'
+export default function HeroPost() {
+  const ratio = useAspectRatio();
+  const t = useTheme();
+  const isTall = ratio === '9:16' || ratio === '3:4';
 
-## RENDER DIMENSIONS (CRITICAL)
-Your component renders on a ~540px wide canvas, then exports at 2x for social media (1080px).
-Design canvas sizes:
-- 1:1 → 540×540px (exports 1080×1080)
-- 4:5 → 540×675px (exports 1080×1350)
-- 3:4 → 540×720px (exports 1080×1440)
-- 4:3 → 540×405px (exports 1080×810)
-- 9:16 → 540×960px (exports 1080×1920)
-- 16:9 → 960×540px (exports 1920×1080)
+  return (
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
+         style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
+      <img src="/seasons/2.jpg" className="absolute inset-0 w-full h-full object-cover" alt="Hero" />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)' }} />
 
-## SIZING REFERENCE (calibrated for 540px canvas — USE THESE EXACT SIZES)
-Root: className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}
-Content: className="relative z-10 w-full h-full flex flex-col p-8" (always p-8, never smaller)
-Main heading: className="text-4xl font-black" (MINIMUM text-4xl, prefer text-5xl for hero headlines)
-Subheading: className="text-lg font-bold" to "text-xl font-bold"
-Body text: className="text-base" to "text-lg"
-Small labels/badges: className="text-xs uppercase tracking-widest font-bold"
-Icons in text: size={16} to size={20}
-Decorative icons: size={24} to size={32}
-Stat cards: min-w-[120px] p-4 rounded-xl
-Logo images: w-10 h-10 to w-12 h-12 object-contain rounded-lg
-Decorative blobs/glows: w-[250px] h-[250px] to w-[350px] h-[350px]
-Phone mockup (CSS): w-48 h-80 (192×320px) — takes ~35% of width
-Feature cards: p-4 to p-6, gap-3 between them
-IMPORTANT: Text must be BOLD and LARGE. Never use text-sm or text-xs for visible content. The post will be viewed on mobile feeds.
+      <div className="relative z-10 w-full h-full flex flex-col p-8 text-white">
+        <PostHeader id="hero" subtitle="PREMIUM FLOWERS" badge={<><Sparkles size={12}/> LUXURY</>} variant="dark" />
+        <div className="flex-1 flex flex-col justify-end mb-12">
+          <DraggableWrapper id="headline" className="text-right" dir="rtl">
+            <h2 className="text-5xl font-black leading-tight">
+              <EditableText>أجمل اللحظات</EditableText><br/>
+              <span style={{ color: t.accentLime }}><EditableText>تبدأ بوردة</EditableText></span>
+            </h2>
+            <p className="text-xl font-bold mt-4 opacity-90">
+              <EditableText>تشكيلات راقية لكل مناسباتكم السعيدة</EditableText>
+            </p>
+          </DraggableWrapper>
+        </div>
+        <PostFooter id="hero" label="SEASONS FLOWERS" text="نحتفل معكم بكل لحظة" icon={<Heart size={24} fill="currentColor"/>} variant="dark" />
+      </div>
+    </div>
+  );
+}`;
 
-## ASSET TYPE RULES (CRITICAL)
-- **background** → <img src={url} className="absolute inset-0 w-full h-full object-cover" /> + overlay. NEVER in mockups.
-- **screenshot/iphone** → ONLY inside <IPhoneMockup>. NEVER as background.
-- **screenshot/ipad** → ONLY inside <IPadMockup>. NEVER as background.
-- **screenshot/desktop** → ONLY inside <DesktopMockup>. NEVER as background.
-- **product** → <img src={url} className="w-48 h-48 to w-72 h-72 object-contain drop-shadow-2xl" />
-- **logo** → <img src={url} className="w-10 h-10 object-contain rounded-lg" /> in your header area
-- NEVER put background images in mockups.
+const EXAMPLE_LIGHT_CREATIVE = `// EXAMPLE C: Light bg + circular image + subscription style
+import React from 'react';
+import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
+import { useAspectRatio } from './EditContext';
+import { useTheme } from './ThemeContext';
+import { PostHeader, PostFooter } from './shared';
+import { Calendar, Sparkles } from 'lucide-react';
 
-## DESIGN APPROACH
-Build everything from scratch with Tailwind + inline styles. Create your own:
-- Headers (brand logo + name + tagline)
-- Stat cards, badges, tags
-- Decorative elements (shapes, gradients, patterns, glows)
-- Creative layouts (grids, splits, overlaps, diagonals)
+export default function SubscriptionPost() {
+  const ratio = useAspectRatio();
+  const t = useTheme();
+  const isTall = ratio === '9:16' || ratio === '3:4';
 
-Design families to pick from (vary each time!):
-A) Hero Image — full-bleed photo, bold text overlay, cinematic feel
-B) Device Showcase — mockup centered, stats floating around
-C) Split — half photo/half text, or diagonal split
-D) Bold Typography — massive text, no images, pattern bg, icon accents
-E) Card Grid — 2-4 feature cards with icons
-F) Product Hero — product image floating with badges
-G) Magazine Cover — photo dominant, text bar at bottom
-H) Minimal White — light bg, tons of whitespace, one color pop
-I) Angular/Geometric — clip-path shapes, overlapping colored sections
-J) Quote/Testimonial — oversized decorative quote marks, centered text
+  return (
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
+         style={{ backgroundColor: '#fff', fontFamily: t.font }}>
+      <div className="absolute inset-0 opacity-[0.4]"
+        style={{ background: \`linear-gradient(to bottom, \${t.primaryLight}, white)\` }} />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] opacity-[0.05] rounded-full blur-[100px]"
+           style={{ backgroundColor: t.accent }} />
 
-Vary: dark vs light bg, text alignment, element count, icon choices, spacing, decorative patterns.
+      <div className="relative z-10 w-full h-full flex flex-col p-8">
+        <PostHeader id="sub" subtitle="SUBSCRIPTIONS" badge={<><Calendar size={12}/> WEEKLY FRESH</>} variant="light" />
+        <div className="flex-1 flex flex-col items-center justify-center relative mt-4">
+          <DraggableWrapper id="mockup" className={\`relative z-20 \${isTall ? 'w-[400px] h-[400px]' : 'w-[320px] h-[320px]'}\`}>
+             <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl border-[12px] border-white ring-1 ring-black/5">
+                <img src="/seasons/3.jpg" className="w-full h-full object-cover" alt="Product" />
+             </div>
+          </DraggableWrapper>
+          <DraggableWrapper id="stat" className="absolute -right-4 bottom-24 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 rotate-6" dir="rtl">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: t.accentLight }}>
+                   <Sparkles size={20} style={{ color: t.accent }} />
+                </div>
+                <div>
+                   <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: t.accent }}>الاشتراك</p>
+                   <p className="text-sm font-black" style={{ color: t.primary }}>يبدأ من 15 د.ك</p>
+                </div>
+             </div>
+          </DraggableWrapper>
+        </div>
+        <DraggableWrapper id="headline" className="mt-8 text-right" dir="rtl">
+          <h2 className="text-5xl font-black leading-tight" style={{ color: t.primary }}>
+            <EditableText>جدد منزلك</EditableText><br/>
+            <span style={{ color: t.accent }}><EditableText>بالورد الطبيعي</EditableText></span>
+          </h2>
+          <p className="text-lg font-bold opacity-70 mt-4" style={{ color: t.primary }}>
+            <EditableText>اشتراكات أسبوعية تصلك طازجة إلى باب بيتك</EditableText>
+          </p>
+        </DraggableWrapper>
+        <PostFooter id="sub" label="SEASONS SUBSCRIPTIONS" text="الجمال المستمر في حياتك" variant="light" />
+      </div>
+    </div>
+  );
+}`;
 
-## CONTENT WRITING RULES (CRITICAL)
-- The workspace/company info is for INSPIRATION ONLY — understand the brand, then write ORIGINAL creative copy
-- NEVER copy text directly from workspace info or features list
-- Write catchy, creative marketing headlines — think like a copywriter, not a data displayer
-- Each post should have a unique angle/message even for the same brand
-- Use metaphors, power words, emotional language
-- Keep it short and punchy — social media style
+const EXAMPLE_DARK_CORPORATE = `// EXAMPLE D: Dark cinematic + half-image + left-aligned text
+import React from 'react';
+import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
+import { useAspectRatio } from './EditContext';
+import { useTheme } from './ThemeContext';
+import { PostHeader, PostFooter, FloatingCard } from './shared';
+import { Briefcase, Building2 } from 'lucide-react';
 
-## OUTPUT
-Return ONLY the raw component code. No markdown fences, no backticks, no explanation. Start with imports.`;
+export default function CorporatePost() {
+  const ratio = useAspectRatio();
+  const t = useTheme();
+  const isTall = ratio === '9:16' || ratio === '3:4';
 
-// ─── V2: Structured (uses shared components like the skill prompt) ──────────
+  return (
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
+         style={{ backgroundColor: '#111', fontFamily: t.font }}>
+      <img src="/seasons/2.jpg" className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale" alt="Corporate" />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 100%)' }} />
 
-const STATIC_PROMPT_V2 = `You are an expert social media post designer. Generate a SINGLE visually stunning React/TSX component. Each post should highlight ONE feature or message with a creative visual metaphor.
+      <div className="relative z-10 w-full h-full flex flex-col p-8 text-white">
+        <PostHeader id="corp" subtitle="CORPORATE GIFTS" badge={<><Briefcase size={12}/> BUSINESS</>} variant="dark" />
+        <div className="flex-1 flex flex-col justify-center max-w-sm">
+          <DraggableWrapper id="text" className="text-right" dir="rtl">
+            <h2 className="text-5xl font-black leading-tight">
+               <EditableText>هدايا شركات</EditableText><br/>
+               <span style={{ color: t.accentLime }}><EditableText>بلمسة احترافية</EditableText></span>
+            </h2>
+            <p className="text-xl font-bold mt-6 opacity-70">
+               <EditableText>حلول متكاملة لهدايا الموظفين والعملاء</EditableText>
+            </p>
+          </DraggableWrapper>
+          <div className="flex gap-4 mt-8">
+             <FloatingCard id="card1" icon={<Building2 size={16} />} label="توصيل" value="للمكاتب" className="mt-4" rotate={-3} />
+          </div>
+        </div>
+        <PostFooter id="corp" label="SEASONS BUSINESS" text="ارتقِ بعلاقاتك المهنية" variant="dark" />
+      </div>
+    </div>
+  );
+}`;
 
-## Required Imports
+const EXAMPLE_DESKTOP_ANALYTICS = `// EXAMPLE E: Light bg + Desktop mockup + analytics focus
+import React from 'react';
+import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
+import { useAspectRatio } from './EditContext';
+import { useTheme } from './ThemeContext';
+import { DesktopMockup, PostHeader, PostFooter, FloatingCard } from './shared';
+import { BarChart3, TrendingUp, PieChart } from 'lucide-react';
+
+export default function MenuEngineeringPost() {
+  const ratio = useAspectRatio();
+  const t = useTheme();
+  const isTall = ratio === '9:16' || ratio === '3:4';
+
+  return (
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
+         style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{backgroundImage: \`radial-gradient(\${t.primary} 2px, transparent 2px)\`, backgroundSize: '20px 20px'}} />
+      <div className="absolute -bottom-24 -left-24 w-[400px] h-[400px] opacity-[0.1] blur-[100px] rounded-full"
+        style={{ backgroundColor: t.accentLime }} />
+
+      <div className="relative z-10 w-full h-full flex flex-col p-8">
+        <PostHeader id="menu-eng" subtitle="RESTAURANT ANALYTICS" badge={<><TrendingUp size={12}/> PROFIT MAX</>} variant="light" />
+        <DraggableWrapper id="headline" className="mt-8 text-right z-30" dir="rtl">
+          <h2 className="text-5xl font-black leading-tight" style={{ color: t.primary }}>
+            <EditableText>هندسة المنيو</EditableText><br/>
+            <span style={{ color: t.accent }}><EditableText>لأرباح أعلى</EditableText></span>
+          </h2>
+        </DraggableWrapper>
+        <div className="flex-1 flex items-center justify-center relative mt-4">
+          <DraggableWrapper id="mockup" className={\`relative z-20 \${isTall ? 'w-full h-[350px]' : 'w-[360px] h-[240px]'}\`}>
+            <DesktopMockup src="/pos-screen.jpg" url="admin.sylo.com/analytics" />
+          </DraggableWrapper>
+          <FloatingCard id="stat1" icon={<BarChart3 size={16} />} label="نمو الأرباح" value="+22%" className="absolute -right-4 top-4" rotate={5} />
+          <FloatingCard id="stat2" icon={<PieChart size={16} />} label="الأكثر مبيعًا" value="برجر دبل" className="absolute -left-4 bottom-12" rotate={-5} />
+        </div>
+        <PostFooter id="menu-eng" label="SYLO ANALYTICS" text="حلل أداء أصنافك وارفع هوامش ربحك" variant="light" />
+      </div>
+    </div>
+  );
+}`;
+
+// ─── CREATIVE COPY ANGLES (rotated per post for variety) ─────────────────────
+
+const COPY_ANGLES = [
+  { angle: "Emotional storytelling", instruction: "Tell a micro-story. Use 'imagine...', 'picture this...', create an emotional scenario the viewer relates to. Focus on feelings, not features." },
+  { angle: "Bold provocation", instruction: "Challenge the status quo. Use a provocative question or surprising stat. Make them stop scrolling. 'Still doing X? There's a better way.' style." },
+  { angle: "Aspirational vision", instruction: "Paint the dream outcome. Focus on the transformation, not the tool. 'From X to Y' narrative. Make them see their better future." },
+  { angle: "Social proof / authority", instruction: "Imply trust and scale. Use impressive numbers, community size, years of experience. 'Trusted by...', 'Join thousands who...', '+X% growth'." },
+  { angle: "Urgency / scarcity", instruction: "Create FOMO. Limited offer, seasonal, exclusive. Time-sensitive language. 'Only this week', 'Exclusive collection', 'While supplies last'." },
+  { angle: "Behind the scenes", instruction: "Show the craft, the process, the care. 'Handpicked...', 'Carefully curated...', 'Every detail matters'. Artisanal, premium feel." },
+  { angle: "Comparison / contrast", instruction: "Before vs after. Old way vs new way. Without us vs with us. Create a visual or textual contrast that makes the value obvious." },
+  { angle: "Celebration / joy", instruction: "Celebrate moments, milestones, seasons. Festive, warm, joyful tone. 'Celebrate with...', 'Make every moment...', 'Share the joy'." },
+];
+
+// ─── LAYOUT BLUEPRINTS (detailed structure, not just hints) ──────────────────
+
+const LAYOUT_BLUEPRINTS = [
+  {
+    name: "Device Showcase",
+    structure: "Dark gradient bg → dot/grid pattern overlay → 2 glow circles → PostHeader → headline (text-5xl with accent color second line) → centered device mockup (isTall responsive) → 2 FloatingCards at opposite corners → PostFooter",
+    decorations: "radial-gradient dots OR linear-gradient grid, 2 blur glow circles (accentLime + accent), gradient bg (primary → primaryDark)",
+  },
+  {
+    name: "Hero Image Cinematic",
+    structure: "Full-bleed <img> → gradient overlay (bottom-heavy) → PostHeader → flex-1 justify-end for bottom text → headline text-5xl → subtitle text-xl → PostFooter",
+    decorations: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), rgba(0,0,0,0.4)). Image covers entire post, text floats at bottom.",
+  },
+  {
+    name: "Light Product Showcase",
+    structure: "White/primaryLight bg → soft gradient overlay → subtle glow circle → PostHeader → centered circular image frame (rounded-full, thick white border, ring) → absolute-positioned stat card → headline below image → PostFooter",
+    decorations: "Soft gradient (primaryLight → white), one glow blob, clean white borders, drop shadows",
+  },
+  {
+    name: "Bold Typography Only",
+    structure: "Dark bg → pattern (dots or grid) → 2 glow circles → PostHeader → massive centered text (text-5xl to text-6xl) with accentLime keyword → decorative icon cluster → subtle body text → PostFooter",
+    decorations: "Grid or dot pattern, 2+ glow circles, NO device mockups. Pure typography power. Maybe a subtle CSS-only shape.",
+  },
+  {
+    name: "Split Cinematic",
+    structure: "Half-visible background image (opacity-30, grayscale) → directional gradient (left-to-right) → PostHeader → flex-col justify-center max-w-sm → headline + body + FloatingCard row → PostFooter",
+    decorations: "Image as subtle bg, strong directional gradient, text on one side, image bleeds through on other",
+  },
+  {
+    name: "Card Grid Feature",
+    structure: "Light bg → dot pattern → PostHeader → headline → 2x2 or 3-column grid of feature cards (each with icon + label + desc, themed borders) → PostFooter",
+    decorations: "Each card: bg-white, shadow-lg, rounded-2xl, border with theme color, icon in colored circle. Subtle bg pattern.",
+  },
+  {
+    name: "Magazine Cover",
+    structure: "Full-bleed image → heavy bottom gradient → PostHeader transparent over image → large whitespace in middle → bottom section: headline + CTA badge → PostFooter",
+    decorations: "Cinematic feel. Minimal text. Image is the star. Text at bottom like a magazine title.",
+  },
+  {
+    name: "Geometric Abstract",
+    structure: "Dark bg → abstract CSS shapes (rotated divs, circles, diagonal lines using transforms) → PostHeader → centered content → headline with creative word emphasis → icon accents → PostFooter",
+    decorations: "CSS-only art: rotated rectangles with opacity, overlapping circles, diagonal stripes. Bold, modern, editorial feel.",
+  },
+];
+
+// ─── UNIFIED SYSTEM PROMPT (replaces V1/V2/V3) ──────────────────────────────
+
+const SYSTEM_PROMPT = `You are an elite social media post designer. Generate a SINGLE visually stunning React/TSX component. Study the examples below carefully — they show the EXACT quality, structure, and patterns you must match.
+
+## CRITICAL RULES
+1. EVERY post must use useAspectRatio() and conditionally size elements with isTall
+2. EVERY visible text must be wrapped in <EditableText>
+3. EVERY content section must be wrapped in <DraggableWrapper>
+4. NEVER hardcode colors — always use the theme system via style props
+5. Root div: className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}
+6. Content wrapper: className="relative z-10 w-full h-full flex flex-col p-8"
+7. Text sizing: MINIMUM text-4xl for headlines, text-lg for body. NEVER text-sm or text-xs for visible content.
+8. Export exactly ONE component: export default function PostName() { ... }
+
+## IMPORTS
 \`\`\`tsx
 import React from 'react';
 import EditableText from './EditableText';
@@ -123,151 +314,98 @@ import DraggableWrapper from './DraggableWrapper';
 import { useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
 import { IPhoneMockup, IPadMockup, DesktopMockup, PostHeader, PostFooter, FloatingCard } from './shared';
-// Import only the lucide-react icons you use
+// Import only the lucide-react icons you use:
+// import { Heart, Star, ... } from 'lucide-react';
 \`\`\`
 
-## Theme System (MANDATORY — never hardcode colors)
+## THEME (MANDATORY)
 \`\`\`tsx
 const t = useTheme();
 // t.primary (dark), t.primaryLight (light bg), t.primaryDark (darkest)
 // t.accent (medium), t.accentLight, t.accentLime (bright), t.accentGold, t.accentOrange
 // t.border, t.font (font family string)
+// Apply ONLY via: style={{ backgroundColor: t.primary, color: t.primaryLight }}
+// NEVER use Tailwind color classes like bg-[#1B4332]. NEVER hardcode hex colors.
 \`\`\`
-Apply via inline style props: style={{ backgroundColor: t.primary, color: t.primaryLight }}
-NEVER use Tailwind color classes like bg-[#1B4332].
 
-## Aspect Ratio (MANDATORY)
+## ASPECT RATIO (MANDATORY — makes posts responsive across 1:1, 9:16, etc.)
 \`\`\`tsx
 const ratio = useAspectRatio();
 const isTall = ratio === '9:16' || ratio === '3:4';
+// USE isTall to conditionally size mockups, images, and spacing:
+// className={isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}  // iPhone
+// className={isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]'}  // Desktop
+// className={isTall ? 'w-[400px] h-[400px]' : 'w-[320px] h-[320px]'}  // Circular image
 \`\`\`
 
-## Shared Components
+## SHARED COMPONENTS
+- **<PostHeader>** — Props: id, title (brand name), subtitle, badge (JSX), variant ("dark"|"light"), logoUrl
+- **<PostFooter>** — Props: id, label (BRAND NAME), text, icon (JSX), variant ("dark"|"light")
+- **<FloatingCard>** — Props: id, icon, label, value, className (use absolute positioning), rotate (number), borderColor, animation ("float"|"float-slow"|"none")
+- **<IPhoneMockup>** — Props: src (image URL), alt, notch ("pill"|"notch"). Wrap in: className={isTall ? 'w-[200px] h-[400px]' : 'w-[180px] h-[340px]'}
+- **<IPadMockup>** — Props: src, alt, orientation. Landscape: isTall ? 'w-[320px] h-[230px]' : 'w-[280px] h-[200px]'
+- **<DesktopMockup>** — Props: src, alt, url, trafficLights. Size: isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]'
+- **<EditableText>** — Props: as ("h2"|"p"|"span"|"h3"), className, style. Wrap ALL visible text.
+- **<DraggableWrapper>** — Props: id (unique), className, variant ("mockup"), dir ("rtl" for Arabic). Wrap ALL sections.
 
-### <PostHeader> — Top bar with brand logo + subtitle + badge
-\`\`\`tsx
-<PostHeader id="mypost" title="BrandName" subtitle="FLOWERS" badge={<><Star size={12}/> PREMIUM</>} variant="dark" logoUrl="/logo.png" />
-\`\`\`
-Props: id (required), title (brand name), subtitle, badge (JSX), variant ("dark"|"light"), logoUrl
-
-### <PostFooter> — Bottom bar with brand label + text + icon
-\`\`\`tsx
-<PostFooter id="mypost" label="BRAND FLOWERS" text="وصف قصير" icon={<Heart size={24}/>} variant="dark" />
-\`\`\`
-Props: id, label (use actual brand name — NEVER "SYLO"), text, icon (JSX), variant ("dark"|"light")
-
-### <FloatingCard> — Floating stat card with animation
-\`\`\`tsx
-<FloatingCard id="stat1" icon={<BarChart size={16}/>} label="Growth" value="+24%" className="absolute -right-8 top-16" rotate={3} borderColor={t.accentLime} animation="float" />
-\`\`\`
-Props: id, icon, label, value, className, rotate (number), borderColor, animation ("float"|"float-slow"|"none")
-
-### <IPhoneMockup> — iPhone device frame
-Wrap in sized div: \`className={isTall ? 'w-[200px] h-[400px]' : 'w-[180px] h-[340px]'}\`
-Props: src (required), alt, notch ("pill"|"notch")
-
-### <IPadMockup> — iPad device frame
-Landscape: \`className={isTall ? 'w-[320px] h-[230px]' : 'w-[280px] h-[200px]'}\`
-Portrait: \`className={isTall ? 'w-[200px] h-[280px]' : 'w-[180px] h-[250px]'}\`
-Props: src (required), alt, orientation ("landscape"|"portrait")
-
-### <DesktopMockup> — Browser window frame
-Size: \`className={isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]'}\`
-Props: src (required), alt, url (address bar text), trafficLights (boolean)
-
-## Mandatory Wrappers
-**<EditableText>** — Wrap ALL visible text. Props: as ("h2"|"p"|"span"|"h3"), className, style
-**<DraggableWrapper>** — Wrap ALL moveable sections. Props: id (unique), className, variant ("mockup" for devices), dir ("rtl" for Arabic)
-
-## Asset Type Rules (CRITICAL)
-- **background** → Full-bleed: \`<img src={url} className="absolute inset-0 w-full h-full object-cover" />\` + overlay. NEVER in mockups.
+## ASSET RULES
+- **background** → \`<img src={url} className="absolute inset-0 w-full h-full object-cover" />\` + gradient overlay. NEVER in mockups.
 - **screenshot/iphone** → ONLY inside <IPhoneMockup>
 - **screenshot/ipad** → ONLY inside <IPadMockup>
 - **screenshot/desktop** → ONLY inside <DesktopMockup>
-- **product** → Hero image: \`<img src={url} className="w-64 h-64 object-contain drop-shadow-2xl" />\`
+- **product** → \`<img className="w-64 h-64 object-contain drop-shadow-2xl" />\`
 - **logo** → Pass to PostHeader via logoUrl prop
 - NEVER put background images in device mockups.
 
-## Background Decorations (pick 1-2 per post, vary them!)
+## DECORATION TOOLKIT (pick 1-3 per post, combine creatively)
 \`\`\`tsx
-// Gradient (dark posts)
-<div className="absolute inset-0" style={{ background: \\\`linear-gradient(to bottom right, \\\${t.primary}, \\\${t.primaryDark})\\\` }} />
-// Glow circle
-<div className="absolute bottom-0 right-0 w-[400px] h-[400px] opacity-[0.15] blur-[120px] rounded-full" style={{ backgroundColor: t.accentLime }} />
-// Grid pattern
-<div className="absolute inset-0 opacity-[0.05]" style={{backgroundImage: \\\`linear-gradient(\\\${t.primaryLight} 0.5px, transparent 0.5px), linear-gradient(90deg, \\\${t.primaryLight} 0.5px, transparent 0.5px)\\\`, backgroundSize: '30px 30px'}} />
+// Gradient bg
+<div className="absolute inset-0" style={{ background: \`linear-gradient(to bottom right, \${t.primary}, \${t.primaryDark})\` }} />
 // Dot pattern
-<div className="absolute inset-0 opacity-[0.05]" style={{backgroundImage: \\\`radial-gradient(\\\${t.primary} 1px, transparent 1px)\\\`, backgroundSize: '20px 20px'}} />
+<div className="absolute inset-0 opacity-[0.05]" style={{backgroundImage: \`radial-gradient(\${t.primaryLight} 1px, transparent 1px)\`, backgroundSize: '30px 30px'}} />
+// Grid pattern
+<div className="absolute inset-0 opacity-[0.05]" style={{backgroundImage: \`linear-gradient(\${t.primaryLight} 0.5px, transparent 0.5px), linear-gradient(90deg, \${t.primaryLight} 0.5px, transparent 0.5px)\`, backgroundSize: '30px 30px'}} />
+// Glow circle
+<div className="absolute -top-20 -left-20 w-[300px] h-[300px] opacity-[0.1] blur-[80px] rounded-full" style={{ backgroundColor: t.accentLime }} />
+// Image overlay
+<div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2))' }} />
 \`\`\`
 
-## RENDER DIMENSIONS (CRITICAL)
-Your component renders on a ~540px wide canvas, then exports at 2x for social media (1080px).
-Design canvas sizes:
-- 1:1 → 540×540px (exports 1080×1080)
-- 4:5 → 540×675px (exports 1080×1350)
-- 9:16 → 540×960px (exports 1080×1920)
-
-## Sizing Guide (calibrated for 540px canvas — USE THESE EXACT SIZES)
-- Main heading: text-4xl to text-5xl font-black (MINIMUM text-4xl, never smaller)
-- Subheading: text-lg to text-xl font-bold
-- Body: text-base to text-lg
-- Labels/badges: text-xs uppercase tracking-widest font-bold
-- Icons in text: size={16} to size={20}. Decorative: size={24} to size={32}
-- Content padding: p-8 (always, never smaller)
-- Gaps: gap-3 to gap-6
-- Stat cards: min-w-[120px] p-4
-- Decorative blobs: w-[250px] to w-[350px]
-- IMPORTANT: Text must be BOLD and LARGE. Never text-sm for visible content. Posts viewed on mobile feeds.
-
-## Design Rules
-- Root div: \`className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"\` with \`style={{ backgroundColor: t.primary, fontFamily: t.font }}\`
-- Content wrapper: \`className="relative z-10 w-full h-full flex flex-col p-8"\` (always p-8, never smaller)
-- Alternate dark bg (t.primary) and light bg (t.primaryLight)
-- Each post highlights ONE feature with a creative visual metaphor
-- Icons only from lucide-react
-- Use CSS-only visuals (gradients, blur, patterns) for decoration
-
-## Layout Variety (pick different ones!)
-- Dark bg + iPhone mockup + floating stat cards
-- Light bg + iPad mockup + feature list cards
-- Dark bg + Desktop mockup + gradient overlay
-- Light bg + CSS-only cards (no mockup) + icon grid
-- Dark bg + bold typography + pattern background
-- Split layout: half image, half text
-- Magazine: large photo bg + text panel at bottom
-
-## CONTENT WRITING RULES (CRITICAL)
-- The workspace/company info is for INSPIRATION ONLY
-- NEVER copy text directly from workspace info or features list
-- Write ORIGINAL creative marketing copy — catchy, punchy, social media style
-- Each post = unique angle, unique message
-- Think like a copywriter, not a data displayer
+## CANVAS (540px base, exports 2x)
+- 1:1 → 540×540 (1080×1080), 4:5 → 540×675, 9:16 → 540×960, 16:9 → 960×540
 
 ## OUTPUT
-Return ONLY the complete component code. No markdown fences, no backticks, no explanation. Start with import statements.`;
+Return ONLY the raw component code. No markdown fences, no backticks, no explanation. Start with imports.`;
 
-// ─── V3: Minimal — let AI be creative, just give essentials ─────────────────
+// ─── REFERENCE EXAMPLES SECTION ──────────────────────────────────────────────
 
-const STATIC_PROMPT_V3 = `You are a world-class social media designer. Generate a beautiful, creative React component for a social media post.
+function buildExamplesSection(hasAssets: boolean, assetTypes: string[]): string {
+  const examples: string[] = [];
 
-## Available
-\`\`\`tsx
-import React from 'react';
-import { useTheme } from './ThemeContext'; // const t = useTheme() → t.primary, t.primaryLight, t.primaryDark, t.accent, t.accentLight, t.accentLime, t.accentGold, t.accentOrange, t.border, t.font
-import { IPhoneMockup, IPadMockup, DesktopMockup } from './shared'; // Device mockups — props: src (image url), alt
-// Any lucide-react icons: import { Heart, Star, ... } from 'lucide-react';
-\`\`\`
+  // Always include at least 2 examples for variety
+  // Pick examples based on available assets
+  const hasMockupAssets = assetTypes.some(t => ['iphone', 'screenshot', 'ipad', 'desktop'].includes(t));
+  const hasBackgroundAssets = assetTypes.includes('background');
+  const hasProductAssets = assetTypes.includes('product');
 
-## Rules
-- Use theme colors via style props (never hardcode hex): style={{ backgroundColor: t.primary, color: t.primaryLight, fontFamily: t.font }}
-- Use <img> tags for logos, backgrounds, products. Use device mockups for screenshots.
-- Write original creative copy inspired by the brand — never copy verbatim.
-- Be wildly creative with layout, typography, decorations, gradients, shapes, blur, patterns. Surprise me.
-- Export EXACTLY ONE component as: export default function PostName() { ... }
-- Generate only ONE post per response. Never multiple components.
-- Return ONLY the component code. No markdown, no explanation.`;
+  if (hasMockupAssets) {
+    examples.push(EXAMPLE_DARK_MOCKUP);
+    examples.push(EXAMPLE_DESKTOP_ANALYTICS);
+  } else if (hasBackgroundAssets || hasProductAssets) {
+    examples.push(EXAMPLE_HERO_IMAGE);
+    examples.push(EXAMPLE_LIGHT_CREATIVE);
+    examples.push(EXAMPLE_DARK_CORPORATE);
+  } else {
+    // No assets — show variety of CSS-only + mockup patterns
+    examples.push(EXAMPLE_DARK_MOCKUP);
+    examples.push(EXAMPLE_LIGHT_CREATIVE);
+    examples.push(EXAMPLE_DARK_CORPORATE);
+  }
 
-// ─── DYNAMIC CONTEXT BUILDER (shared by all versions) ───────────────────────
+  return `## REFERENCE EXAMPLES — Study these. Match this quality level.\n${examples.join('\n\n')}`;
+}
+
+// ─── DYNAMIC CONTEXT BUILDER ─────────────────────────────────────────────────
 
 interface AssetInfo {
   id: string;
@@ -305,7 +443,7 @@ interface GenerationContext {
   assets: AssetInfo[];
 }
 
-function buildDynamicPrompt(context: GenerationContext, version: number): string {
+function buildDynamicPrompt(context: GenerationContext): string {
   const {
     brandName = "Brand",
     tagline,
@@ -328,7 +466,7 @@ function buildDynamicPrompt(context: GenerationContext, version: number): string
   brandLines.push(
     `- Language: ${
       isArabic
-        ? "Arabic for ALL text (headings, body, labels). English only for numbers/stats."
+        ? "Arabic for ALL text (headings, body, labels). English only for numbers/stats. Add dir=\"rtl\" to DraggableWrapper elements. Use className=\"text-right\" on text containers."
         : "English for all text"
     }`
   );
@@ -337,24 +475,20 @@ function buildDynamicPrompt(context: GenerationContext, version: number): string
 
   // ── Logo ──
   if (logoUrl) {
-    if (version === 2) {
-      sections.push(
-        `## LOGO (MANDATORY)\nURL: ${logoUrl}\nPass to PostHeader: <PostHeader id="..." title="${brandName}" logoUrl="${logoUrl}" ... />`
-      );
-    } else {
-      sections.push(
-        `## LOGO\nURL: ${logoUrl}\n<img src="${logoUrl}" alt="${brandName}" className="w-10 h-10 object-contain rounded-lg" />`
-      );
-    }
+    sections.push(
+      `## LOGO (MANDATORY)\nURL: ${logoUrl}\nPass to PostHeader: <PostHeader id="..." title="${brandName}" logoUrl="${logoUrl}" ... />`
+    );
   }
 
   // ── Available assets — grouped by type ──
+  const assetTypes: string[] = [];
   if (assets && assets.length > 0) {
     const grouped: Record<string, AssetInfo[]> = {};
     for (const a of assets) {
       const key = a.type || "other";
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(a);
+      if (!assetTypes.includes(key)) assetTypes.push(key);
     }
 
     const assetSections: string[] = [];
@@ -371,25 +505,23 @@ function buildDynamicPrompt(context: GenerationContext, version: number): string
       let usage = "";
       switch (type) {
         case "background":
-          usage = "USE AS: Full-bleed <img> with overlay on top. NEVER in device mockups.";
+          usage = "USE AS: Full-bleed <img> with gradient overlay on top. NEVER in device mockups.";
           break;
         case "iphone":
         case "screenshot":
-          usage = "USE AS: Inside <IPhoneMockup src={url} /> only.";
+          usage = "USE AS: Inside <IPhoneMockup src={url} /> only. Wrap mockup in isTall-responsive div.";
           break;
         case "ipad":
-          usage = "USE AS: Inside <IPadMockup src={url} /> only.";
+          usage = "USE AS: Inside <IPadMockup src={url} /> only. Wrap in isTall-responsive div.";
           break;
         case "desktop":
-          usage = "USE AS: Inside <DesktopMockup src={url} /> only.";
+          usage = "USE AS: Inside <DesktopMockup src={url} /> only. Wrap in isTall-responsive div.";
           break;
         case "product":
           usage = "USE AS: Hero product <img> with drop-shadow, positioned creatively.";
           break;
         case "logo":
-          usage = version === 2
-            ? "USE AS: Pass to PostHeader via logoUrl prop."
-            : "USE AS: Brand logo <img> in header area.";
+          usage = "USE AS: Pass to PostHeader via logoUrl prop.";
           break;
         default:
           usage = "USE AS: Best placement based on the analysis.";
@@ -403,9 +535,12 @@ function buildDynamicPrompt(context: GenerationContext, version: number): string
     );
   } else {
     sections.push(
-      `## ASSETS\nNone uploaded. Create CSS-only visuals — gradients, shapes, icons, patterns. No device mockups.`
+      `## ASSETS\nNone uploaded. Create CSS-only visuals — gradients, shapes, icons, patterns. No device mockups needed.`
     );
   }
+
+  // ── Reference examples based on asset types ──
+  sections.push(buildExamplesSection(assets && assets.length > 0, assetTypes));
 
   // ── Company info — INSPIRATION ONLY ──
   if (websiteInfo) {
@@ -425,25 +560,27 @@ function buildDynamicPrompt(context: GenerationContext, version: number): string
     }
   }
 
-  // ── Layout rules ──
-  const dirAttr = isArabic ? ' dir="rtl"' : "";
-  const textAlign = isArabic ? "text-right" : "text-left";
-
-  const conventionLines = [`- Brand name in header: "${brandName}"`];
-  if (version === 2) {
-    conventionLines.push(`- PostHeader: title="${brandName}"${logoUrl ? ` logoUrl="${logoUrl}"` : ""}`);
-    conventionLines.push(`- PostFooter: label="${brandName.toUpperCase()}" — NEVER use "SYLO"`);
-  }
+  // ── Final layout conventions ──
+  const conventionLines = [
+    `- Brand name in header: "${brandName}"`,
+    `- PostHeader: title="${brandName}"${logoUrl ? ` logoUrl="${logoUrl}"` : ""}`,
+    `- PostFooter: label="${brandName.toUpperCase()}" — NEVER use "SYLO" unless that IS the brand`,
+  ];
   if (isArabic) {
-    conventionLines.push(`- dir="rtl" on DraggableWrapper elements`);
-    conventionLines.push(`- Text: className="${textAlign}"`);
+    conventionLines.push(`- dir="rtl" on ALL DraggableWrapper elements`);
+    conventionLines.push(`- className="text-right" on text containers`);
   }
-  conventionLines.push(`- Use ${dirAttr ? `dir="rtl" and ` : ""}className="${textAlign}" on text containers`);
   conventionLines.push(`- Write ORIGINAL creative copy — catchy headlines, not feature lists`);
 
-  sections.push(`## LAYOUT RULES\n${conventionLines.join("\n")}\n\nNow create something stunning and original.`);
+  sections.push(`## LAYOUT RULES\n${conventionLines.join("\n")}`);
 
   return sections.join("\n\n");
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function cleanCode(raw: string): string {
+  return raw.replace(/^```(?:tsx?|jsx?|javascript|typescript)?\n?/gm, '').replace(/```$/gm, '').trim();
 }
 
 // ─── API ROUTE ───────────────────────────────────────────────────────────────
@@ -455,69 +592,70 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { prompt, context, count = 1, version = 1 } = await req.json();
+    const { prompt, context, count = 1 } = await req.json();
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
     const postCount = Math.min(Math.max(1, Number(count) || 1), 4);
-    const promptVersion = version === 3 ? 3 : version === 2 ? 2 : 1;
 
-    const staticPrompt = promptVersion === 3 ? STATIC_PROMPT_V3 : promptVersion === 2 ? STATIC_PROMPT_V2 : STATIC_PROMPT_V1;
     const dynamicSection = context
-      ? buildDynamicPrompt(context as GenerationContext, promptVersion)
+      ? buildDynamicPrompt(context as GenerationContext)
       : "";
     const systemPrompt = dynamicSection
-      ? `${staticPrompt}\n\n${dynamicSection}`
-      : staticPrompt;
+      ? `${SYSTEM_PROMPT}\n\n${dynamicSection}`
+      : SYSTEM_PROMPT;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
 
-    function cleanCode(raw: string): string {
-      return raw.replace(/^```(?:tsx?|jsx?|javascript|typescript)?\n?/gm, '').replace(/```$/gm, '').trim();
-    }
+    // Select creative angles and layouts for each post
+    const shuffledAngles = [...COPY_ANGLES].sort(() => Math.random() - 0.5);
+    const shuffledLayouts = [...LAYOUT_BLUEPRINTS].sort(() => Math.random() - 0.5);
 
     if (postCount === 1) {
+      const angle = shuffledAngles[0];
+      const layout = shuffledLayouts[0];
+
       const result = await model.generateContent([
         { text: systemPrompt },
-        { text: `Generate a social media post for: ${prompt}\n\nBe creative. Unique layout. Original copy.` },
+        { text: `Generate a social media post for: ${prompt}
+
+## YOUR CREATIVE DIRECTION
+Layout: "${layout.name}" — ${layout.structure}
+Decorations: ${layout.decorations}
+
+## YOUR COPY ANGLE: ${angle.angle}
+${angle.instruction}
+
+Create something stunning and original. Match the quality of the reference examples.` },
       ]);
       const code = cleanCode(result.response.text());
       return NextResponse.json({ code, codes: [code] });
     }
 
-    const layoutHints = promptVersion === 3
-      ? [
-          "Bold and dramatic — make it eye-catching",
-          "Clean and minimal — elegant with whitespace",
-          "Colorful and energetic — vibrant gradients and shapes",
-          "Dark and premium — luxury feel with subtle accents",
-        ]
-      : promptVersion === 2
-      ? [
-          "Dark bg + iPhone mockup + floating stat cards",
-          "Light bg + bold typography + CSS pattern, no device mockups",
-          "Dark bg + gradient overlay + card grid with icons",
-          "Light bg + split layout: half image, half text with stats",
-        ]
-      : [
-          "Use a Hero Image or Magazine layout — photo-dominant with bold text overlay",
-          "Use Bold Typography or Minimal layout — no mockups, oversized text, icons, whitespace",
-          "Use Card Grid or Angular layout — geometric, structured, multiple info sections",
-          "Use Split or Product Hero layout — half image half text, or centered product",
-        ];
+    const promises = Array.from({ length: postCount }, (_, i) => {
+      const angle = shuffledAngles[i % shuffledAngles.length];
+      const layout = shuffledLayouts[i % shuffledLayouts.length];
 
-    const promises = Array.from({ length: postCount }, (_, i) =>
-      model.generateContent([
+      return model.generateContent([
         { text: systemPrompt },
-        { text: `Generate a social media post for: ${prompt}\n\n${layoutHints[i % layoutHints.length]}\n\nPost ${i + 1}/${postCount} — MUST be visually distinct. Different layout, different copy angle.` },
+        { text: `Generate a social media post for: ${prompt}
+
+## YOUR CREATIVE DIRECTION (Post ${i + 1}/${postCount})
+Layout: "${layout.name}" — ${layout.structure}
+Decorations: ${layout.decorations}
+
+## YOUR COPY ANGLE: ${angle.angle}
+${angle.instruction}
+
+Post ${i + 1}/${postCount} — MUST be visually distinct from other posts. Different layout, different copy angle, different decorations. Match the quality of the reference examples.` },
       ]).then(r => cleanCode(r.response.text()))
         .catch(err => {
           console.error(`Generation ${i + 1} failed:`, err);
           return null;
-        })
-    );
+        });
+    });
 
     const results = await Promise.all(promises);
     const codes = results.filter((c): c is string => c !== null);
