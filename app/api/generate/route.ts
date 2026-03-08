@@ -3,79 +3,97 @@ import { NextRequest, NextResponse } from "next/server";
 
 // ─── STATIC TECHNICAL SECTION (never changes) ───────────────────────────────
 
-const STATIC_PROMPT = `You are an expert React component generator for social media posts. Generate a SINGLE visually stunning, UNIQUE React component. Every post you create must have a DIFFERENT layout and visual approach.
+const STATIC_PROMPT = `You are an expert React component generator for social media posts. Generate a SINGLE visually stunning, UNIQUE React component. Be wildly creative — every post must look completely different.
 
 ## IMPORTS
-Always start with these. Only import what you actually use:
 import React from 'react';
 import EditableText from './EditableText';
 import DraggableWrapper from './DraggableWrapper';
 import { useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
-// Only import shared components you need — don't import all of them:
-// import { PostHeader, PostFooter, FloatingCard, IPhoneMockup, IPadMockup, DesktopMockup } from './shared';
-// Only import icons you actually use:
-// import { Heart, Star, Flower2 } from 'lucide-react';
+// Only import device mockups if you have matching assets:
+// import { IPhoneMockup, IPadMockup, DesktopMockup } from './shared';
+// Import only the lucide-react icons you use:
+// import { Heart, Star, Flower2, Gift, Truck } from 'lucide-react';
 
 ## THEME (MANDATORY - never hardcode colors)
 const t = useTheme();
-Colors: t.primary (dark), t.primaryLight (light bg), t.primaryDark (darkest), t.accent (medium), t.accentLight, t.accentLime (bright), t.accentGold, t.accentOrange, t.border, t.font (font family)
-Apply via style props: style={{ backgroundColor: t.primary, color: t.primaryLight }}
-NEVER use Tailwind color classes like bg-[#1B4332].
+t.primary (dark), t.primaryLight (light bg), t.primaryDark (darkest), t.accent (medium), t.accentLight, t.accentLime (bright), t.accentGold, t.accentOrange, t.border, t.font (font family)
+Apply via style props ONLY: style={{ backgroundColor: t.primary, color: t.primaryLight }}
+NEVER use Tailwind color classes like bg-[#1B4332]. NEVER hardcode hex colors.
 
 ## ASPECT RATIO (MANDATORY)
 const ratio = useAspectRatio();
 const isTall = ratio === '9:16' || ratio === '3:4';
 
-## AVAILABLE COMPONENTS (use only what the design needs)
+## CORE COMPONENTS
 
-**<PostHeader>** — Optional top bar with brand logo. Props: id, title, subtitle, badge (JSX), variant ("dark"|"light"), logoUrl
-**<PostFooter>** — Optional bottom bar. Props: id, label, text, icon (JSX), variant ("dark"|"light")
-**<FloatingCard>** — Optional floating stat card. Props: id, icon, label, value, className, rotate, borderColor, animation ("float"|"float-slow"|"none")
-**<EditableText>** — MANDATORY: wrap ALL visible text. Props: as ("h2"|"p"|"span"), className, style
-**<DraggableWrapper>** — MANDATORY: wrap all moveable content sections. Props: id (unique), className, variant ("mockup" for devices), dir
+**<EditableText>** — MANDATORY: wrap ALL visible text. Props: as ("h2"|"p"|"span"|"h3"), className, style. Default renders as span.
+**<DraggableWrapper>** — MANDATORY: wrap every content block so user can reposition. Props: id (unique string), className, variant ("mockup" for devices), dir ("rtl" for Arabic)
 
-Device mockups (only use when matching asset type is available):
-**<IPhoneMockup>** — Props: src, alt, notch ("pill"|"notch")
-**<IPadMockup>** — Props: src, alt, orientation ("landscape"|"portrait")
-**<DesktopMockup>** — Props: src, alt, url, trafficLights
+## DEVICE MOCKUPS (only when matching assets exist)
+Import from './shared'. Always wrap in a sized div:
+
+**<IPhoneMockup>** — src (image URL), alt, notch ("pill"|"notch")
+Size: isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'
+
+**<IPadMockup>** — src, alt, orientation ("landscape"|"portrait")
+Size landscape: isTall ? 'w-[420px] h-[300px]' : 'w-[320px] h-[220px]'
+Size portrait: isTall ? 'w-[260px] h-[360px]' : 'w-[200px] h-[280px]'
+
+**<DesktopMockup>** — src, alt, url (shown in browser bar), trafficLights (boolean)
+Size: isTall ? 'w-[420px] h-[280px]' : 'w-[360px] h-[240px]'
 
 ## SIZING REFERENCE
-Device mockup wrapper sizes:
-- IPhoneMockup: isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'
-- IPadMockup landscape: isTall ? 'w-[420px] h-[300px]' : 'w-[320px] h-[220px]'
-- IPadMockup portrait: isTall ? 'w-[260px] h-[360px]' : 'w-[200px] h-[280px]'
-- DesktopMockup: isTall ? 'w-[420px] h-[280px]' : 'w-[360px] h-[240px]'
-
-Root div: className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}
-Content wrapper: className="relative z-10 w-full h-full flex flex-col p-8"
+Root: className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}
+Content: className="relative z-10 w-full h-full flex flex-col" with padding p-6 to p-10
+Headings: text-3xl to text-6xl font-black
+Subtext: text-base to text-xl
+Small labels: text-[10px] to text-xs uppercase tracking-widest font-bold
+Icons: size={14} to size={28}
+Stat cards: min-w-[100px] p-3 rounded-xl
+Logo images: w-8 h-8 to w-12 h-12 object-contain rounded-lg
 
 ## ASSET TYPE RULES (CRITICAL)
-- **background** → Full-bleed: <img src={url} className="absolute inset-0 w-full h-full object-cover" /> + overlay on top. NEVER in device mockups.
+- **background** → <img src={url} className="absolute inset-0 w-full h-full object-cover" /> + overlay. NEVER in mockups.
 - **screenshot/iphone** → ONLY inside <IPhoneMockup>. NEVER as background.
 - **screenshot/ipad** → ONLY inside <IPadMockup>. NEVER as background.
 - **screenshot/desktop** → ONLY inside <DesktopMockup>. NEVER as background.
-- **product** → Hero image: <img src={url} className="w-64 h-64 object-contain drop-shadow-2xl" />
-- **logo** → Pass to PostHeader logoUrl prop.
-- NEVER put background images in mockups. NEVER use screenshots as backgrounds.
+- **product** → <img src={url} className="w-48 h-48 to w-72 h-72 object-contain drop-shadow-2xl" />
+- **logo** → <img src={url} className="w-10 h-10 object-contain rounded-lg" /> in your header area
+- NEVER put background images in mockups.
 
-## DESIGN VARIETY (be creative, never repeat)
-Pick a DIFFERENT layout each time:
-A) Hero Image — full-bleed photo bg with text overlay
-B) Device Showcase — mockup + floating cards
-C) Split — half image, half text
-D) Bold Typography — oversized text, no images, patterns + icons
-E) Card Grid — 2-3 info cards with icons
-F) Centered Product — product image hero
-G) Magazine — photo 60-70% with text panel
-H) Minimal — light bg, clean hierarchy, whitespace
-I) Diagonal — clip-path angles, overlapping sections
-J) Quote — large decorative quote text
+## DESIGN APPROACH
+Build everything from scratch with Tailwind + inline styles. Create your own:
+- Headers (brand logo + name + tagline)
+- Stat cards, badges, tags
+- Decorative elements (shapes, gradients, patterns, glows)
+- Creative layouts (grids, splits, overlaps, diagonals)
 
-Also vary: light vs dark bg, text position, number of cards (0-3), icon choices, font sizes.
+Design families to pick from (vary each time!):
+A) Hero Image — full-bleed photo, bold text overlay, cinematic feel
+B) Device Showcase — mockup centered, stats floating around
+C) Split — half photo/half text, or diagonal split
+D) Bold Typography — massive text, no images, pattern bg, icon accents
+E) Card Grid — 2-4 feature cards with icons
+F) Product Hero — product image floating with badges
+G) Magazine Cover — photo dominant, text bar at bottom
+H) Minimal White — light bg, tons of whitespace, one color pop
+I) Angular/Geometric — clip-path shapes, overlapping colored sections
+J) Quote/Testimonial — oversized decorative quote marks, centered text
+
+Vary: dark vs light bg, text alignment, element count, icon choices, spacing, decorative patterns.
+
+## CONTENT WRITING RULES (CRITICAL)
+- The workspace/company info is for INSPIRATION ONLY — understand the brand, then write ORIGINAL creative copy
+- NEVER copy text directly from workspace info or features list
+- Write catchy, creative marketing headlines — think like a copywriter, not a data displayer
+- Each post should have a unique angle/message even for the same brand
+- Use metaphors, power words, emotional language
+- Keep it short and punchy — social media style
 
 ## OUTPUT
-Return ONLY the component code. No markdown, no backticks, no explanation.`;
+Return ONLY the raw component code. No markdown fences, no backticks, no explanation. Start with imports.`;
 
 // ─── DYNAMIC CONTEXT BUILDER ─────────────────────────────────────────────────
 
@@ -128,32 +146,31 @@ function buildDynamicPrompt(context: GenerationContext): string {
   } = context;
 
   const isArabic = language === "ar";
-
   const sections: string[] = [];
 
   // ── Brand context ──
-  const brandLines: string[] = [`- Brand: ${brandName}`];
+  const brandLines: string[] = [`- Brand name: ${brandName}`];
   if (tagline) brandLines.push(`- Tagline: ${tagline}`);
   if (industry) brandLines.push(`- Industry: ${industry}`);
   if (website) brandLines.push(`- Website: ${website}`);
   brandLines.push(
     `- Language: ${
       isArabic
-        ? "Use Arabic text for ALL content (headings, descriptions, labels). English only for numbers/stats."
-        : "Use English for all text"
+        ? "Arabic for ALL text (headings, body, labels). English only for numbers/stats."
+        : "English for all text"
     }`
   );
 
-  sections.push(`## BRAND CONTEXT\n${brandLines.join("\n")}`);
+  sections.push(`## BRAND\n${brandLines.join("\n")}`);
 
   // ── Logo ──
   if (logoUrl) {
     sections.push(
-      `## LOGO (MANDATORY)\nBrand logo URL: ${logoUrl}\nYou MUST pass it to PostHeader: <PostHeader id="..." title="${brandName}" logoUrl="${logoUrl}" ... />`
+      `## LOGO\nURL: ${logoUrl}\nDisplay it in your header area: <img src="${logoUrl}" alt="${brandName}" className="w-10 h-10 object-contain rounded-lg" />`
     );
   }
 
-  // ── Available assets — grouped by type with usage instructions ──
+  // ── Available assets — grouped by type ──
   if (assets && assets.length > 0) {
     const grouped: Record<string, AssetInfo[]> = {};
     for (const a of assets) {
@@ -176,86 +193,70 @@ function buildDynamicPrompt(context: GenerationContext): string {
       let usage = "";
       switch (type) {
         case "background":
-          usage = "USE AS: Full-bleed background image with <img src={url} className=\"absolute inset-0 w-full h-full object-cover\" /> then add a dark/light overlay div on top. NEVER put these inside device mockups.";
+          usage = "USE AS: Full-bleed <img> with overlay on top. NEVER in device mockups.";
           break;
         case "iphone":
         case "screenshot":
-          usage = "USE AS: Screenshot inside <IPhoneMockup src={url} /> or <DesktopMockup src={url} />. NEVER use as background.";
+          usage = "USE AS: Inside <IPhoneMockup src={url} /> only.";
           break;
         case "ipad":
-          usage = "USE AS: Screenshot inside <IPadMockup src={url} />. NEVER use as background.";
+          usage = "USE AS: Inside <IPadMockup src={url} /> only.";
           break;
         case "desktop":
-          usage = "USE AS: Screenshot inside <DesktopMockup src={url} />. NEVER use as background.";
+          usage = "USE AS: Inside <DesktopMockup src={url} /> only.";
           break;
         case "product":
-          usage = "USE AS: Hero product image with <img src={url} className=\"w-64 h-64 object-contain drop-shadow-2xl\" />. Position creatively — centered, offset, or with text wrapping around it.";
+          usage = "USE AS: Hero product <img> with drop-shadow, positioned creatively.";
           break;
         case "logo":
-          usage = "USE AS: Pass to PostHeader via logoUrl prop.";
+          usage = "USE AS: Brand logo <img> in header area.";
           break;
         default:
-          usage = "USE AS: Choose the best placement based on the AI analysis above.";
+          usage = "USE AS: Best placement based on the analysis.";
       }
 
-      assetSections.push(`### ${type.toUpperCase()} assets (${items.length}):\n${usage}\n${lines}`);
+      assetSections.push(`### ${type.toUpperCase()} (${items.length}):\n${usage}\n${lines}`);
     }
 
     sections.push(
-      `## AVAILABLE ASSETS (MANDATORY — use these, NEVER use /1.jpg or hardcoded paths)\n${assetSections.join("\n\n")}`
+      `## ASSETS (use these — NEVER use /1.jpg or hardcoded paths)\n${assetSections.join("\n\n")}`
     );
   } else {
     sections.push(
-      `## ASSETS\nNo assets uploaded. Create CSS-only visuals — use gradients, geometric shapes, lucide-react icons, and patterns. Do NOT use IPhoneMockup, IPadMockup, or DesktopMockup. Focus on bold typography, icon compositions, and creative CSS layouts.`
+      `## ASSETS\nNone uploaded. Create CSS-only visuals — gradients, shapes, icons, patterns. No device mockups.`
     );
   }
 
-  // ── Product info from website ──
+  // ── Company info — INSPIRATION ONLY ──
   if (websiteInfo) {
     const infoLines: string[] = [];
     if (websiteInfo.companyName) infoLines.push(`Company: ${websiteInfo.companyName}`);
-    if (websiteInfo.description) infoLines.push(`About: ${websiteInfo.description}`);
+    if (websiteInfo.description) infoLines.push(`What they do: ${websiteInfo.description}`);
     if (websiteInfo.industry) infoLines.push(`Industry: ${websiteInfo.industry}`);
     if (websiteInfo.features && websiteInfo.features.length > 0) {
-      infoLines.push(`Key Features: ${websiteInfo.features.join(", ")}`);
+      infoLines.push(`Their features/services: ${websiteInfo.features.join(", ")}`);
     }
-    if (websiteInfo.targetAudience) infoLines.push(`Target Audience: ${websiteInfo.targetAudience}`);
-    if (websiteInfo.tone) infoLines.push(`Brand Tone: ${websiteInfo.tone}`);
-    if (websiteInfo.contact) {
-      const contactParts: string[] = [];
-      if (websiteInfo.contact.phone) contactParts.push(`Phone: ${websiteInfo.contact.phone}`);
-      if (websiteInfo.contact.email) contactParts.push(`Email: ${websiteInfo.contact.email}`);
-      if (websiteInfo.contact.address) contactParts.push(`Address: ${websiteInfo.contact.address}`);
-      if (contactParts.length > 0) infoLines.push(`Contact: ${contactParts.join(", ")}`);
-    }
-    if (websiteInfo.content) infoLines.push(`Website Content: ${websiteInfo.content}`);
+    if (websiteInfo.targetAudience) infoLines.push(`Audience: ${websiteInfo.targetAudience}`);
+    if (websiteInfo.tone) infoLines.push(`Brand tone: ${websiteInfo.tone}`);
     if (infoLines.length > 0) {
       sections.push(
-        `## COMPANY INFO (from website analysis)\nUse this info to write relevant, specific copy — not generic placeholder text:\n${infoLines.join("\n")}`
+        `## COMPANY CONTEXT (INSPIRATION ONLY — do NOT copy this text)\nUse this to understand the brand, then write your OWN creative copy. Never repeat these words verbatim.\n${infoLines.join("\n")}`
       );
     }
   }
 
-  // ── Component conventions ──
-  const footerSubtitle = isArabic ? "للأعمال" : "Platform";
+  // ── Layout rules ──
   const dirAttr = isArabic ? ' dir="rtl"' : "";
   const textAlign = isArabic ? "text-right" : "text-left";
 
-  sections.push(`## COMPONENT CONVENTIONS (CRITICAL)
-- ALWAYS use title="${brandName}" in PostHeader — NEVER use "SYLO" or any other name
-${logoUrl ? `- ALWAYS pass logoUrl="${logoUrl}" to PostHeader` : ""}
-- For PostFooter: use label="${brandName.toUpperCase()} ${footerSubtitle}" with relevant text in ${isArabic ? "Arabic" : "English"}
-${isArabic ? `- Use dir="rtl" on DraggableWrapper elements for Arabic layout\n- Text alignment: ${textAlign}` : ""}
+  sections.push(`## LAYOUT RULES
+- Brand name in header: "${brandName}"
+${isArabic ? `- dir="rtl" on DraggableWrapper elements\n- Text: className="${textAlign}"` : ""}
 - Use ${dirAttr ? `dir="rtl" and ` : ""}className="${textAlign}" on text containers
+- Write ORIGINAL creative copy inspired by the brand — catchy headlines, not feature lists
+- Each post = unique angle, unique message, unique visual approach
 
-## CREATIVITY INSTRUCTIONS
-- Do NOT copy the example layout below — use it only to understand the code structure
-- Pick a random layout family from the DESIGN VARIETY section above
-- Use the brand's actual features/products in your copy, not generic text
-- Vary background treatments: photo backgrounds, gradients, split designs, minimal white
-- If background assets are available, strongly prefer using them as full-bleed backgrounds with overlays`);
-
-  sections.push(`Now create something visually DIFFERENT and CREATIVE. Surprise me with the layout.`);
+Now create something stunning and original.`);
 
   return sections.join("\n\n");
 }
@@ -276,7 +277,6 @@ export async function POST(req: NextRequest) {
 
     const postCount = Math.min(Math.max(1, Number(count) || 1), 4);
 
-    // Build the full system prompt: static technical docs + dynamic brand context
     const dynamicSection = context
       ? buildDynamicPrompt(context as GenerationContext)
       : "";
@@ -294,24 +294,24 @@ export async function POST(req: NextRequest) {
     if (postCount === 1) {
       const result = await model.generateContent([
         { text: systemPrompt },
-        { text: `Generate a social media post component for: ${prompt}\n\nIMPORTANT: Be creative with the layout. Pick a unique visual approach.` },
+        { text: `Generate a social media post for: ${prompt}\n\nBe creative. Unique layout. Original copy.` },
       ]);
       const code = cleanCode(result.response.text());
       return NextResponse.json({ code, codes: [code] });
     }
 
-    // Generate multiple posts in parallel
+    // Generate multiple posts in parallel with different layout hints
     const layoutHints = [
-      "Use Layout A (Hero Image) or Layout G (Magazine Style) — full-bleed photo background with text overlay",
-      "Use Layout D (Bold Typography) or Layout H (Minimal & Clean) — no device mockups, focus on large text and icons",
-      "Use Layout E (Card Grid) or Layout I (Diagonal/Angular) — creative geometric layout with stats",
-      "Use Layout C (Split Composition) or Layout F (Centered Product) — half image, half text design",
+      "Use a Hero Image or Magazine layout — photo-dominant with bold text overlay",
+      "Use Bold Typography or Minimal layout — no mockups, oversized text, icons, whitespace",
+      "Use Card Grid or Angular layout — geometric, structured, multiple info sections",
+      "Use Split or Product Hero layout — half image half text, or centered product",
     ];
 
     const promises = Array.from({ length: postCount }, (_, i) =>
       model.generateContent([
         { text: systemPrompt },
-        { text: `Generate a social media post component for: ${prompt}\n\n${layoutHints[i % layoutHints.length]}\n\nPost ${i + 1} of ${postCount} — make this one VISUALLY DISTINCT from the others.` },
+        { text: `Generate a social media post for: ${prompt}\n\n${layoutHints[i % layoutHints.length]}\n\nPost ${i + 1}/${postCount} — MUST be visually distinct from others. Different layout, different copy angle.` },
       ]).then(r => cleanCode(r.response.text()))
         .catch(err => {
           console.error(`Generation ${i + 1} failed:`, err);
