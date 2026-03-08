@@ -35,24 +35,40 @@ const isTall = ratio === '9:16' || ratio === '3:4';
 Import from './shared'. Always wrap in a sized div:
 
 **<IPhoneMockup>** — src (image URL), alt, notch ("pill"|"notch")
-Size: isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'
+Size: isTall ? 'w-[200px] h-[400px]' : 'w-[180px] h-[340px]'
 
 **<IPadMockup>** — src, alt, orientation ("landscape"|"portrait")
-Size landscape: isTall ? 'w-[420px] h-[300px]' : 'w-[320px] h-[220px]'
-Size portrait: isTall ? 'w-[260px] h-[360px]' : 'w-[200px] h-[280px]'
+Size landscape: isTall ? 'w-[320px] h-[230px]' : 'w-[280px] h-[200px]'
+Size portrait: isTall ? 'w-[200px] h-[280px]' : 'w-[180px] h-[250px]'
 
 **<DesktopMockup>** — src, alt, url (shown in browser bar), trafficLights (boolean)
-Size: isTall ? 'w-[420px] h-[280px]' : 'w-[360px] h-[240px]'
+Size: isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]'
 
-## SIZING REFERENCE
+## RENDER DIMENSIONS (CRITICAL)
+Your component renders on a ~540px wide canvas, then exports at 2x for social media (1080px).
+Design canvas sizes:
+- 1:1 → 540×540px (exports 1080×1080)
+- 4:5 → 540×675px (exports 1080×1350)
+- 3:4 → 540×720px (exports 1080×1440)
+- 4:3 → 540×405px (exports 1080×810)
+- 9:16 → 540×960px (exports 1080×1920)
+- 16:9 → 960×540px (exports 1920×1080)
+
+## SIZING REFERENCE (calibrated for 540px canvas — USE THESE EXACT SIZES)
 Root: className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}
-Content: className="relative z-10 w-full h-full flex flex-col" with padding p-6 to p-10
-Headings: text-3xl to text-6xl font-black
-Subtext: text-base to text-xl
-Small labels: text-[10px] to text-xs uppercase tracking-widest font-bold
-Icons: size={14} to size={28}
-Stat cards: min-w-[100px] p-3 rounded-xl
-Logo images: w-8 h-8 to w-12 h-12 object-contain rounded-lg
+Content: className="relative z-10 w-full h-full flex flex-col p-8" (always p-8, never smaller)
+Main heading: className="text-4xl font-black" (MINIMUM text-4xl, prefer text-5xl for hero headlines)
+Subheading: className="text-lg font-bold" to "text-xl font-bold"
+Body text: className="text-base" to "text-lg"
+Small labels/badges: className="text-xs uppercase tracking-widest font-bold"
+Icons in text: size={16} to size={20}
+Decorative icons: size={24} to size={32}
+Stat cards: min-w-[120px] p-4 rounded-xl
+Logo images: w-10 h-10 to w-12 h-12 object-contain rounded-lg
+Decorative blobs/glows: w-[250px] h-[250px] to w-[350px] h-[350px]
+Phone mockup (CSS): w-48 h-80 (192×320px) — takes ~35% of width
+Feature cards: p-4 to p-6, gap-3 between them
+IMPORTANT: Text must be BOLD and LARGE. Never use text-sm or text-xs for visible content. The post will be viewed on mobile feeds.
 
 ## ASSET TYPE RULES (CRITICAL)
 - **background** → <img src={url} className="absolute inset-0 w-full h-full object-cover" /> + overlay. NEVER in mockups.
@@ -147,16 +163,16 @@ Props: id, label (use actual brand name — NEVER "SYLO"), text, icon (JSX), var
 Props: id, icon, label, value, className, rotate (number), borderColor, animation ("float"|"float-slow"|"none")
 
 ### <IPhoneMockup> — iPhone device frame
-Wrap in sized div: \`className={isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}\`
+Wrap in sized div: \`className={isTall ? 'w-[200px] h-[400px]' : 'w-[180px] h-[340px]'}\`
 Props: src (required), alt, notch ("pill"|"notch")
 
 ### <IPadMockup> — iPad device frame
-Landscape: \`className={isTall ? 'w-[420px] h-[300px]' : 'w-[320px] h-[220px]'}\`
-Portrait: \`className={isTall ? 'w-[260px] h-[360px]' : 'w-[200px] h-[280px]'}\`
+Landscape: \`className={isTall ? 'w-[320px] h-[230px]' : 'w-[280px] h-[200px]'}\`
+Portrait: \`className={isTall ? 'w-[200px] h-[280px]' : 'w-[180px] h-[250px]'}\`
 Props: src (required), alt, orientation ("landscape"|"portrait")
 
 ### <DesktopMockup> — Browser window frame
-Size: \`className={isTall ? 'w-[420px] h-[280px]' : 'w-[360px] h-[240px]'}\`
+Size: \`className={isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]'}\`
 Props: src (required), alt, url (address bar text), trafficLights (boolean)
 
 ## Mandatory Wrappers
@@ -184,9 +200,28 @@ Props: src (required), alt, url (address bar text), trafficLights (boolean)
 <div className="absolute inset-0 opacity-[0.05]" style={{backgroundImage: \\\`radial-gradient(\\\${t.primary} 1px, transparent 1px)\\\`, backgroundSize: '20px 20px'}} />
 \`\`\`
 
+## RENDER DIMENSIONS (CRITICAL)
+Your component renders on a ~540px wide canvas, then exports at 2x for social media (1080px).
+Design canvas sizes:
+- 1:1 → 540×540px (exports 1080×1080)
+- 4:5 → 540×675px (exports 1080×1350)
+- 9:16 → 540×960px (exports 1080×1920)
+
+## Sizing Guide (calibrated for 540px canvas — USE THESE EXACT SIZES)
+- Main heading: text-4xl to text-5xl font-black (MINIMUM text-4xl, never smaller)
+- Subheading: text-lg to text-xl font-bold
+- Body: text-base to text-lg
+- Labels/badges: text-xs uppercase tracking-widest font-bold
+- Icons in text: size={16} to size={20}. Decorative: size={24} to size={32}
+- Content padding: p-8 (always, never smaller)
+- Gaps: gap-3 to gap-6
+- Stat cards: min-w-[120px] p-4
+- Decorative blobs: w-[250px] to w-[350px]
+- IMPORTANT: Text must be BOLD and LARGE. Never text-sm for visible content. Posts viewed on mobile feeds.
+
 ## Design Rules
 - Root div: \`className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"\` with \`style={{ backgroundColor: t.primary, fontFamily: t.font }}\`
-- Content wrapper: \`className="relative z-10 w-full h-full flex flex-col p-8"\`
+- Content wrapper: \`className="relative z-10 w-full h-full flex flex-col p-8"\` (always p-8, never smaller)
 - Alternate dark bg (t.primary) and light bg (t.primaryLight)
 - Each post highlights ONE feature with a creative visual metaphor
 - Icons only from lucide-react
@@ -211,7 +246,28 @@ Props: src (required), alt, url (address bar text), trafficLights (boolean)
 ## OUTPUT
 Return ONLY the complete component code. No markdown fences, no backticks, no explanation. Start with import statements.`;
 
-// ─── DYNAMIC CONTEXT BUILDER (shared by both versions) ──────────────────────
+// ─── V3: Minimal — let AI be creative, just give essentials ─────────────────
+
+const STATIC_PROMPT_V3 = `You are a world-class social media designer. Generate a beautiful, creative React component for a social media post.
+
+## Available
+\`\`\`tsx
+import React from 'react';
+import { useTheme } from './ThemeContext'; // const t = useTheme() → t.primary, t.primaryLight, t.primaryDark, t.accent, t.accentLight, t.accentLime, t.accentGold, t.accentOrange, t.border, t.font
+import { IPhoneMockup, IPadMockup, DesktopMockup } from './shared'; // Device mockups — props: src (image url), alt
+// Any lucide-react icons: import { Heart, Star, ... } from 'lucide-react';
+\`\`\`
+
+## Rules
+- Use theme colors via style props (never hardcode hex): style={{ backgroundColor: t.primary, color: t.primaryLight, fontFamily: t.font }}
+- Use <img> tags for logos, backgrounds, products. Use device mockups for screenshots.
+- Write original creative copy inspired by the brand — never copy verbatim.
+- Be wildly creative with layout, typography, decorations, gradients, shapes, blur, patterns. Surprise me.
+- Export EXACTLY ONE component as: export default function PostName() { ... }
+- Generate only ONE post per response. Never multiple components.
+- Return ONLY the component code. No markdown, no explanation.`;
+
+// ─── DYNAMIC CONTEXT BUILDER (shared by all versions) ───────────────────────
 
 interface AssetInfo {
   id: string;
@@ -287,7 +343,7 @@ function buildDynamicPrompt(context: GenerationContext, version: number): string
       );
     } else {
       sections.push(
-        `## LOGO\nURL: ${logoUrl}\nDisplay in your header: <img src="${logoUrl}" alt="${brandName}" className="w-10 h-10 object-contain rounded-lg" />`
+        `## LOGO\nURL: ${logoUrl}\n<img src="${logoUrl}" alt="${brandName}" className="w-10 h-10 object-contain rounded-lg" />`
       );
     }
   }
@@ -405,9 +461,9 @@ export async function POST(req: NextRequest) {
     }
 
     const postCount = Math.min(Math.max(1, Number(count) || 1), 4);
-    const promptVersion = version === 2 ? 2 : 1;
+    const promptVersion = version === 3 ? 3 : version === 2 ? 2 : 1;
 
-    const staticPrompt = promptVersion === 2 ? STATIC_PROMPT_V2 : STATIC_PROMPT_V1;
+    const staticPrompt = promptVersion === 3 ? STATIC_PROMPT_V3 : promptVersion === 2 ? STATIC_PROMPT_V2 : STATIC_PROMPT_V1;
     const dynamicSection = context
       ? buildDynamicPrompt(context as GenerationContext, promptVersion)
       : "";
@@ -431,7 +487,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ code, codes: [code] });
     }
 
-    const layoutHints = promptVersion === 2
+    const layoutHints = promptVersion === 3
+      ? [
+          "Bold and dramatic — make it eye-catching",
+          "Clean and minimal — elegant with whitespace",
+          "Colorful and energetic — vibrant gradients and shapes",
+          "Dark and premium — luxury feel with subtle accents",
+        ]
+      : promptVersion === 2
       ? [
           "Dark bg + iPhone mockup + floating stat cards",
           "Light bg + bold typography + CSS pattern, no device mockups",

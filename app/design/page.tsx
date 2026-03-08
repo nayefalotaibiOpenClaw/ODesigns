@@ -140,7 +140,7 @@ export default function DesignPage() {
   const [generatedPosts, setGeneratedPosts] = useState<{ id: string; code: string }[]>([]);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [generateCount, setGenerateCount] = useState(2);
-  const [generateVersion, setGenerateVersion] = useState<1 | 2>(1);
+  const [generateVersion, setGenerateVersion] = useState<1 | 2 | 3>(1);
   const [codeViewPosts, setCodeViewPosts] = useState<Set<string>>(new Set());
   const [fetchingWebsite, setFetchingWebsite] = useState(false);
   const [websiteScreenshot, setWebsiteScreenshot] = useState<string | null>(null);
@@ -1083,7 +1083,7 @@ export default function DesignPage() {
                   <div className="flex-1">
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 block">Engine</label>
                     <div className="flex gap-1">
-                      {([1, 2] as const).map((v) => (
+                      {([1, 2, 3] as const).map((v) => (
                         <button
                           key={v}
                           onClick={() => setGenerateVersion(v)}
@@ -1093,7 +1093,7 @@ export default function DesignPage() {
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
-                          {v === 1 ? 'V1' : 'V2'}
+                          V{v}
                         </button>
                       ))}
                     </div>

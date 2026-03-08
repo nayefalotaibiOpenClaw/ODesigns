@@ -4,16 +4,20 @@ import React, { useRef, useEffect, useState } from "react";
 import { Download, Loader2, Video } from "lucide-react";
 import { toPng, toCanvas } from "html-to-image";
 
+// Design canvas sizes — kept small for viewport rendering.
+// Export uses pixelRatio: 2 to hit social media resolution (1080×1080, 1080×1350, etc.)
 const SIZES: Record<string, { width: number; height: number }> = {
   "1:1":  { width: 540, height: 540 },
+  "4:5":  { width: 540, height: 675 },
   "3:4":  { width: 540, height: 720 },
   "4:3":  { width: 540, height: 405 },
   "9:16": { width: 540, height: 960 },
-  "16:9": { width: 540, height: 304 },
+  "16:9": { width: 960, height: 540 },
 };
 
 const ASPECT_RATIOS: Record<string, string> = {
   "1:1":  "1 / 1",
+  "4:5":  "4 / 5",
   "3:4":  "3 / 4",
   "4:3":  "4 / 3",
   "9:16": "9 / 16",

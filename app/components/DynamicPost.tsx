@@ -21,13 +21,19 @@ interface DynamicPostProps {
 export default function DynamicPost({ code }: DynamicPostProps) {
   const Component = useMemo(() => {
     try {
-      // Remove import statements - we provide everything via scope
-      const codeWithoutImports = code
+      // Remove import statements and strip all 'export' keywords
+      let codeWithoutImports = code
         .replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '')
-        .replace(/^export\s+default\s+function\s+(\w+)/m, 'const __Component__ = function $1')
-        .replace(/^export\s+default\s+/m, 'const __Component__ = ')
         .replace(/^export\s+\{[^}]*\};?\s*$/gm, '')
-        .replace(/^export\s+function\s+(\w+)/m, 'const __Component__ = function $1');
+        .replace(/^export\s+default\s+/gm, '')
+        .replace(/^export\s+/gm, '');
+
+      // Find the first component (function or const arrow) and alias it as __Component__
+      const fnMatch = codeWithoutImports.match(/^(const|function)\s+(\w+)/m);
+      if (fnMatch) {
+        const name = fnMatch[2];
+        codeWithoutImports += `\nconst __Component__ = ${name};`;
+      }
 
       // Transpile JSX to JS
       const { code: jsCode } = transform(codeWithoutImports, {
