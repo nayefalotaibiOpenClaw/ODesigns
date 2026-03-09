@@ -548,7 +548,7 @@ export const calculatePlanChange = query({
     const isUpgrade = newRank > currentRank || (newRank === currentRank && newPlanPrice > (sub.amountPaid || 0));
 
     if (isUpgrade) {
-      const amountToCharge = Math.max(0, Math.round((newPlanPrice - credit) * 100) / 100);
+      const amountToCharge = Math.max(1, Math.round((newPlanPrice - credit) * 100) / 100);
       return {
         type: "upgrade" as const,
         currentPlan: sub.plan,
@@ -591,6 +591,7 @@ export const downgrade = mutation({
     const sub = await findUsableSub(ctx, userId);
 
     if (!sub) throw new Error("No active subscription");
+    if (sub.status === "cancelled") throw new Error("Cannot downgrade a cancelled subscription");
     if (sub.plan === "trial") throw new Error("Cannot downgrade a free trial");
     if (sub.expiresAt < Date.now()) throw new Error("Subscription expired");
 
