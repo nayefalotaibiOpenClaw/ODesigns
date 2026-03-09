@@ -229,7 +229,6 @@ describe("Convex Mutations: Auth Guards", () => {
         plan: "starter",
         billingPeriod: "monthly",
         orderId: uniqueOrderId(),
-        amount: 40,
         currency: "USD",
       })
     ).rejects.toThrow();

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
 
 const UPAYMENTS_BASE_URL = process.env.UPAYMENTS_BASE_URL;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL;
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
 const PLAN_PRICES: Record<string, { monthly: { amount: number; name: string }; yearly: { amount: number; name: string } }> = {
   starter: {
@@ -39,6 +42,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order ID required" }, { status: 400 });
     }
 
+    // Look up the pending payment from Convex to get the server-computed amount
+    // This prevents clients from manipulating the charge amount
+    const convex = new ConvexHttpClient(CONVEX_URL);
+    const payment = await convex.query(api.payments.getPendingAmount, { orderId: clientOrderId });
+
+    if (!payment) {
+      return NextResponse.json({ error: "Payment record not found. Create a pending payment first." }, { status: 400 });
+    }
+    if (payment.status !== "pending") {
+      return NextResponse.json({ error: "Payment already processed" }, { status: 400 });
+    }
+
+    // Use the server-computed amount from the payment record
+    const chargeAmount = payment.amount;
     const planInfo = PLAN_PRICES[plan][period];
     const orderId = clientOrderId;
 
@@ -46,8 +63,8 @@ export async function POST(req: NextRequest) {
       products: [
         {
           name: planInfo.name,
-          description: `oDesigns${planInfo.name}`,
-          price: planInfo.amount,
+          description: `oDesigns ${planInfo.name}`,
+          price: chargeAmount,
           quantity: 1,
         },
       ],
@@ -56,7 +73,7 @@ export async function POST(req: NextRequest) {
         reference: orderId,
         description: `oDesigns${planInfo.name} Subscription`,
         currency: "USD",
-        amount: planInfo.amount,
+        amount: chargeAmount,
       },
       language: "en",
       reference: {

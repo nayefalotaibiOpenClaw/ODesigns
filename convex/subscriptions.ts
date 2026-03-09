@@ -35,6 +35,31 @@ const BILLING_DURATION = {
   yearly: 365 * 24 * 60 * 60 * 1000,
 } as const;
 
+// Helper to find user's usable subscription (active or cancelled but not yet expired)
+async function findUsableSub(ctx: { db: any }, userId: any) {
+  // Check active first
+  const activeSub = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_user_status", (q: any) =>
+      q.eq("userId", userId).eq("status", "active")
+    )
+    .first();
+
+  if (activeSub && activeSub.expiresAt >= Date.now()) return activeSub;
+
+  // Check cancelled — still usable until expiresAt
+  const cancelledSub = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_user_status", (q: any) =>
+      q.eq("userId", userId).eq("status", "cancelled")
+    )
+    .first();
+
+  if (cancelledSub && cancelledSub.expiresAt >= Date.now()) return cancelledSub;
+
+  return null;
+}
+
 // Get user's active subscription
 export const getActive = query({
   args: {},
@@ -42,17 +67,7 @@ export const getActive = query({
     const userId = await auth.getUserId(ctx);
     if (!userId) return null;
 
-    const sub = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", userId).eq("status", "active")
-      )
-      .first();
-
-    if (!sub) return null;
-    if (sub.expiresAt < Date.now()) return null;
-
-    return sub;
+    return await findUsableSub(ctx, userId);
   },
 });
 
@@ -63,34 +78,33 @@ export const getUsage = query({
     const userId = await auth.getUserId(ctx);
     if (!userId) return null;
 
-    const sub = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", userId).eq("status", "active")
-      )
-      .first();
+    const sub = await findUsableSub(ctx, userId);
 
-    const now = Date.now();
-
-    // Expired subscription
-    if (sub && sub.expiresAt < now) {
-      return {
-        plan: sub.plan,
-        status: "expired" as const,
-        postsUsed: sub.postsUsed,
-        postsLimit: sub.postsLimit,
-        aiTokensUsed: sub.aiTokensUsed,
-        aiTokensLimit: sub.aiTokensLimit,
-        canGenerate: false,
-        expiresAt: sub.expiresAt,
-        daysLeft: 0,
-        isExpired: true,
-        isExpiringSoon: false,
-      };
-    }
-
-    // No subscription at all
+    // Also check for truly expired subs (active ones past expiry, not caught by cron yet)
     if (!sub) {
+      const expiredSub = await ctx.db
+        .query("subscriptions")
+        .withIndex("by_user_status", (q) =>
+          q.eq("userId", userId).eq("status", "active")
+        )
+        .first();
+
+      if (expiredSub && expiredSub.expiresAt < Date.now()) {
+        return {
+          plan: expiredSub.plan,
+          status: "expired" as const,
+          postsUsed: expiredSub.postsUsed,
+          postsLimit: expiredSub.postsLimit,
+          aiTokensUsed: expiredSub.aiTokensUsed,
+          aiTokensLimit: expiredSub.aiTokensLimit,
+          canGenerate: false,
+          expiresAt: expiredSub.expiresAt,
+          daysLeft: 0,
+          isExpired: true,
+          isExpiringSoon: false,
+        };
+      }
+
       return {
         plan: null,
         status: "none" as const,
@@ -106,18 +120,19 @@ export const getUsage = query({
       };
     }
 
-    // Active subscription
+    const now = Date.now();
     const daysLeft = Math.ceil((sub.expiresAt - now) / (24 * 60 * 60 * 1000));
     const isExpiringSoon = daysLeft <= 5;
+    const isCancelled = sub.status === "cancelled";
 
     return {
       plan: sub.plan,
-      status: "active" as const,
+      status: isCancelled ? "cancelled" as const : "active" as const,
       postsUsed: sub.postsUsed,
       postsLimit: sub.postsLimit,
       aiTokensUsed: sub.aiTokensUsed,
       aiTokensLimit: sub.aiTokensLimit,
-      canGenerate: sub.postsUsed < sub.postsLimit && sub.aiTokensUsed < sub.aiTokensLimit,
+      canGenerate: !isCancelled && sub.postsUsed < sub.postsLimit && sub.aiTokensUsed < sub.aiTokensLimit,
       expiresAt: sub.expiresAt,
       daysLeft,
       isExpired: false,
@@ -140,14 +155,10 @@ export const incrementUsage = mutation({
     const tokensUsed = Math.max(0, args.tokensUsed);
     const postsGenerated = Math.max(0, args.postsGenerated);
 
-    const sub = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", userId).eq("status", "active")
-      )
-      .first();
+    const sub = await findUsableSub(ctx, userId);
 
     if (!sub) throw new Error("No active subscription");
+    if (sub.status === "cancelled") throw new Error("Subscription is cancelled. Cannot generate.");
 
     // Check expiry
     if (sub.expiresAt < Date.now()) throw new Error("Subscription expired");
@@ -177,15 +188,14 @@ export const canGenerate = query({
     const userId = await auth.getUserId(ctx);
     if (!userId) return { allowed: false, reason: "Not authenticated" };
 
-    const sub = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", userId).eq("status", "active")
-      )
-      .first();
+    const sub = await findUsableSub(ctx, userId);
 
     if (!sub || sub.expiresAt < Date.now()) {
       return { allowed: false, reason: "No active plan. Please subscribe to continue generating." };
+    }
+
+    if (sub.status === "cancelled") {
+      return { allowed: false, reason: "Subscription cancelled. Please subscribe to continue generating." };
     }
 
     if (sub.postsUsed + args.postsCount > sub.postsLimit) {
@@ -220,7 +230,7 @@ export const startTrial = mutation({
 
     const trialConfig = getPlanConfig("trial");
     const now = Date.now();
-    const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
     const subId = await ctx.db.insert("subscriptions", {
       userId,
@@ -234,7 +244,7 @@ export const startTrial = mutation({
       amountPaid: 0,
       currency: "USD",
       startsAt: now,
-      expiresAt: now + ninetyDays,
+      expiresAt: now + sevenDays,
       createdAt: now,
     });
 
@@ -390,6 +400,7 @@ export const expireStale = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
+    let expiredCount = 0;
 
     // Find all "active" subscriptions that have passed their expiresAt
     const activeSubs = await ctx.db
@@ -401,20 +412,37 @@ export const expireStale = internalMutation({
           q.lt(q.field("expiresAt"), now)
         )
       )
-      .take(100); // process in batches
+      .take(100);
 
     for (const sub of activeSubs) {
       await ctx.db.patch(sub._id, { status: "expired" });
+      expiredCount++;
 
-      // Update user plan to reflect expiry
       const user = await ctx.db.get(sub.userId);
       if (user && user.plan === sub.plan) {
         await ctx.db.patch(sub.userId, { plan: "trial" });
       }
     }
 
-    if (activeSubs.length > 0) {
-      console.log(`Expired ${activeSubs.length} stale subscriptions`);
+    // Also expire cancelled subscriptions that have passed their expiresAt
+    const cancelledSubs = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user_status")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "cancelled"),
+          q.lt(q.field("expiresAt"), now)
+        )
+      )
+      .take(100);
+
+    for (const sub of cancelledSubs) {
+      await ctx.db.patch(sub._id, { status: "expired" });
+      expiredCount++;
+    }
+
+    if (expiredCount > 0) {
+      console.log(`Expired ${expiredCount} stale subscriptions`);
     }
   },
 });
@@ -431,5 +459,183 @@ export const list = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(20);
+  },
+});
+
+// Compute proration credit for remaining subscription time (exported for use in payments)
+export function computeCredit(sub: {
+  amountPaid: number;
+  billingPeriod?: "monthly" | "yearly";
+  startsAt: number;
+  expiresAt: number;
+}) {
+  const now = Date.now();
+  const totalDays = sub.billingPeriod === "yearly" ? 365 : 30;
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysRemaining = Math.max(0, (sub.expiresAt - now) / msPerDay);
+  const dailyRate = sub.amountPaid / totalDays;
+  const credit = Math.round(daysRemaining * dailyRate * 100) / 100; // round to 2 decimals
+  return { credit, daysRemaining, dailyRate, totalDays };
+}
+
+// Cancel active subscription (keeps access until expiresAt in future when auto-renewal is added)
+export const cancel = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const sub = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user_status", (q) =>
+        q.eq("userId", userId).eq("status", "active")
+      )
+      .first();
+
+    if (!sub) throw new Error("No active subscription to cancel");
+    if (sub.plan === "trial") throw new Error("Cannot cancel a free trial");
+
+    await ctx.db.patch(sub._id, { status: "cancelled" });
+    // Mark user plan field — subscription still usable until expiresAt
+    await ctx.db.patch(userId, { plan: "trial" });
+
+    return { subscriptionId: sub._id, plan: sub.plan };
+  },
+});
+
+// Calculate proration for plan changes (upgrade or downgrade)
+export const calculatePlanChange = query({
+  args: {
+    newPlan: v.union(v.literal("starter"), v.literal("pro")),
+    newBillingPeriod: v.union(v.literal("monthly"), v.literal("yearly")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) return null;
+
+    const sub = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user_status", (q) =>
+        q.eq("userId", userId).eq("status", "active")
+      )
+      .first();
+
+    if (!sub || sub.expiresAt < Date.now()) return null;
+
+    // Trial has no credit
+    if (sub.plan === "trial") {
+      const newConfig = getPlanConfig(args.newPlan, args.newBillingPeriod);
+      return {
+        type: "upgrade" as const,
+        currentPlan: sub.plan,
+        newPlan: args.newPlan,
+        credit: 0,
+        newPlanPrice: newConfig.price,
+        amountToCharge: newConfig.price,
+        extendedDays: 0,
+        daysRemaining: Math.max(0, (sub.expiresAt - Date.now()) / (24 * 60 * 60 * 1000)),
+      };
+    }
+
+    const { credit, daysRemaining } = computeCredit(sub);
+    const newConfig = getPlanConfig(args.newPlan, args.newBillingPeriod);
+    const newPlanPrice = newConfig.price;
+
+    // Determine if upgrade or downgrade
+    const planRank = { starter: 1, pro: 2 } as const;
+    const currentRank = planRank[sub.plan as "starter" | "pro"] || 0;
+    const newRank = planRank[args.newPlan];
+    const isUpgrade = newRank > currentRank || (newRank === currentRank && newPlanPrice > (sub.amountPaid || 0));
+
+    if (isUpgrade) {
+      const amountToCharge = Math.max(1, Math.round((newPlanPrice - credit) * 100) / 100);
+      return {
+        type: "upgrade" as const,
+        currentPlan: sub.plan,
+        newPlan: args.newPlan,
+        credit,
+        newPlanPrice,
+        amountToCharge,
+        extendedDays: 0,
+        daysRemaining,
+      };
+    } else {
+      // Downgrade: credit converts to extended days on cheaper plan
+      const newTotalDays = args.newBillingPeriod === "yearly" ? 365 : 30;
+      const newDailyRate = newPlanPrice / newTotalDays;
+      const extendedDays = newDailyRate > 0 ? Math.floor(credit / newDailyRate) : 0;
+      return {
+        type: "downgrade" as const,
+        currentPlan: sub.plan,
+        newPlan: args.newPlan,
+        credit,
+        newPlanPrice,
+        amountToCharge: 0,
+        extendedDays,
+        daysRemaining,
+      };
+    }
+  },
+});
+
+// Downgrade plan — no payment, extends subscription period with credit
+export const downgrade = mutation({
+  args: {
+    newPlan: v.union(v.literal("starter"), v.literal("pro")),
+    newBillingPeriod: v.union(v.literal("monthly"), v.literal("yearly")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const sub = await findUsableSub(ctx, userId);
+
+    if (!sub) throw new Error("No active subscription");
+    if (sub.status === "cancelled") throw new Error("Cannot downgrade a cancelled subscription");
+    if (sub.plan === "trial") throw new Error("Cannot downgrade a free trial");
+    if (sub.expiresAt < Date.now()) throw new Error("Subscription expired");
+
+    // Validate this is actually a downgrade (aligned with calculatePlanChange logic)
+    const planRank = { starter: 1, pro: 2 } as const;
+    const currentRank = planRank[sub.plan as "starter" | "pro"] || 0;
+    const newRank = planRank[args.newPlan];
+    const newConfig = getPlanConfig(args.newPlan, args.newBillingPeriod);
+    const isDowngrade = newRank < currentRank || (newRank === currentRank && newConfig.price < (sub.amountPaid || 0));
+    if (!isDowngrade) throw new Error("This is not a downgrade. Use the upgrade flow instead.");
+
+    const { credit } = computeCredit(sub);
+    const newTotalDays = args.newBillingPeriod === "yearly" ? 365 : 30;
+    const newDailyRate = newConfig.price / newTotalDays;
+    const extendedDays = newDailyRate > 0 ? Math.floor(credit / newDailyRate) : 0;
+
+    // Prevent creating a subscription with 0 or negative days
+    if (extendedDays < 1) throw new Error("Insufficient credit for downgrade. No remaining value to convert.");
+
+    const now = Date.now();
+    const msPerDay = 24 * 60 * 60 * 1000;
+
+    // Expire old subscription
+    await ctx.db.patch(sub._id, { status: "expired" });
+
+    // Create new subscription with extended period
+    const subId = await ctx.db.insert("subscriptions", {
+      userId,
+      plan: args.newPlan,
+      billingPeriod: args.newBillingPeriod,
+      status: "active",
+      aiTokensLimit: newConfig.aiTokensLimit,
+      aiTokensUsed: 0,
+      postsLimit: newConfig.postsLimit,
+      postsUsed: 0,
+      amountPaid: 0,
+      currency: "USD",
+      startsAt: now,
+      expiresAt: now + extendedDays * msPerDay,
+      createdAt: now,
+    });
+
+    await ctx.db.patch(userId, { plan: args.newPlan });
+
+    return { subscriptionId: subId, extendedDays, credit };
   },
 });
