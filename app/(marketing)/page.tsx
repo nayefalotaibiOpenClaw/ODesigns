@@ -11,7 +11,7 @@ import {
   LogOut
 } from "lucide-react";
 
-// Real post components
+// Real post components - Sylo
 import AnalyticsPost from "@/features/posts/templates/sylo/AnalyticsPost";
 import LoyaltyPost from "@/features/posts/templates/sylo/LoyaltyPost";
 import InventoryPost from "@/features/posts/templates/sylo/InventoryPost";
@@ -19,10 +19,20 @@ import CloudPOSPost from "@/features/posts/templates/sylo/CloudPOSPost";
 import DashboardOverviewPost from "@/features/posts/templates/sylo/DashboardOverviewPost";
 import OnlineOrderingPost from "@/features/posts/templates/sylo/OnlineOrderingPost";
 import SmartMenuPost from "@/features/posts/templates/sylo/SmartMenuPost";
+// Real post components - Seasons
 import SeasonsHeroPost from "@/features/posts/templates/seasons/SeasonsHeroPost";
 import SeasonsGiftPost from "@/features/posts/templates/seasons/SeasonsGiftPost";
 import SeasonsRomancePost from "@/features/posts/templates/seasons/SeasonsRomancePost";
 import SeasonsSubscriptionPost from "@/features/posts/templates/seasons/SeasonsSubscriptionPost";
+// Showcase posts
+import SaaSDashboardPost from "@/features/posts/templates/showcase/SaaSDashboardPost";
+import FoodDeliveryPost from "@/features/posts/templates/showcase/FoodDeliveryPost";
+import LuxuryFashionPost from "@/features/posts/templates/showcase/LuxuryFashionPost";
+import FitnessAppPost from "@/features/posts/templates/showcase/FitnessAppPost";
+import TravelBookingPost from "@/features/posts/templates/showcase/TravelBookingPost";
+import FintechBankingPost from "@/features/posts/templates/showcase/FintechBankingPost";
+import RealEstatePost from "@/features/posts/templates/showcase/RealEstatePost";
+import BeautyCosmeticsPost from "@/features/posts/templates/showcase/BeautyCosmeticsPost";
 
 // Contexts for rendering posts
 import { type Theme, defaultTheme, ThemeCtx } from "@/contexts/ThemeContext";
@@ -103,43 +113,43 @@ const tabs: { key: TabKey; label: string }[] = [
   { key: "ads", label: "Ads" },
 ];
 
-// Social media posts — 1:1 square
+// Social media posts — 1:1 square (showcase + existing mix)
 const socialPosts = [
+  { component: <SaaSDashboardPost />, theme: themes[6], label: "SaaS Dashboard" },
+  { component: <FoodDeliveryPost />, theme: themes[0], label: "Food Delivery" },
+  { component: <LuxuryFashionPost />, theme: themes[2], label: "Luxury Fashion" },
+  { component: <FitnessAppPost />, theme: themes[4], label: "Fitness App" },
+  { component: <TravelBookingPost />, theme: themes[1], label: "Travel Booking" },
+  { component: <FintechBankingPost />, theme: themes[0], label: "Fintech" },
+  { component: <RealEstatePost />, theme: themes[4], label: "Real Estate" },
+  { component: <BeautyCosmeticsPost />, theme: themes[3], label: "Beauty" },
   { component: <AnalyticsPost />, theme: themes[0], label: "Analytics" },
-  { component: <SeasonsHeroPost />, theme: themes[3], label: "Brand Hero" },
   { component: <LoyaltyPost />, theme: themes[1], label: "Loyalty" },
-  { component: <CloudPOSPost />, theme: themes[4], label: "Cloud POS" },
   { component: <InventoryPost />, theme: themes[2], label: "Inventory" },
-  { component: <SeasonsGiftPost />, theme: themes[5], label: "Gift Sets" },
-  { component: <SmartMenuPost />, theme: themes[6], label: "Smart Menu" },
-  { component: <OnlineOrderingPost />, theme: themes[1], label: "Online Store" },
-  { component: <DashboardOverviewPost />, theme: themes[0], label: "Dashboard" },
-  { component: <SeasonsSubscriptionPost />, theme: themes[4], label: "Subscriptions" },
-  { component: <SeasonsRomancePost />, theme: themes[3], label: "Romance" },
 ];
 
 // App Store Preview — 9:16 tall
 const appStorePosts = [
-  { component: <OnlineOrderingPost />, theme: themes[0], label: "Online Store" },
-  { component: <SmartMenuPost />, theme: themes[1], label: "Smart Menu" },
-  { component: <CloudPOSPost />, theme: themes[2], label: "Cloud POS" },
-  { component: <SeasonsHeroPost />, theme: themes[3], label: "Brand Hero" },
-  { component: <DashboardOverviewPost />, theme: themes[4], label: "Dashboard" },
-  { component: <SeasonsGiftPost />, theme: themes[5], label: "Gift Sets" },
-  { component: <SeasonsRomancePost />, theme: themes[6], label: "Romance" },
-  { component: <AnalyticsPost />, theme: themes[0], label: "Analytics" },
+  { component: <FoodDeliveryPost />, theme: themes[0], label: "Food Delivery" },
+  { component: <SaaSDashboardPost />, theme: themes[1], label: "SaaS Dashboard" },
+  { component: <FitnessAppPost />, theme: themes[4], label: "Fitness App" },
+  { component: <FintechBankingPost />, theme: themes[6], label: "Fintech" },
+  { component: <LuxuryFashionPost />, theme: themes[2], label: "Luxury Fashion" },
+  { component: <BeautyCosmeticsPost />, theme: themes[3], label: "Beauty" },
+  { component: <TravelBookingPost />, theme: themes[5], label: "Travel Booking" },
+  { component: <RealEstatePost />, theme: themes[0], label: "Real Estate" },
 ];
 
 // Ads — 16:9 landscape
 const adsPosts = [
-  { component: <DashboardOverviewPost />, theme: themes[6], label: "Dashboard" },
-  { component: <AnalyticsPost />, theme: themes[1], label: "Analytics" },
-  { component: <LoyaltyPost />, theme: themes[0], label: "Loyalty" },
-  { component: <SeasonsHeroPost />, theme: themes[4], label: "Brand Hero" },
-  { component: <InventoryPost />, theme: themes[3], label: "Inventory" },
-  { component: <CloudPOSPost />, theme: themes[5], label: "Cloud POS" },
-  { component: <SeasonsSubscriptionPost />, theme: themes[2], label: "Subscriptions" },
-  { component: <SmartMenuPost />, theme: themes[1], label: "Smart Menu" },
+  { component: <LuxuryFashionPost />, theme: themes[2], label: "Luxury Fashion" },
+  { component: <SaaSDashboardPost />, theme: themes[6], label: "SaaS Dashboard" },
+  { component: <TravelBookingPost />, theme: themes[1], label: "Travel Booking" },
+  { component: <FoodDeliveryPost />, theme: themes[0], label: "Food Delivery" },
+  { component: <FitnessAppPost />, theme: themes[4], label: "Fitness App" },
+  { component: <RealEstatePost />, theme: themes[5], label: "Real Estate" },
+  { component: <BeautyCosmeticsPost />, theme: themes[3], label: "Beauty" },
+  { component: <FintechBankingPost />, theme: themes[0], label: "Fintech" },
 ];
 
 const tabPostsMap: Record<TabKey, { posts: typeof socialPosts; aspect: string; size: number; minW: string }> = {
@@ -150,12 +160,12 @@ const tabPostsMap: Record<TabKey, { posts: typeof socialPosts; aspect: string; s
 
 // Collage posts for bottom CTA section
 const collagePostItems = [
-  { component: <LoyaltyPost />, theme: themes[2] },
-  { component: <AnalyticsPost />, theme: themes[1] },
-  { component: <SeasonsGiftPost />, theme: themes[4] },
-  { component: <InventoryPost />, theme: themes[0] },
-  { component: <CloudPOSPost />, theme: themes[6] },
-  { component: <SeasonsHeroPost />, theme: themes[3] },
+  { component: <SaaSDashboardPost />, theme: themes[6] },
+  { component: <FoodDeliveryPost />, theme: themes[0] },
+  { component: <LuxuryFashionPost />, theme: themes[2] },
+  { component: <FitnessAppPost />, theme: themes[4] },
+  { component: <TravelBookingPost />, theme: themes[1] },
+  { component: <BeautyCosmeticsPost />, theme: themes[3] },
 ];
 
 const FloatingLogo = ({ delay, children, top, left, right }: { delay: number; children: React.ReactNode; top?: string; left?: string; right?: string }) => (
@@ -194,12 +204,6 @@ export default function LandingPage() {
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-4xl">
         <div className="bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-full px-6 py-3 flex items-center justify-between shadow-2xl shadow-slate-200/50">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-[10px]">oD</span>
-              </div>
-              <span className="font-black text-lg tracking-tight">oDesigns</span>
-            </div>
             <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-500">
               <Link href="/pricing" className="hover:text-slate-900">Pricing</Link>
               {!isLoading && !isAuthenticated && (
@@ -482,12 +486,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-20 border-t border-slate-100 bg-white">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8 text-slate-400 font-bold text-sm">
-          <div className="flex items-center gap-2 text-slate-900">
-            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-              <span className="text-white font-black text-[10px]">oD</span>
-            </div>
-            <span className="font-black">oDesigns Studio.</span>
-          </div>
+          <div />
           <div className="flex gap-8">
             <a href="#" className="hover:text-slate-900">Twitter</a>
             <a href="#" className="hover:text-slate-900">LinkedIn</a>
