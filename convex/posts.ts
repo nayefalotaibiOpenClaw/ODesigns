@@ -132,20 +132,6 @@ export const reorder = mutation({
   },
 });
 
-// Update config overrides (click-to-edit system)
-export const updateOverrides = mutation({
-  args: {
-    id: v.id("posts"),
-    configOverrides: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, {
-      configOverrides: args.configOverrides,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
 export const remove = mutation({
   args: { id: v.id("posts") },
   handler: async (ctx, args) => {

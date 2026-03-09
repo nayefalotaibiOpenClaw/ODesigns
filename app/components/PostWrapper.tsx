@@ -42,12 +42,19 @@ export default function PostWrapper({ children, filename = "post", aspectRatio =
 
   // Find the toolbar portal target in the parent post card
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const postCard = el.closest("[data-post-card]");
-    if (!postCard) return;
-    const target = postCard.querySelector("[data-toolbar-right]");
-    setToolbarTarget(target as HTMLElement | null);
+    const find = () => {
+      const el = containerRef.current;
+      if (!el) return false;
+      const postCard = el.closest("[data-post-card]");
+      if (!postCard) return false;
+      const target = postCard.querySelector("[data-toolbar-right]");
+      if (target) { setToolbarTarget(target as HTMLElement); return true; }
+      return false;
+    };
+    if (!find()) {
+      // Retry once after paint in case DOM isn't ready yet
+      requestAnimationFrame(() => find());
+    }
   }, []);
 
   const handleDownload = async () => {
