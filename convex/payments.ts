@@ -1,14 +1,15 @@
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import { PLANS, computeCredit } from "./subscriptions";
 
 // Create a pending payment record before redirecting to UPayments
+// Amount is computed server-side using proration — never trust client-provided amounts
 export const createPending = mutation({
   args: {
     plan: v.union(v.literal("starter"), v.literal("pro")),
     billingPeriod: v.union(v.literal("monthly"), v.literal("yearly")),
     orderId: v.string(),
-    amount: v.number(),
     currency: v.string(),
   },
   handler: async (ctx, args) => {
@@ -23,18 +24,61 @@ export const createPending = mutation({
 
     if (existing) throw new Error("A payment with this orderId already exists");
 
+    // Compute the correct charge amount server-side
+    const planConfig = PLANS[args.plan][args.billingPeriod];
+    let chargeAmount: number = planConfig.price;
+
+    // Check for an existing active subscription to compute proration credit
+    const activeSub = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user_status", (q: any) =>
+        q.eq("userId", userId).eq("status", "active")
+      )
+      .first();
+
+    if (activeSub && activeSub.expiresAt >= Date.now() && activeSub.plan !== "trial" && activeSub.amountPaid > 0) {
+      const { credit } = computeCredit(activeSub);
+      // Minimum $1 charge to prevent gateway rejection
+      chargeAmount = Math.max(1, Math.round((planConfig.price - credit) * 100) / 100);
+    }
+
     const now = Date.now();
-    return await ctx.db.insert("payments", {
+    const paymentId = await ctx.db.insert("payments", {
       userId,
       orderId: args.orderId,
       plan: args.plan,
       billingPeriod: args.billingPeriod,
-      amount: args.amount,
+      amount: chargeAmount,
       currency: args.currency,
       status: "pending",
       createdAt: now,
       updatedAt: now,
     });
+
+    return { paymentId, chargeAmount };
+  },
+});
+
+// Get pending payment amount by orderId — used by the API route to get the server-computed charge amount
+// Returns only orderId, amount, currency, plan, billingPeriod, and status (no sensitive user data)
+export const getPendingAmount = query({
+  args: { orderId: v.string() },
+  handler: async (ctx, args) => {
+    const payment = await ctx.db
+      .query("payments")
+      .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
+      .first();
+
+    if (!payment) return null;
+
+    return {
+      orderId: payment.orderId,
+      amount: payment.amount,
+      currency: payment.currency,
+      plan: payment.plan,
+      billingPeriod: payment.billingPeriod,
+      status: payment.status,
+    };
   },
 });
 
