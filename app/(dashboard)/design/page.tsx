@@ -361,31 +361,36 @@ export default function DesignPage() {
     setUploadingAsset(true);
     try {
       for (const file of pendingFiles) {
-        // Compress large images to prevent mobile crashes
-        const blob = file.size > 1024 * 1024 ? await compressImage(file) : file;
-        const uploadUrl = await generateUploadUrl();
-        const result = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": blob.type || file.type },
-          body: blob,
-        });
-        const { storageId } = await result.json();
+        try {
+          // Compress large images to prevent mobile crashes
+          const blob = file.size > 1024 * 1024 ? await compressImage(file) : file;
+          const uploadUrl = await generateUploadUrl();
+          const result = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": blob.type || file.type || "application/octet-stream" },
+            body: blob,
+          });
+          if (!result.ok) { console.error(`Upload failed for ${file.name}: ${result.status}`); continue; }
+          const { storageId } = await result.json();
 
-        const assetId = await createAsset({
-          workspaceId: assetScope === "workspace" ? workspaceId : undefined,
-          userId: user._id,
-          scope: assetScope,
-          fileId: storageId,
-          fileName: file.name,
-          type: assetTypeSelect,
-        });
+          const assetId = await createAsset({
+            workspaceId: assetScope === "workspace" ? workspaceId : undefined,
+            userId: user._id,
+            scope: assetScope,
+            fileId: storageId,
+            fileName: file.name,
+            type: assetTypeSelect,
+          });
 
-        analyzeImage({
-          assetId,
-          storageId,
-          fileName: file.name,
-          assetType: assetTypeSelect,
-        }).catch((err) => console.error("Background analysis failed:", err));
+          analyzeImage({
+            assetId,
+            storageId,
+            fileName: file.name,
+            assetType: assetTypeSelect,
+          }).catch((err) => console.error("Background analysis failed:", err));
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err);
+        }
       }
       setPendingFiles([]);
       setShowAssetUploadDialog(false);

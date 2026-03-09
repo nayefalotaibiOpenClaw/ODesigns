@@ -63,7 +63,8 @@ export default function AssetsPanel({
   // Clean up blob URLs when files change
   React.useEffect(() => {
     return () => { previewUrls.forEach((url) => URL.revokeObjectURL(url)); };
-  }, [previewUrls]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingFiles]);
 
   return (
     <div className="space-y-4">
