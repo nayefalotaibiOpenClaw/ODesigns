@@ -12,6 +12,7 @@ export default function CloudPOSPost() {
   const ratio = useAspectRatio();
   const t = useTheme();
   const isTall = ratio === '9:16' || ratio === '3:4';
+  const isWide = ratio === '16:9' || ratio === '4:3';
   const deviceType = useDeviceType();
   const DeviceMockup =
     deviceType === 'android' ? AndroidPhoneMockup :
@@ -32,17 +33,17 @@ export default function CloudPOSPost() {
       <div className="absolute -bottom-20 -right-20 w-[300px] h-[300px] opacity-[0.1] blur-[80px] rounded-full"
         style={{ backgroundColor: t.accent }} />
 
-      <div className="relative z-10 w-full h-full flex flex-col p-8">
+      <div className="relative z-10 w-full h-full flex flex-col p-8 overflow-hidden">
         <PostHeader id="cloud-pos" subtitle="CLOUD TECHNOLOGY" badge={<><Cloud size={12}/> LIVE SYNC</>} variant="dark" />
 
-        <DraggableWrapper id="headline" className="mt-8 text-right z-30" dir="rtl">
-          <h2 className="text-5xl font-black leading-tight" style={{ color: t.primaryLight }}>
+        <DraggableWrapper id="headline" className={\`\${isTall ? 'mt-8' : 'mt-4'} text-right z-30\`} dir="rtl">
+          <h2 className={\`\${isTall ? 'text-5xl' : 'text-4xl'} font-black leading-tight\`} style={{ color: t.primaryLight }}>
             <EditableText>نظامك السحابي</EditableText><br/>
             <span style={{ color: t.accentLime }}><EditableText>في كل مكان</EditableText></span>
           </h2>
         </DraggableWrapper>
 
-        <div className="flex-1 flex items-center justify-center relative mt-4">
+        <div className="flex-1 min-h-0 flex items-center justify-center relative mt-4">
           <DraggableWrapper id="mockup" className={\`relative z-20 \${isPhoneDevice ? (isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]') : (isTall ? 'w-[340px] h-[230px]' : 'w-[300px] h-[200px]')}\`}>
             <DeviceMockup src="/pos-screen.jpg" />
           </DraggableWrapper>
@@ -76,9 +77,9 @@ export default function HeroPost() {
       <img src="/seasons/2.jpg" className="absolute inset-0 w-full h-full object-cover" alt="Hero" />
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)' }} />
 
-      <div className="relative z-10 w-full h-full flex flex-col p-8 text-white">
+      <div className="relative z-10 w-full h-full flex flex-col p-8 overflow-hidden text-white">
         <PostHeader id="hero" subtitle="PREMIUM FLOWERS" badge={<><Sparkles size={12}/> LUXURY</>} variant="dark" />
-        <div className="flex-1 flex flex-col justify-end mb-12">
+        <div className="flex-1 min-h-0 flex flex-col justify-end mb-12">
           <DraggableWrapper id="headline" className="text-right" dir="rtl">
             <h2 className="text-5xl font-black leading-tight">
               <EditableText>أجمل اللحظات</EditableText><br/>
@@ -117,10 +118,10 @@ export default function SubscriptionPost() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] opacity-[0.05] rounded-full blur-[100px]"
            style={{ backgroundColor: t.accent }} />
 
-      <div className="relative z-10 w-full h-full flex flex-col p-8">
+      <div className="relative z-10 w-full h-full flex flex-col p-8 overflow-hidden">
         <PostHeader id="sub" subtitle="SUBSCRIPTIONS" badge={<><Calendar size={12}/> WEEKLY FRESH</>} variant="light" />
-        <div className="flex-1 flex flex-col items-center justify-center relative mt-4">
-          <DraggableWrapper id="mockup" className={\`relative z-20 \${isTall ? 'w-[400px] h-[400px]' : 'w-[320px] h-[320px]'}\`}>
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center relative mt-4">
+          <DraggableWrapper id="mockup" className={\`relative z-20 \${isTall ? 'w-[400px] h-[400px]' : 'w-[280px] h-[280px]'}\`}>
              <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl border-[12px] border-white ring-1 ring-black/5">
                 <img src="/seasons/3.jpg" className="w-full h-full object-cover" alt="Product" />
              </div>
@@ -137,8 +138,8 @@ export default function SubscriptionPost() {
              </div>
           </DraggableWrapper>
         </div>
-        <DraggableWrapper id="headline" className="mt-8 text-right" dir="rtl">
-          <h2 className="text-5xl font-black leading-tight" style={{ color: t.primary }}>
+        <DraggableWrapper id="headline" className={\`\${isTall ? 'mt-8' : 'mt-4'} text-right\`} dir="rtl">
+          <h2 className={\`\${isTall ? 'text-5xl' : 'text-4xl'} font-black leading-tight\`} style={{ color: t.primary }}>
             <EditableText>جدد منزلك</EditableText><br/>
             <span style={{ color: t.accent }}><EditableText>بالورد الطبيعي</EditableText></span>
           </h2>
@@ -172,9 +173,9 @@ export default function CorporatePost() {
       <img src="/seasons/2.jpg" className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale" alt="Corporate" />
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 100%)' }} />
 
-      <div className="relative z-10 w-full h-full flex flex-col p-8 text-white">
+      <div className="relative z-10 w-full h-full flex flex-col p-8 overflow-hidden text-white">
         <PostHeader id="corp" subtitle="CORPORATE GIFTS" badge={<><Briefcase size={12}/> BUSINESS</>} variant="dark" />
-        <div className="flex-1 flex flex-col justify-center max-w-sm">
+        <div className="flex-1 min-h-0 flex flex-col justify-center max-w-sm">
           <DraggableWrapper id="text" className="text-right" dir="rtl">
             <h2 className="text-5xl font-black leading-tight">
                <EditableText>هدايا شركات</EditableText><br/>
@@ -216,22 +217,84 @@ export default function MenuEngineeringPost() {
       <div className="absolute -bottom-24 -left-24 w-[400px] h-[400px] opacity-[0.1] blur-[100px] rounded-full"
         style={{ backgroundColor: t.accentLime }} />
 
-      <div className="relative z-10 w-full h-full flex flex-col p-8">
+      <div className="relative z-10 w-full h-full flex flex-col p-8 overflow-hidden">
         <PostHeader id="menu-eng" subtitle="RESTAURANT ANALYTICS" badge={<><TrendingUp size={12}/> PROFIT MAX</>} variant="light" />
-        <DraggableWrapper id="headline" className="mt-8 text-right z-30" dir="rtl">
-          <h2 className="text-5xl font-black leading-tight" style={{ color: t.primary }}>
+        <DraggableWrapper id="headline" className={\`\${isTall ? 'mt-8' : 'mt-4'} text-right z-30\`} dir="rtl">
+          <h2 className={\`\${isTall ? 'text-5xl' : 'text-4xl'} font-black leading-tight\`} style={{ color: t.primary }}>
             <EditableText>هندسة المنيو</EditableText><br/>
             <span style={{ color: t.accent }}><EditableText>لأرباح أعلى</EditableText></span>
           </h2>
         </DraggableWrapper>
-        <div className="flex-1 flex items-center justify-center relative mt-4">
+        <div className="flex-1 min-h-0 flex items-center justify-center relative mt-4">
           <DraggableWrapper id="mockup" className={\`relative z-20 \${isTall ? 'w-full h-[350px]' : 'w-[360px] h-[240px]'}\`}>
             <DesktopMockup src="/pos-screen.jpg" url="admin.sylo.com/analytics" />
-          </DraggableWrapper>
           <FloatingCard id="stat1" icon={<BarChart3 size={16} />} label="نمو الأرباح" value="+22%" className="absolute -right-4 top-4" rotate={5} />
           <FloatingCard id="stat2" icon={<PieChart size={16} />} label="الأكثر مبيعًا" value="برجر دبل" className="absolute -left-4 bottom-12" rotate={-5} />
         </div>
         <PostFooter id="menu-eng" label="SYLO ANALYTICS" text="حلل أداء أصنافك وارفع هوامش ربحك" variant="light" />
+      </div>
+    </div>
+  );
+}`;
+
+export const EXAMPLE_CARD_GRID = `// EXAMPLE F: Card grid — OVERFLOW-SAFE. Adapts card count and layout per ratio.
+import React from 'react';
+import EditableText from './EditableText';
+import DraggableWrapper from './DraggableWrapper';
+import { useAspectRatio } from './EditContext';
+import { useTheme } from './ThemeContext';
+import { PostHeader, PostFooter } from './shared';
+import { Zap, BarChart3, Shield, Globe } from 'lucide-react';
+
+export default function FeaturesPost() {
+  const ratio = useAspectRatio();
+  const t = useTheme();
+  const isTall = ratio === '9:16' || ratio === '3:4';
+  const isWide = ratio === '16:9' || ratio === '4:3';
+
+  // Adapt content quantity to available space
+  const allFeatures = [
+    { icon: Zap, title: 'السرعة', desc: 'إنجاز بلا تعقيد' },
+    { icon: BarChart3, title: 'التحليلات', desc: 'بيانات فورية' },
+    { icon: Shield, title: 'الأمان', desc: 'حماية متكاملة' },
+    { icon: Globe, title: 'الوصول', desc: 'من أي مكان' },
+  ];
+  // Show 4 cards in tall, 2 in square/wide — PREVENTS OVERFLOW
+  const features = isTall ? allFeatures : allFeatures.slice(0, 2);
+
+  return (
+    <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
+         style={{ backgroundColor: t.primaryLight, fontFamily: t.font }}>
+      <div className="absolute inset-0 opacity-[0.05]"
+        style={{backgroundImage: \`radial-gradient(\${t.primary} 1px, transparent 1px)\`, backgroundSize: '24px 24px'}} />
+
+      <div className="relative z-10 w-full h-full flex flex-col p-8 overflow-hidden">
+        <PostHeader id="features" subtitle="PLATFORM" badge={<><Zap size={12}/> FEATURES</>} variant="light" />
+
+        <DraggableWrapper id="headline" className={\`\${isTall ? 'mt-6' : 'mt-3'} text-right\`} dir="rtl">
+          <h2 className={\`\${isTall ? 'text-5xl' : 'text-4xl'} font-black leading-tight\`} style={{ color: t.primary }}>
+            <EditableText>كل ما تحتاجه</EditableText><br/>
+            <span style={{ color: t.accent }}><EditableText>في منصة واحدة</EditableText></span>
+          </h2>
+        </DraggableWrapper>
+
+        <div className={\`flex-1 min-h-0 grid \${isTall ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-2'} mt-4 auto-rows-min\`}>
+          {features.map((f, i) => (
+            <DraggableWrapper key={i} id={\`card-\${i}\`} className="bg-white rounded-2xl p-3 shadow-lg border flex items-center gap-3" dir="rtl"
+              style={{ borderColor: t.accentLight }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: t.accentLight }}>
+                <f.icon size={20} style={{ color: t.accent }} />
+              </div>
+              <div className="text-right">
+                <EditableText as="h3" className="font-bold text-lg" style={{ color: t.primary }}>{f.title}</EditableText>
+                <EditableText as="p" className="text-sm opacity-60" style={{ color: t.primary }}>{f.desc}</EditableText>
+              </div>
+            </DraggableWrapper>
+          ))}
+        </div>
+
+        <PostFooter id="features" label="BRAND" text="ارتقِ بأعمالك" variant="light" />
       </div>
     </div>
   );

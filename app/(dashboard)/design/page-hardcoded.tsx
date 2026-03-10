@@ -147,9 +147,13 @@ export default function DesignPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Generation failed');
-      const newId = `generated-${Date.now()}`;
-      setGeneratedPosts(prev => [{ id: newId, code: data.code }, ...prev]);
-      setPostOrder(prev => [newId, ...prev]);
+      const codes: string[] = data.codes || [data.code];
+      const newPosts = codes.map((code, i) => ({
+        id: `generated-${Date.now()}-${i}`,
+        code,
+      }));
+      setGeneratedPosts(prev => [...newPosts, ...prev]);
+      setPostOrder(prev => [...newPosts.map(p => p.id), ...prev]);
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : 'Generation failed');
     } finally {

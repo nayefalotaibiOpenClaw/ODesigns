@@ -5,6 +5,7 @@ import {
   EXAMPLE_LIGHT_CREATIVE,
   EXAMPLE_DARK_CORPORATE,
   EXAMPLE_DESKTOP_ANALYTICS,
+  EXAMPLE_CARD_GRID,
 } from "./prompts/examples";
 
 export function buildExamplesSection(hasAssets: boolean, assetTypes: string[]): string {
@@ -15,6 +16,9 @@ export function buildExamplesSection(hasAssets: boolean, assetTypes: string[]): 
   const hasMockupAssets = assetTypes.some(t => ['iphone', 'screenshot', 'ipad', 'desktop'].includes(t));
   const hasBackgroundAssets = assetTypes.includes('background');
   const hasProductAssets = assetTypes.includes('product');
+
+  // Always include the card grid example to teach overflow-safe patterns
+  examples.push(EXAMPLE_CARD_GRID);
 
   if (hasMockupAssets) {
     examples.push(EXAMPLE_DARK_MOCKUP);

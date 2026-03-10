@@ -430,26 +430,26 @@ export default function BulkScheduleModal({
               {timeline.length === 0 ? (
                 <p className="text-sm text-neutral-500 text-center py-8">No items. Go back and check settings.</p>
               ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {timeline.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3 bg-neutral-800 rounded-lg border border-neutral-700/50">
-                      <span className="text-xs font-mono text-neutral-500 w-8">#{item.postIndex}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-neutral-200 truncate">{item.postTitle}</p>
+                <>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {timeline.map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-3 bg-neutral-800 rounded-lg border border-neutral-700/50">
+                        <span className="text-xs font-mono text-neutral-500 w-8">#{item.postIndex}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-neutral-200 truncate">{item.postTitle}</p>
+                        </div>
+                        <span className="text-xs text-neutral-400 whitespace-nowrap">
+                          {item.dateTime.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
+                          {item.dateTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
+                        </span>
+                        <span className="text-xs text-neutral-500 truncate max-w-[100px]">@{item.accountName}</span>
                       </div>
-                      <span className="text-xs text-neutral-400 whitespace-nowrap">
-                        {item.dateTime.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
-                        {item.dateTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
-                      </span>
-                      <span className="text-xs text-neutral-500 truncate max-w-[100px]">@{item.accountName}</span>
-                    </div>
-                  ))}
-                </div>
-                {timeline.length > 0 && (
+                    ))}
+                  </div>
                   <p className="text-xs text-neutral-500 mt-3">
                     This will create {timeline.length} scheduled post{timeline.length !== 1 ? "s" : ""}.
                   </p>
-                )}
+                </>
               )}
             </div>
           )}
