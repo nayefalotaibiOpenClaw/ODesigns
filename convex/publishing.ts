@@ -112,7 +112,7 @@ async function publishToInstagram(params: {
   additionalUrls?: string[];
 }): Promise<{ postId: string; postUrl?: string }> {
   const { accessToken, igUserId, mediaUrl, caption, contentType, additionalUrls } = params;
-  const baseUrl = "https://graph.facebook.com/v21.0";
+  const baseUrl = "https://graph.instagram.com/v21.0";
 
   if (contentType === "carousel" && additionalUrls?.length) {
     // Instagram requires 2-10 items for carousels

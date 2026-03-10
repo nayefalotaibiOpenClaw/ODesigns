@@ -689,7 +689,7 @@ export default function DesignPage() {
         </div>
       </main>
 
-      {/* Properties side panel */}
+      {/* Properties side panel — commented out for now
       {selectedPostId && (() => {
         const selectedPost = posts?.find(p => p._id === selectedPostId);
         if (!selectedPost || codeViewPosts.has(selectedPostId)) return null;
@@ -719,7 +719,7 @@ export default function DesignPage() {
             />
           </div>
         );
-      })()}
+      })()} */}
 
       {/* Floating download bar */}
       {selectMode && selectedPosts.length > 0 && (
