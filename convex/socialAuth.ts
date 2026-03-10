@@ -51,7 +51,33 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
 
   let state: { userId: string; workspaceId: string; provider?: string; ts: number };
   try {
-    state = JSON.parse(atob(stateParam));
+    const dotIndex = stateParam.indexOf(".");
+    if (dotIndex === -1) throw new Error("Missing signature");
+
+    const receivedSig = stateParam.substring(0, dotIndex);
+    const statePayload = stateParam.substring(dotIndex + 1);
+
+    const secret = process.env.META_APP_SECRET;
+    if (!secret) throw new Error("META_APP_SECRET not configured");
+
+    // Verify HMAC-SHA256 signature using Web Crypto API
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const sigBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(statePayload));
+    const expectedSig = btoa(String.fromCharCode(...new Uint8Array(sigBuffer)))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    if (receivedSig !== expectedSig) throw new Error("Invalid state signature");
+
+    state = JSON.parse(atob(statePayload));
   } catch {
     return redirect(
       `${appUrl}/workspaces?social_error=Invalid+state`
@@ -247,6 +273,43 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
   }
 });
 
+// ─── Verify Meta signed_request ─────────────────────────────────────
+
+async function verifySignedRequest(signedRequest: string): Promise<{ user_id: string }> {
+  const appSecret = process.env.META_APP_SECRET;
+  if (!appSecret) throw new Error("META_APP_SECRET not configured");
+
+  const [encodedSig, payload] = signedRequest.split(".");
+  if (!encodedSig || !payload) throw new Error("Invalid signed_request format");
+
+  // Meta uses base64url encoding — convert to standard base64
+  const sigBase64 = encodedSig.replace(/-/g, "+").replace(/_/g, "/");
+  const sigBytes = Uint8Array.from(atob(sigBase64), (c) => c.charCodeAt(0));
+
+  // Compute expected HMAC-SHA256
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(appSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const expectedBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const expectedBytes = new Uint8Array(expectedBuffer);
+
+  // Constant-time comparison
+  if (sigBytes.length !== expectedBytes.length) throw new Error("Invalid signature");
+  let mismatch = 0;
+  for (let i = 0; i < sigBytes.length; i++) {
+    mismatch |= sigBytes[i] ^ expectedBytes[i];
+  }
+  if (mismatch !== 0) throw new Error("Invalid signature");
+
+  const decoded = JSON.parse(atob(payload));
+  return decoded;
+}
+
 // ─── Deauthorize Callback (Meta calls this when user removes app) ───
 
 export const handleDeauthorize = httpAction(async (ctx, request) => {
@@ -262,9 +325,8 @@ export const handleDeauthorize = httpAction(async (ctx, request) => {
       });
     }
 
-    // Decode the signed request payload to get user ID
-    const payload = signedRequest.split(".")[1];
-    const decoded = JSON.parse(atob(payload));
+    // Verify signature and decode payload
+    const decoded = await verifySignedRequest(signedRequest);
     const providerUserId = decoded.user_id;
 
     if (providerUserId) {
@@ -301,8 +363,8 @@ export const handleDataDeletion = httpAction(async (ctx, request) => {
       });
     }
 
-    const payload = signedRequest.split(".")[1];
-    const decoded = JSON.parse(atob(payload));
+    // Verify signature and decode payload
+    const decoded = await verifySignedRequest(signedRequest);
     const providerUserId = decoded.user_id;
     const confirmationCode = `del_${providerUserId}_${Date.now()}`;
 

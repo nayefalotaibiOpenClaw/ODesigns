@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac } from "crypto";
 import { getInstagramAuthUrl } from "@/lib/social-providers/meta";
 
 export async function GET(request: NextRequest) {
@@ -15,23 +16,26 @@ export async function GET(request: NextRequest) {
 
   const clientId = process.env.META_APP_ID;
   const redirectUri = process.env.META_REDIRECT_URI;
+  const appSecret = process.env.META_APP_SECRET;
 
-  if (!clientId || !redirectUri) {
+  if (!clientId || !redirectUri || !appSecret) {
     return NextResponse.json(
       { error: "Instagram OAuth not configured" },
       { status: 500 }
     );
   }
 
-  const state = Buffer.from(
+  const payload = Buffer.from(
     JSON.stringify({
       userId,
       workspaceId,
       provider: "instagram",
-      csrf: crypto.randomUUID(),
       ts: Date.now(),
     })
   ).toString("base64");
+
+  const signature = createHmac("sha256", appSecret).update(payload).digest("base64url");
+  const state = `${signature}.${payload}`;
 
   const authUrl = getInstagramAuthUrl({ clientId, redirectUri, state });
 

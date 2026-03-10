@@ -21,6 +21,12 @@ export const publishToSocial = action({
     additionalStorageIds: v.optional(v.array(v.id("_storage"))),
   },
   handler: async (ctx, args) => {
+    // Verify authentication and workspace ownership
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const workspace = await ctx.runQuery(internal.publishing.getWorkspace, { id: args.workspaceId });
+    if (!workspace || workspace.userId !== userId) throw new Error("Workspace not found");
+
     // Get the social account with tokens
     const account = await ctx.runQuery(internal.socialAccounts.getWithTokens, {
       id: args.socialAccountId,
@@ -535,6 +541,13 @@ export const processScheduledPosts = internalAction({
         });
       }
     }
+  },
+});
+
+export const getWorkspace = internalQuery({
+  args: { id: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
   },
 });
 
