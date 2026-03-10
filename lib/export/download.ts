@@ -54,9 +54,11 @@ export async function downloadPostsMultiRatio(
   const JSZip = (await import("jszip")).default;
   const zip = new JSZip();
 
+  const useFolders = ratios.length > 1;
+
   for (const ratio of ratios) {
     const folderName = ratio.replace(":", "x");
-    const folder = zip.folder(folderName)!;
+    const target = useFolders ? zip.folder(folderName)! : zip;
 
     // Switch to this ratio and wait for render
     setAspectRatio(ratio);
@@ -82,7 +84,7 @@ export async function downloadPostsMultiRatio(
       });
       const base64 = dataUrl.split(",")[1];
       const post = posts.find(p => p.id === id);
-      folder.file(`${i + 1}-${post?.filename || id}.png`, base64, { base64: true });
+      target.file(`${i + 1}-${post?.filename || id}.png`, base64, { base64: true });
     }
   }
 
