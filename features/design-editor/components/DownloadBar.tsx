@@ -35,52 +35,53 @@ export default function DownloadBar({ selectedCount, downloading, downloadProgre
   };
 
   return (
-    <div className="fixed bottom-16 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 px-4 md:px-6 py-3 flex flex-col gap-2">
-      {expanded && (
-        <div className="flex flex-col gap-2 pb-2 border-b border-gray-100">
-          <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Export Sizes</label>
-          <div className="flex gap-1">
-            {ALL_RATIOS.map((ratio) => (
-              <button
-                key={ratio}
-                onClick={() => toggleRatio(ratio)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  selectedRatios.has(ratio)
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                }`}
-              >
-                {ratio}
-              </button>
-            ))}
+    <div className="fixed bottom-28 md:bottom-20 left-1/2 -translate-x-1/2 z-[70]">
+      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-gray-200/60 px-2 py-1.5 flex flex-col gap-1.5">
+        {expanded && (
+          <div className="flex flex-col gap-1.5 pb-1.5 border-b border-gray-200/60 px-1.5">
+            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Export Sizes</label>
+            <div className="flex gap-0.5">
+              {ALL_RATIOS.map((ratio) => (
+                <button
+                  key={ratio}
+                  onClick={() => toggleRatio(ratio)}
+                  className={`px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all ${
+                    selectedRatios.has(ratio)
+                      ? 'bg-gray-900 text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                  }`}
+                >
+                  {ratio}
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+        <div className="flex items-center gap-0.5">
+          <span className="px-3 py-1.5 text-[12px] font-semibold text-gray-900">{selectedCount} selected</span>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="px-3 py-1.5 rounded-xl text-[12px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all flex items-center gap-1"
+          >
+            Sizes {expanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            {selectedRatios.size > 1 && (
+              <span className="bg-gray-900 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{selectedRatios.size}</span>
+            )}
+          </button>
+          <button
+            onClick={onClear}
+            className="px-3 py-1.5 rounded-xl text-[12px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+          >
+            Clear
+          </button>
+          <button
+            onClick={() => onDownload(Array.from(selectedRatios))}
+            disabled={downloading}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-900 text-white shadow-sm transition-all hover:bg-gray-800 active:scale-95 disabled:opacity-50"
+          >
+            {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+          </button>
         </div>
-      )}
-      <div className="flex items-center gap-3 md:gap-4">
-        <span className="text-sm font-bold text-gray-700">{selectedCount} selected</span>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
-        >
-          Sizes {expanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-          {selectedRatios.size > 1 && (
-            <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{selectedRatios.size}</span>
-          )}
-        </button>
-        <button
-          onClick={onClear}
-          className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          Clear
-        </button>
-        <button
-          onClick={() => onDownload(Array.from(selectedRatios))}
-          disabled={downloading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all disabled:opacity-50"
-        >
-          {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          {downloading && downloadProgress ? downloadProgress : 'Download'}
-        </button>
       </div>
     </div>
   );

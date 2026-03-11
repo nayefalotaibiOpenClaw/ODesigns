@@ -1,11 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { memo, useCallback, useRef } from "react";
 import { Code, Eye, Trash2 } from "lucide-react";
 import { AspectRatioType } from "@/contexts/EditContext";
 import DynamicPost from "@/app/components/DynamicPost";
 import PostWrapper from "@/app/components/PostWrapper";
 import { Id } from "@/convex/_generated/dataModel";
+
+const MemoizedPostContent = memo(function MemoizedPostContent({ code, aspectRatio, filename }: { code: string; aspectRatio: AspectRatioType; filename: string }) {
+  return (
+    <PostWrapper aspectRatio={aspectRatio} filename={filename}>
+      <DynamicPost code={code} />
+    </PostWrapper>
+  );
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PostRecord = any;
@@ -49,10 +57,48 @@ export default function PostGrid({
   onUpdatePostCode, onUpdatePostCodeForRatio, onRemovePost,
   selectedPostId, onSelectPost,
 }: PostGridProps) {
+  // Store modes in refs so handlers never need to be recreated
+  const modeRef = useRef({ reorderMode, selectMode, selectedPostId });
+  modeRef.current = { reorderMode, selectMode, selectedPostId };
+
+  const handleCardClick = useCallback((e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const { selectMode, reorderMode, selectedPostId } = modeRef.current;
+    if (selectMode) {
+      onTogglePostSelection(id);
+    } else if (!reorderMode) {
+      onSelectPost(selectedPostId === id ? null : id);
+    }
+  }, [onTogglePostSelection, onSelectPost]);
+
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+    if (!modeRef.current.reorderMode) return;
+    dragItem.current = id;
+    setDraggingId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  }, [dragItem, setDraggingId]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (modeRef.current.reorderMode) e.preventDefault();
+  }, []);
+
+  const handleDragEnterCb = useCallback((id: string) => {
+    if (modeRef.current.reorderMode) onDragEnter(id);
+  }, [onDragEnter]);
+
+  const handleDragEndCb = useCallback(() => {
+    if (modeRef.current.reorderMode) onDragEnd();
+  }, [onDragEnd]);
+
+  // Determine data-mode for CSS-driven cursor/overlay
+  const dataMode = reorderMode ? 'reorder' : selectMode ? 'select' : 'default';
+
   return (
     <div
+      data-mode={dataMode}
       className={`
-        w-full mx-auto transition-all duration-500
+        w-full mx-auto
         ${viewMode === 'list' ? 'flex flex-col items-center space-y-12' : 'gap-3 md:gap-6 post-grid-responsive'}
         ${editMode ? 'edit-mode' : ''}
       `}
@@ -79,33 +125,16 @@ export default function PostGrid({
           <div
             key={id}
             data-post-card
+            data-post-id={id}
             ref={(el) => { if (el) postRefs.current.set(id, el); else postRefs.current.delete(id); }}
             draggable={reorderMode}
-            onDragStart={reorderMode ? (e) => {
-              dragItem.current = id;
-              setDraggingId(id);
-              e.dataTransfer.effectAllowed = 'move';
-              e.dataTransfer.setData('text/plain', id);
-            } : undefined}
-            onDragOver={reorderMode ? (e) => {
-              e.preventDefault();
-            } : undefined}
-            onDragEnter={reorderMode ? () => {
-              onDragEnter(id);
-            } : undefined}
-            onDragEnd={reorderMode ? () => {
-              onDragEnd();
-            } : undefined}
-            onClick={selectMode ? (e) => { e.stopPropagation(); onTogglePostSelection(id); } : !reorderMode ? (e) => {
-              e.stopPropagation();
-              onSelectPost(isPostSelected ? null : id);
-            } : undefined}
-            className={`relative group ${isPostSelected ? 'ring-2 ring-blue-500 rounded-xl' : ''}`}
-            style={{
-              opacity: draggingId === id ? 0.4 : 1,
-              transition: 'opacity 0.2s, box-shadow 0.2s',
-              cursor: reorderMode ? 'grab' : selectMode ? 'pointer' : 'pointer',
-            }}
+            onDragStart={(e) => handleDragStart(e, id)}
+            onDragOver={handleDragOver}
+            onDragEnter={() => handleDragEnterCb(id)}
+            onDragEnd={handleDragEndCb}
+            onClick={(e) => handleCardClick(e, id)}
+            className={`relative group post-card ${isPostSelected ? 'ring-2 ring-blue-500 rounded-xl' : ''}`}
+            style={draggingId === id ? { opacity: 0.4, transition: 'opacity 0.2s' } : undefined}
           >
             {/* Post toolbar - above the post */}
             <div className="flex items-center justify-between mb-1 px-0.5 opacity-0 group-hover:opacity-100 transition-opacity h-7">
@@ -154,15 +183,13 @@ export default function PostGrid({
                 />
               </div>
             ) : (
-              <PostWrapper aspectRatio={aspectRatio} filename={post?.title || id}>
-                <DynamicPost code={code} />
-              </PostWrapper>
+              <MemoizedPostContent code={code} aspectRatio={aspectRatio} filename={post?.title || id} />
             )}
             {reorderMode && <div className="absolute inset-0 z-10 border-2 border-dashed border-transparent hover:border-[#1B4332]/30 transition-colors" />}
             {selectMode && (
-              <div className={`absolute inset-0 z-20 rounded-xl transition-all ${isSelected ? 'ring-4 ring-blue-500 bg-blue-500/10' : 'hover:bg-black/5'}`}>
-                <div className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all ${
-                  isSelected ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/80 backdrop-blur-sm text-gray-400 border-2 border-gray-300'
+              <div className={`absolute inset-0 z-20 rounded-xl transition-all ${isSelected ? 'ring-2 ring-gray-900 bg-gray-900/5' : 'hover:bg-black/5'}`}>
+                <div className={`absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                  isSelected ? 'bg-gray-900 text-white shadow-sm' : 'bg-white/80 backdrop-blur-sm text-gray-400 border border-gray-300'
                 }`}>
                   {isSelected ? selectionIndex + 1 : ''}
                 </div>

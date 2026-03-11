@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Loader2, FolderOpen, Image as ImageIcon } from "lucide-react";
+import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, ArrowUpDown, Pencil, MousePointer2, Download } from "lucide-react";
 import { downloadPostsAsZip, downloadPostsMultiRatio } from "@/lib/export/download";
 import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext } from "@/contexts/EditContext";
 import { DeviceContext } from "@/contexts/DeviceContext";
@@ -16,13 +16,13 @@ import { Id } from "@/convex/_generated/dataModel";
 import PostPropertiesPanel from "@/app/components/PostPropertiesPanel";
 
 import Sidebar, { type SidebarTab } from "@/features/design-editor/components/Sidebar";
-import SettingsPanel from "@/features/design-editor/components/SettingsPanel";
 import ThemePanel from "@/features/design-editor/components/ThemePanel";
 import AssetsPanel, { type AssetTypeValue } from "@/features/design-editor/components/AssetsPanel";
 import GeneratePanel from "@/features/design-editor/components/GeneratePanel";
 import PostGrid from "@/features/design-editor/components/PostGrid";
 import DownloadBar from "@/features/design-editor/components/DownloadBar";
-import PublishPanel from "@/features/design-editor/components/PublishPanel";
+import PublishChannelsPage from "@/features/design-editor/components/PublishChannelsPage";
+import BrandPanel from "@/features/design-editor/components/BrandPanel";
 
 export default function DesignPage() {
   const searchParams = useSearchParams();
@@ -65,6 +65,32 @@ export default function DesignPage() {
     workspaceId ? { workspaceId } : "skip"
   );
   const updateWebsiteInfo = useMutation(api.workspaces.updateWebsiteInfo);
+  const updateWorkspace = useMutation(api.workspaces.update);
+  const updateBrandingField = useMutation(api.branding.updateField);
+  const upsertBranding = useMutation(api.branding.upsert);
+
+  // Crawl data
+  const crawlData = useQuery(
+    api.websiteCrawls.getByWorkspace,
+    workspaceId ? { workspaceId } : "skip"
+  );
+  const upsertCrawl = useMutation(api.websiteCrawls.upsert);
+  const addCrawlProducts = useMutation(api.websiteCrawls.addProducts);
+  const markProductSaved = useMutation(api.websiteCrawls.markProductSaved);
+  const removeCrawlProduct = useMutation(api.websiteCrawls.removeProduct);
+
+  // Logo URLs
+  const logoStorageUrl = useMutation(api.assets.getStorageUrl);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoDarkUrl, setLogoDarkUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (branding?.logo) {
+      logoStorageUrl({ storageId: branding.logo }).then(url => setLogoUrl(url ?? null)).catch(() => {});
+    }
+    if (branding?.logoDark) {
+      logoStorageUrl({ storageId: branding.logoDark }).then(url => setLogoDarkUrl(url ?? null)).catch(() => {});
+    }
+  }, [branding?.logo, branding?.logoDark, logoStorageUrl]);
 
   // Assets
   const generateUploadUrl = useMutation(api.assets.generateUploadUrl);
@@ -77,16 +103,22 @@ export default function DesignPage() {
   );
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [editMode, setEditMode] = useState(false);
+  const [activeMode, setActiveMode] = useState<'default' | 'edit' | 'reorder' | 'select'>('default');
+  const editMode = activeMode === 'edit';
+  const reorderMode = activeMode === 'reorder';
+  const selectMode = activeMode === 'select';
+  const setEditMode = useCallback((v: boolean) => setActiveMode(v ? 'edit' : 'default'), []);
+  const setReorderMode = useCallback((v: boolean) => setActiveMode(v ? 'reorder' : 'default'), []);
+  const setSelectMode = useCallback((v: boolean) => setActiveMode(v ? 'select' : 'default'), []);
   const [aspectRatio, setAspectRatio] = useState<AspectRatioType>('1:1');
   const [deviceType, setDeviceType] = useState<"iphone" | "android" | "ipad" | "android_tablet" | "desktop">("iphone");
   const [gridCols, setGridCols] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const handleSetSelectedId = useCallback((id: string | null) => setSelectedId(id), []);
-  const [reorderMode, setReorderMode] = useState(false);
+  const [toolbarDropdown, setToolbarDropdown] = useState<string | null>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const dragItem = useRef<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [selectMode, setSelectMode] = useState(false);
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<string | undefined>();
@@ -118,6 +150,18 @@ export default function DesignPage() {
       setLocalOrder(posts.map(p => p._id));
     }
   }, [posts]);
+
+  // Close toolbar dropdown on click outside
+  useEffect(() => {
+    if (!toolbarDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        setToolbarDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [toolbarDropdown]);
 
   const toggleCodeView = (id: string) => {
     setCodeViewPosts(prev => {
@@ -395,6 +439,269 @@ export default function DesignPage() {
     }
   };
 
+  // ── Crawl handlers ──
+  const handleCrawlDiscover = async (url: string) => {
+    if (!workspaceId || !user) return;
+    await upsertCrawl({
+      workspaceId,
+      userId: user._id,
+      url,
+      status: "discovering",
+      sections: [],
+      discoveredProducts: [],
+      totalProductsFound: 0,
+      totalProductsFetched: 0,
+    });
+
+    try {
+      const res = await fetch("/api/crawl-website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, step: "discover" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Crawl failed");
+
+      const sections = (data.sections || []).map((s: Record<string, unknown>) => ({
+        type: String(s.type || "page"),
+        name: String(s.name || ""),
+        nameAr: s.nameAr ? String(s.nameAr) : undefined,
+        url: String(s.url || ""),
+        imageUrl: s.imageUrl ? String(s.imageUrl) : undefined,
+        productCount: typeof s.productCount === "number" ? s.productCount : undefined,
+        fetched: false,
+      }));
+
+      const homepageProducts = (data.homepageProducts || []).map((p: Record<string, unknown>) => ({
+        name: String(p.name || "Unknown"),
+        price: p.price ? String(p.price) : undefined,
+        currency: p.currency ? String(p.currency) : undefined,
+        originalPrice: p.originalPrice ? String(p.originalPrice) : undefined,
+        discount: p.discount ? String(p.discount) : undefined,
+        imageUrl: p.imageUrl ? String(p.imageUrl) : undefined,
+        sourceUrl: String(p.sourceUrl || url),
+        brand: p.brand ? String(p.brand) : undefined,
+        section: "homepage",
+      }));
+
+      const wi = data.websiteInfo || {};
+      await upsertCrawl({
+        workspaceId,
+        userId: user._id,
+        url,
+        status: "ready",
+        businessInfo: {
+          companyName: wi.companyName || undefined,
+          description: wi.description || undefined,
+          industry: wi.industry || undefined,
+          tone: wi.tone || undefined,
+          targetAudience: wi.targetAudience || undefined,
+        },
+        sections,
+        discoveredProducts: homepageProducts,
+        totalProductsFound: homepageProducts.length,
+        totalProductsFetched: 0,
+      });
+
+      if (wi.companyName || wi.description) {
+        await updateWebsiteInfo({
+          id: workspaceId,
+          websiteInfo: {
+            companyName: wi.companyName || "",
+            description: wi.description || "",
+            industry: wi.industry || "",
+            features: Array.isArray(wi.features) ? wi.features : [],
+            targetAudience: wi.targetAudience || undefined,
+            tone: wi.tone || undefined,
+            contact: wi.contact ? {
+              phone: wi.contact.phone || undefined,
+              email: wi.contact.email || undefined,
+              address: wi.contact.address || undefined,
+              socialMedia: Array.isArray(wi.contact.socialMedia) ? wi.contact.socialMedia.filter(Boolean) : undefined,
+            } : undefined,
+            fetchedAt: Date.now(),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Crawl discover failed:", err);
+      await upsertCrawl({
+        workspaceId,
+        userId: user._id,
+        url,
+        status: "failed",
+        sections: [],
+        discoveredProducts: [],
+        totalProductsFound: 0,
+        totalProductsFetched: 0,
+      });
+    }
+  };
+
+  const handleCrawlSection = async (sectionUrl: string) => {
+    if (!workspaceId || !workspace?.website) return;
+    try {
+      const res = await fetch("/api/crawl-website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: workspace.website, step: "fetch-section", sectionUrl, limit: 6 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Section fetch failed");
+
+      const products = (data.products || []).map((p: Record<string, unknown>) => ({
+        name: String(p.name || "Unknown"),
+        price: p.price ? String(p.price) : undefined,
+        currency: p.currency ? String(p.currency) : undefined,
+        originalPrice: p.originalPrice ? String(p.originalPrice) : undefined,
+        discount: p.discount ? String(p.discount) : undefined,
+        imageUrl: p.imageUrl ? String(p.imageUrl) : undefined,
+        sourceUrl: String(p.sourceUrl || sectionUrl),
+        brand: p.brand ? String(p.brand) : undefined,
+        section: sectionUrl,
+      }));
+
+      await addCrawlProducts({ workspaceId, sectionUrl, products });
+    } catch (err) {
+      console.error("Section fetch failed:", err);
+    }
+  };
+
+  const handleSaveProductAsAsset = async (product: { name: string; imageUrl?: string; sourceUrl: string }) => {
+    if (!workspaceId || !user || !product.imageUrl) return;
+    try {
+      // Proxy through our API to avoid CORS issues
+      const imgRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(product.imageUrl)}`);
+      if (!imgRes.ok) throw new Error("Failed to download product image");
+      const blob = await imgRes.blob();
+
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": blob.type || "image/jpeg" },
+        body: blob,
+      });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const { storageId } = await uploadRes.json();
+
+      const assetId = await createAsset({
+        workspaceId,
+        userId: user._id,
+        scope: "workspace",
+        fileId: storageId,
+        fileName: `${product.name.slice(0, 50)}.jpg`,
+        type: "product",
+        label: product.name,
+      });
+
+      analyzeImage({ assetId, storageId, fileName: product.name, assetType: "product" }).catch(console.error);
+
+      if (crawlData?._id) {
+        await markProductSaved({
+          crawlId: crawlData._id as Id<"websiteCrawls">,
+          productSourceUrl: product.sourceUrl,
+          assetId,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to save product as asset:", err);
+    }
+  };
+
+  const handleSaveAllProducts = async () => {
+    if (!workspaceId || !user || !crawlData) return;
+    const unsaved = (crawlData.discoveredProducts as Array<{ name: string; imageUrl?: string; sourceUrl: string; savedAsAssetId?: string }>).filter(
+      p => !p.savedAsAssetId && p.imageUrl
+    );
+    const batchSize = 3;
+    for (let i = 0; i < unsaved.length; i += batchSize) {
+      const batch = unsaved.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(product =>
+          handleSaveProductAsAsset(product).catch(console.error)
+        )
+      );
+    }
+  };
+
+  const handleRemoveProduct = async (productSourceUrl: string) => {
+    if (!crawlData?._id) return;
+    await removeCrawlProduct({
+      crawlId: crawlData._id as Id<"websiteCrawls">,
+      productSourceUrl,
+    });
+  };
+
+  const handleUploadLogo = async (file: File, variant: "logo" | "logoDark") => {
+    if (!workspaceId) return;
+    const uploadUrl = await generateUploadUrl();
+    const res = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!res.ok) return;
+    const { storageId } = await res.json();
+
+    if (branding) {
+      await updateBrandingField({ workspaceId, field: variant, value: storageId });
+    } else {
+      // Create branding record if it doesn't exist
+      await upsertBranding({
+        workspaceId,
+        brandName: workspace?.name || "Brand",
+        [variant]: storageId,
+        colors: {
+          primary: currentTheme.primary,
+          primaryLight: currentTheme.primaryLight,
+          primaryDark: currentTheme.primaryDark,
+          accent: currentTheme.accent,
+          accentLight: currentTheme.accentLight,
+          accentLime: currentTheme.accentLime,
+          accentGold: currentTheme.accentGold,
+          accentOrange: currentTheme.accentOrange,
+          border: currentTheme.border,
+        },
+        fonts: { heading: currentTheme.font, body: currentTheme.font },
+      });
+    }
+
+    // Update local URL
+    const url = await logoStorageUrl({ storageId });
+    if (variant === "logo") setLogoUrl(url ?? null);
+    else setLogoDarkUrl(url ?? null);
+  };
+
+  const handleDeleteLogo = async (variant: "logo" | "logoDark") => {
+    if (!workspaceId || !branding) return;
+    await updateBrandingField({ workspaceId, field: variant, value: null, unset: true });
+    if (variant === "logo") setLogoUrl(null);
+    else setLogoDarkUrl(null);
+  };
+
+  const handleUpdateBranding = async (field: string, value: string) => {
+    if (!workspaceId || !branding) return;
+    await updateBrandingField({ workspaceId, field, value });
+  };
+
+  const handleUpdateWebsiteInfo = async (updates: Record<string, unknown>) => {
+    if (!workspaceId || !workspace) return;
+    const current = workspace.websiteInfo || {};
+    await updateWebsiteInfo({
+      id: workspaceId,
+      websiteInfo: {
+        ...current,
+        ...updates,
+        fetchedAt: current.fetchedAt || Date.now(),
+      },
+    });
+  };
+
+  const handleUpdateWorkspace = async (updates: { website?: string; industry?: string }) => {
+    if (!workspaceId) return;
+    await updateWorkspace({ id: workspaceId, ...updates });
+  };
+
   const handleDragEnter = useCallback((targetId: string) => {
     if (!dragItem.current || dragItem.current === targetId) return;
     setLocalOrder(prev => {
@@ -421,6 +728,10 @@ export default function DesignPage() {
   }, [localOrder, posts, reorderPosts]);
 
   const handleTabClick = (tab: SidebarTab) => {
+    if (tab === 'design') {
+      setActiveTab(null);
+      return;
+    }
     setActiveTab(prev => prev === tab ? null : tab);
   };
 
@@ -598,20 +909,6 @@ export default function DesignPage() {
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
       <Sidebar activeTab={activeTab} onTabClick={handleTabClick}>
-        {activeTab === 'settings' && (
-          <SettingsPanel
-            editMode={editMode} setEditMode={setEditMode}
-            reorderMode={reorderMode} setReorderMode={setReorderMode}
-            selectMode={selectMode} setSelectMode={setSelectMode}
-            setSelectedPosts={setSelectedPosts}
-            aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}
-            gridCols={gridCols} setGridCols={setGridCols}
-            viewMode={viewMode} setViewMode={setViewMode}
-            collections={collections} activeCollectionId={activeCollectionId}
-            workspaceId={workspaceId} postCount={posts?.length ?? 0}
-            deviceType={deviceType} setDeviceType={setDeviceType}
-          />
-        )}
         {activeTab === 'theme' && (
           <ThemePanel currentTheme={currentTheme} setTheme={setTheme} />
         )}
@@ -652,19 +949,45 @@ export default function DesignPage() {
             websiteScreenshotRef={websiteScreenshotRef} onWebsiteScreenshot={handleWebsiteScreenshot}
           />
         )}
-        {activeTab === 'publish' && user && (
-          <PublishPanel
-            workspaceId={workspaceId!}
-            userId={user._id}
-            posts={posts}
-            postRefs={postRefs}
-          />
-        )}
       </Sidebar>
 
+      {/* Brand full page — sits next to sidebar */}
+      {activeTab === 'brand' && (
+        <BrandPanel
+          workspace={workspace as Parameters<typeof BrandPanel>[0]["workspace"]}
+          branding={branding as Parameters<typeof BrandPanel>[0]["branding"]}
+          crawlData={crawlData as Parameters<typeof BrandPanel>[0]["crawlData"]}
+          logoUrl={logoUrl}
+          logoDarkUrl={logoDarkUrl}
+          currentTheme={currentTheme}
+          setTheme={setTheme}
+          onCrawlDiscover={handleCrawlDiscover}
+          onCrawlSection={handleCrawlSection}
+          onSaveProductAsAsset={handleSaveProductAsAsset}
+          onSaveAllProducts={handleSaveAllProducts}
+          onRemoveProduct={handleRemoveProduct}
+          onClose={() => handleTabClick(null)}
+          onUploadLogo={handleUploadLogo}
+          onDeleteLogo={handleDeleteLogo}
+          onUpdateBranding={handleUpdateBranding}
+          onUpdateWebsiteInfo={handleUpdateWebsiteInfo}
+          onUpdateWorkspace={handleUpdateWorkspace}
+        />
+      )}
+
+      {/* Publish / Channels full page — sits next to sidebar */}
+      {(activeTab === 'publish' || activeTab === 'channels') && user && workspaceId && (
+        <PublishChannelsPage
+          workspaceId={workspaceId}
+          userId={user._id}
+          initialTab={activeTab === 'channels' ? 'channels' : 'publish'}
+          onClose={() => handleTabClick(null)}
+        />
+      )}
+
       {/* Main Content */}
-      <main
-        className="flex-1 overflow-y-auto p-3 md:p-6 pb-14"
+      {activeTab !== 'brand' && activeTab !== 'publish' && activeTab !== 'channels' && <main
+        className="flex-1 overflow-y-auto p-3 md:p-6 pb-24"
         onClick={(e) => {
           if ((e.target as HTMLElement).closest?.('[data-toolbar-portal]')) return;
           if ((e.target as HTMLElement).closest?.('[data-contextual-toolbar]')) return;
@@ -765,31 +1088,113 @@ export default function DesignPage() {
           </DeviceContext.Provider>
         )}
 
-        {/* Bottom toolbar — hidden on mobile when a sidebar panel is open */}
-        <div className={`fixed bottom-[52px] md:bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-sm border-t border-gray-100 px-3 py-1.5 flex items-center justify-center gap-4 md:gap-5 ${activeTab ? 'max-md:hidden' : ''}`}>
-          {(['1:1', '3:4', '4:3', '9:16', '16:9'] as const).map((r) => (
-            <button key={r} onClick={() => setAspectRatio(r)}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${aspectRatio === r ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
-            >{r}</button>
-          ))}
-          <div className="w-px h-4 bg-gray-200" />
-          {(['iphone', 'android', 'ipad', 'android_tablet', 'desktop'] as const).map((d) => (
-            <button key={d} onClick={() => setDeviceType(d)}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${deviceType === d ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
-            >{d === 'iphone' ? 'iPhone' : d === 'android' ? 'Android' : d === 'ipad' ? 'iPad' : d === 'android_tablet' ? 'Tab' : 'Desktop'}</button>
-          ))}
-          <div className="w-px h-4 bg-gray-200" />
-          {[1, 2, 3, 4].map((n) => (
-            <button key={n} onClick={() => setGridCols(n)}
-              className={`w-6 h-6 rounded text-[11px] font-bold transition-all ${gridCols === n ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
-            >{n}</button>
-          ))}
-          <div className="w-px h-4 bg-gray-200" />
-          <button onClick={() => { setReorderMode(!reorderMode); if (!reorderMode) { setEditMode(false); setSelectMode(false); } }}
-            className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${reorderMode ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}`}
-          >Reorder</button>
+        {/* Bottom toolbar — floating pill with icon buttons + click dropdowns */}
+        <div ref={toolbarRef} className={`fixed bottom-[64px] md:bottom-4 left-1/2 -translate-x-1/2 z-[60] ${activeTab ? 'max-md:hidden' : ''}`}>
+          <div className="flex items-center bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_2px_20px_rgba(0,0,0,0.08)] border border-gray-200/60 px-1.5 py-1.5 gap-0.5">
+
+            {/* Cursor / default mode */}
+            <button
+              onClick={() => { setActiveMode('default'); setToolbarDropdown(null); if (selectMode) setSelectedPosts([]); }}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${activeMode === 'default' ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <MousePointer2 size={18} />
+            </button>
+
+            {/* Edit mode */}
+            <button
+              onClick={() => { setActiveMode(activeMode === 'edit' ? 'default' : 'edit'); setToolbarDropdown(null); if (selectMode) setSelectedPosts([]); }}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${activeMode === 'edit' ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <Pencil size={18} />
+            </button>
+
+            {/* Aspect Ratio */}
+            <div className="relative">
+              <button
+                onClick={() => setToolbarDropdown(toolbarDropdown === 'ratio' ? null : 'ratio')}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${toolbarDropdown === 'ratio' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                <Proportions size={18} />
+              </button>
+              {toolbarDropdown === 'ratio' && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 py-1.5 min-w-[140px]">
+                  {(['1:1', '3:4', '4:3', '9:16', '16:9'] as const).map((r) => (
+                    <button key={r} onClick={() => { setAspectRatio(r); setToolbarDropdown(null); }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors ${aspectRatio === r ? 'font-semibold text-gray-900 bg-gray-50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Device */}
+            <div className="relative">
+              <button
+                onClick={() => setToolbarDropdown(toolbarDropdown === 'device' ? null : 'device')}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${toolbarDropdown === 'device' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                <Smartphone size={18} />
+              </button>
+              {toolbarDropdown === 'device' && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 py-1.5 min-w-[150px]">
+                  {([['iphone', 'iPhone'], ['android', 'Android'], ['ipad', 'iPad'], ['android_tablet', 'Tab'], ['desktop', 'Desktop']] as const).map(([key, label]) => (
+                    <button key={key} onClick={() => { setDeviceType(key as typeof deviceType); setToolbarDropdown(null); }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors ${deviceType === key ? 'font-semibold text-gray-900 bg-gray-50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Grid columns */}
+            <div className="relative">
+              <button
+                onClick={() => setToolbarDropdown(toolbarDropdown === 'grid' ? null : 'grid')}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${toolbarDropdown === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              {toolbarDropdown === 'grid' && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 py-1.5 min-w-[140px]">
+                  {[1, 2, 3, 4].map((n) => (
+                    <button key={n} onClick={() => { setGridCols(n); setToolbarDropdown(null); }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors ${gridCols === n ? 'font-semibold text-gray-900 bg-gray-50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                    >
+                      {n} {n === 1 ? 'Column' : 'Columns'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="w-px h-5 bg-gray-200/80 mx-0.5" />
+
+            {/* Reorder */}
+            <button
+              onClick={() => { setActiveMode(activeMode === 'reorder' ? 'default' : 'reorder'); setToolbarDropdown(null); if (selectMode) setSelectedPosts([]); }}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${reorderMode ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <ArrowUpDown size={18} />
+            </button>
+
+            {/* Select & Download */}
+            <button
+              onClick={() => {
+                if (selectMode) { setSelectedPosts([]); setActiveMode('default'); }
+                else { setActiveMode('select'); }
+                setToolbarDropdown(null);
+              }}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${selectMode ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <Download size={18} />
+            </button>
+          </div>
         </div>
-      </main>
+      </main>}
 
       {/* Properties side panel — commented out for now
       {selectedPostId && (() => {

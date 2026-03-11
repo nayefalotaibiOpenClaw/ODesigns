@@ -26,6 +26,7 @@ import type * as subscriptions from "../subscriptions.js";
 import type * as tokenRefresh from "../tokenRefresh.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
+import type * as websiteCrawls from "../websiteCrawls.js";
 import type * as workspaces from "../workspaces.js";
 
 import type {
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   tokenRefresh: typeof tokenRefresh;
   users: typeof users;
   webhooks: typeof webhooks;
+  websiteCrawls: typeof websiteCrawls;
   workspaces: typeof workspaces;
 }>;
 

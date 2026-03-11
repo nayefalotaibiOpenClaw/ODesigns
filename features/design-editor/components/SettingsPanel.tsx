@@ -46,7 +46,7 @@ export default function SettingsPanel({
         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Mode</label>
         <div className="flex gap-2">
           <button
-            onClick={() => { setEditMode(!editMode); setReorderMode(false); setSelectMode(false); }}
+            onClick={() => setEditMode(!editMode)}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold border transition-all ${
               editMode
                 ? 'bg-yellow-400 text-yellow-900 border-yellow-500'
@@ -57,7 +57,7 @@ export default function SettingsPanel({
             Edit
           </button>
           <button
-            onClick={() => { setReorderMode(!reorderMode); setEditMode(false); setSelectMode(false); }}
+            onClick={() => setReorderMode(!reorderMode)}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold border transition-all ${
               reorderMode
                 ? 'bg-[#1B4332] text-white border-[#1B4332]'
@@ -69,7 +69,7 @@ export default function SettingsPanel({
           </button>
         </div>
         <button
-          onClick={() => { setSelectMode(!selectMode); setEditMode(false); setReorderMode(false); if (selectMode) setSelectedPosts([]); }}
+          onClick={() => { setSelectMode(!selectMode); if (selectMode) setSelectedPosts([]); }}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold border transition-all mt-2 ${
             selectMode
               ? 'bg-blue-500 text-white border-blue-600'

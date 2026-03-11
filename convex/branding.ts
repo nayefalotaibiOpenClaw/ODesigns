@@ -59,6 +59,31 @@ export const upsert = mutation({
   },
 });
 
+export const updateField = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    field: v.string(),
+    value: v.any(),
+    unset: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const branding = await ctx.db
+      .query("branding")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .first();
+    if (!branding) throw new Error("Branding not found");
+    if (args.unset) {
+      // Remove the field by replacing the entire document without it
+      const { _id, _creationTime, ...rest } = branding;
+      const updated = { ...rest };
+      delete (updated as Record<string, unknown>)[args.field];
+      await ctx.db.replace(_id, updated);
+    } else {
+      await ctx.db.patch(branding._id, { [args.field]: args.value });
+    }
+  },
+});
+
 export const updateColors = mutation({
   args: {
     workspaceId: v.id("workspaces"),

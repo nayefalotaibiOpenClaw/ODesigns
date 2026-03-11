@@ -1,17 +1,19 @@
 "use client";
 
-import React from "react";
-import { Settings, Palette, Upload, Sparkles, Send, X } from "lucide-react";
+import React, { useState } from "react";
+import { Palette, Upload, Sparkles, Send, X, Building2, LayoutGrid, LinkIcon } from "lucide-react";
 import Link from "next/link";
 
-export type SidebarTab = 'settings' | 'theme' | 'assets' | 'generate' | 'publish' | null;
+export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | null;
 
-const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number }>; label: string }[] = [
-  { id: 'settings', icon: Settings, label: 'Settings' },
-  { id: 'theme', icon: Palette, label: 'Theme' },
+const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number }>; label: string; fullPage?: boolean }[] = [
+  { id: 'brand', icon: Building2, label: 'Brand', fullPage: true },
+  { id: 'design', icon: LayoutGrid, label: 'Design', fullPage: true },
+  // { id: 'theme', icon: Palette, label: 'Theme' }, // Theme is in Brand page
   { id: 'assets', icon: Upload, label: 'Assets' },
   { id: 'generate', icon: Sparkles, label: 'Generate' },
-  { id: 'publish', icon: Send, label: 'Publish' },
+  { id: 'publish', icon: Send, label: 'Publish', fullPage: true },
+  { id: 'channels', icon: LinkIcon, label: 'Channels', fullPage: true },
 ];
 
 interface SidebarProps {
@@ -21,34 +23,58 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, onTabClick, children }: SidebarProps) {
-  const panelOpen = activeTab !== null;
+  const activeItem = SIDEBAR_ITEMS.find(i => i.id === activeTab);
+  const panelOpen = activeTab !== null && !activeItem?.fullPage;
+  const [hoveredTab, setHoveredTab] = useState<SidebarTab>(null);
 
   return (
     <>
       {/* Desktop Icon Rail - hidden on mobile */}
-      <div className="hidden md:flex w-[72px] bg-white border-r border-gray-200 flex-col items-center py-4 gap-1 shrink-0">
-        <Link href="/workspaces" className="w-10 h-10 bg-[#1B4332] rounded-xl flex items-center justify-center mb-4" title="Back to Workspaces">
-          <span className="text-white font-black text-sm">S</span>
-        </Link>
-        {SIDEBAR_ITEMS.map(({ id, icon: Icon, label }) => (
+      <div className="hidden md:flex w-[68px] bg-white flex-col items-center justify-center shrink-0 relative h-full pl-2">
+        {/* Top: Logo — clicks to design view */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2">
           <button
-            key={id}
-            onClick={() => onTabClick(id)}
-            className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all text-[10px] font-medium ${
-              activeTab === id
-                ? 'bg-[#1B4332] text-white'
-                : 'text-gray-500 hover:bg-gray-100'
-            }`}
+            onClick={() => onTabClick('design')}
+            className="w-[42px] h-[42px] rounded-full border border-gray-200 flex items-center justify-center hover:border-gray-300 transition-colors"
+            title="Design"
           >
-            <Icon size={20} />
-            {label}
+            <span className="w-8 h-8 bg-[#1B4332] rounded-full flex items-center justify-center">
+              <span className="text-white font-black text-xs">S</span>
+            </span>
           </button>
-        ))}
+        </div>
+
+        {/* Center: Pill nav container */}
+        <div className="border border-gray-200 rounded-full flex flex-col items-center py-1.5 px-1.5 gap-0">
+          {SIDEBAR_ITEMS.map(({ id, icon: Icon, label }) => (
+            <div key={id} className="relative">
+              <button
+                onClick={() => onTabClick(id)}
+                onMouseEnter={() => setHoveredTab(id)}
+                onMouseLeave={() => setHoveredTab(null)}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  activeTab === id || (id === 'design' && activeTab === null)
+                    ? 'bg-gray-200/70 text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+              >
+                <Icon size={18} />
+              </button>
+              {/* Tooltip */}
+              {hoveredTab === id && (
+                <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-gray-900 text-white text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none z-50 shadow-lg">
+                  {label}
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Desktop Expandable Panel - hidden on mobile */}
       <div
-        className={`hidden md:block bg-white border-r border-gray-200 overflow-y-auto shrink-0 transition-all duration-300 ${
+        className={`hidden md:block bg-white overflow-y-auto shrink-0 transition-all duration-300 ${
           panelOpen ? 'w-[280px]' : 'w-0'
         }`}
       >
@@ -72,7 +98,7 @@ export default function Sidebar({ activeTab, onTabClick, children }: SidebarProp
             key={id}
             onClick={() => onTabClick(id)}
             className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 rounded-xl transition-all text-[10px] font-medium ${
-              activeTab === id
+              activeTab === id || (id === 'design' && activeTab === null)
                 ? 'text-[#1B4332]'
                 : 'text-gray-400'
             }`}

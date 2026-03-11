@@ -141,6 +141,11 @@ body {
   }
 }
 
+/* Post grid cursor modes — driven by data-mode, no JS per-card */
+[data-mode="reorder"] .post-card { cursor: grab; }
+[data-mode="select"] .post-card { cursor: pointer; }
+[data-mode="default"] .post-card { cursor: pointer; }
+
 /* Safe area for bottom nav on notched devices */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);

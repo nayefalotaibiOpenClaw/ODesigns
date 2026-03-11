@@ -85,125 +85,16 @@ export default function GeneratePanel({
         className="hidden"
       />
 
-      {/* Website info (fetched at workspace creation) */}
-      {workspace?.websiteInfo && (
-        <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 space-y-2.5">
-          <div className="flex items-center gap-1.5">
-            <Globe size={12} className="text-blue-400 shrink-0" />
-            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Website Info</span>
-            <div className="ml-auto flex items-center gap-1.5">
-              <button
-                onClick={() => websiteScreenshotRef.current?.click()}
-                className="text-blue-400 hover:text-blue-600"
-                title="Upload website screenshot for better AI analysis"
-              >
-                <ImageIcon size={12} />
-              </button>
-              <button
-                onClick={onRetryWebsiteFetch}
-                disabled={fetchingWebsite}
-                className="text-blue-400 hover:text-blue-600 disabled:opacity-50"
-                title="Refresh website info"
-              >
-                {fetchingWebsite ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-              </button>
-            </div>
+      {/* Website info summary — full details in Brand tab */}
+      {workspace?.websiteInfo?.companyName && (
+        <div className="rounded-lg bg-blue-50 border border-blue-100 p-2.5 flex items-center gap-2">
+          <Globe size={12} className="text-blue-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold text-blue-900 truncate">{workspace.websiteInfo.companyName}</p>
+            {workspace.websiteInfo.industry && (
+              <p className="text-[9px] text-blue-500 truncate">{workspace.websiteInfo.industry}</p>
+            )}
           </div>
-
-          {websiteScreenshot && (
-            <div className="flex items-center gap-1.5 text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded">
-              <ImageIcon size={10} />
-              <span>Screenshot attached — click Refresh to re-analyze</span>
-              <button onClick={() => setWebsiteScreenshot(null)} className="ml-auto text-green-400 hover:text-red-500">
-                <X size={10} />
-              </button>
-            </div>
-          )}
-
-          {workspace.websiteInfo.companyName && (
-            <p className="text-xs font-bold text-blue-900">{workspace.websiteInfo.companyName}</p>
-          )}
-          {workspace.websiteInfo.industry && (
-            <span className="inline-block text-[10px] font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">{workspace.websiteInfo.industry}</span>
-          )}
-          {workspace.websiteInfo.description && (
-            <p className="text-[11px] text-blue-700 leading-relaxed">{workspace.websiteInfo.description}</p>
-          )}
-
-          {workspace.websiteInfo.features && workspace.websiteInfo.features.length > 0 && (
-            <div>
-              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Features</span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {workspace.websiteInfo.features.slice(0, 8).map((f: string, i: number) => (
-                  <span key={i} className="text-[10px] font-medium text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">{f}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {workspace.websiteInfo.targetAudience && (
-            <div>
-              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Audience</span>
-              <p className="text-[10px] text-blue-600 mt-0.5">{workspace.websiteInfo.targetAudience}</p>
-            </div>
-          )}
-
-          {workspace.websiteInfo.tone && (
-            <div>
-              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Tone</span>
-              <p className="text-[10px] text-blue-600 mt-0.5">{workspace.websiteInfo.tone}</p>
-            </div>
-          )}
-
-          {workspace.websiteInfo.contact && (
-            <div>
-              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Contact</span>
-              <div className="text-[10px] text-blue-600 mt-0.5 space-y-0.5">
-                {workspace.websiteInfo.contact.phone && <p>{workspace.websiteInfo.contact.phone}</p>}
-                {workspace.websiteInfo.contact.email && <p>{workspace.websiteInfo.contact.email}</p>}
-                {workspace.websiteInfo.contact.address && <p>{workspace.websiteInfo.contact.address}</p>}
-                {workspace.websiteInfo.contact.socialMedia && workspace.websiteInfo.contact.socialMedia.length > 0 && (
-                  <p>{workspace.websiteInfo.contact.socialMedia.join(' · ')}</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      {workspace?.website && !workspace?.websiteInfo && (
-        <div className="rounded-lg bg-amber-50 border border-amber-100 p-2.5 space-y-2">
-          <div className="flex items-center gap-2">
-            <Globe size={12} className="text-amber-400 shrink-0" />
-            <p className="text-[10px] text-amber-600 truncate flex-1">{workspace.website}</p>
-            <button
-              onClick={() => websiteScreenshotRef.current?.click()}
-              className="text-amber-500 hover:text-amber-700 shrink-0"
-              title="Upload website screenshot (optional)"
-            >
-              <ImageIcon size={12} />
-            </button>
-            <button
-              onClick={onRetryWebsiteFetch}
-              disabled={fetchingWebsite}
-              className="flex items-center gap-1 text-[10px] font-bold text-amber-600 hover:text-amber-800 disabled:opacity-50 shrink-0"
-            >
-              {fetchingWebsite ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : (
-                <RefreshCw size={12} />
-              )}
-              {fetchingWebsite ? 'Fetching...' : 'Analyze'}
-            </button>
-          </div>
-          {websiteScreenshot && (
-            <div className="flex items-center gap-1.5 text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded">
-              <ImageIcon size={10} />
-              <span>Screenshot attached</span>
-              <button onClick={() => setWebsiteScreenshot(null)} className="ml-auto text-green-400 hover:text-red-500">
-                <X size={10} />
-              </button>
-            </div>
-          )}
         </div>
       )}
 

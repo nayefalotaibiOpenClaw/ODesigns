@@ -426,6 +426,57 @@ export default defineSchema({
     .index("by_social_account", ["socialAccountId"])
     .index("by_provider_post", ["provider", "providerPostId"]),
 
+  // ─── Website Crawls ─────────────────────────────────
+  websiteCrawls: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    url: v.string(),
+    status: v.union(
+      v.literal("discovering"),
+      v.literal("ready"),
+      v.literal("failed")
+    ),
+    // Business info extracted from homepage
+    businessInfo: v.optional(v.object({
+      companyName: v.optional(v.string()),
+      description: v.optional(v.string()),
+      industry: v.optional(v.string()),
+      tone: v.optional(v.string()),
+      targetAudience: v.optional(v.string()),
+    })),
+    // Discovered browsable sections (categories, collections, etc)
+    sections: v.array(v.object({
+      type: v.string(),
+      name: v.string(),
+      nameAr: v.optional(v.string()),
+      url: v.string(),
+      imageUrl: v.optional(v.string()),
+      productCount: v.optional(v.number()),
+      fetched: v.boolean(),
+      fetchedAt: v.optional(v.number()),
+      productsFetched: v.optional(v.number()),
+    })),
+    // Products discovered from sections (basic list info)
+    discoveredProducts: v.array(v.object({
+      name: v.string(),
+      price: v.optional(v.string()),
+      currency: v.optional(v.string()),
+      originalPrice: v.optional(v.string()),
+      discount: v.optional(v.string()),
+      imageUrl: v.optional(v.string()),
+      sourceUrl: v.string(),
+      brand: v.optional(v.string()),
+      description: v.optional(v.string()),
+      section: v.optional(v.string()),
+      savedAsAssetId: v.optional(v.id("assets")),
+    })),
+    totalProductsFound: v.number(),
+    totalProductsFetched: v.number(),
+    lastCrawledAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"]),
+
   // ─── Generations ─────────────────────────────────────
   generations: defineTable({
     workspaceId: v.id("workspaces"),
