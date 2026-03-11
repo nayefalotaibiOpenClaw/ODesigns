@@ -90,6 +90,7 @@ export default function MockupFrame({
   return (
     <DraggableWrapper
       id={id}
+      variant="mockup"
       className={`relative z-20 flex-shrink-0 ${className}`}
       style={{ width: size.w, height: size.h, maxHeight: "100%" }}
     >

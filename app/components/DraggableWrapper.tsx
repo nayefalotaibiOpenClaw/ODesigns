@@ -316,13 +316,13 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
         dragListener={false}
         dragMomentum={false}
         dragTransition={{ power: 0 }}
-        style={{ x, y, touchAction: isEditMode ? 'none' : 'auto', perspective: hasTransform ? '800px' : undefined, transition: isEditMode ? 'none' : undefined, animation: hasCustomPosition ? 'none' : undefined, ...style }}
+        style={{ x, y, touchAction: isEditMode ? 'none' : 'auto', perspective: hasTransform ? '800px' : undefined, transition: isEditMode ? 'none' : undefined, animation: isEditMode || hasCustomPosition ? 'none' : undefined, ...style }}
         whileDrag={{ scale: 1.05, zIndex: 100 }}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onClick={handleClick}
         dir={dir}
-        className={`${className} ${isSelected ? 'relative z-[999]' : ''}`}
+        className={`${className} ${isSelected ? 'z-[999]' : ''}`}
       >
         {isSelected && (
           <div className="absolute -inset-1 border-2 border-dashed border-[#B7FF5B]/50 rounded-xl pointer-events-none z-50" />
