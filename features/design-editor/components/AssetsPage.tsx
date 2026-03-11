@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Upload, Image as ImageIcon, X, Check, Loader2, RefreshCw } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Upload, Image as ImageIcon, X, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 
 const ASSET_TYPES = [
   { value: "screenshot", label: "Screenshot" },
@@ -175,12 +175,52 @@ export default function AssetsPage({
           {assets && assets.length > 0 ? (
             <div className="space-y-8">
               {Object.entries(grouped).map(([type, items]) => (
-                <div key={type}>
-                  <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-                    {ASSET_TYPES.find((t) => t.value === type)?.label || type} ({items.length})
-                  </h2>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                    {items.map((asset: AssetRecord) => (
+                <AssetGroup
+                  key={type}
+                  type={type}
+                  items={items}
+                  onRemoveAsset={onRemoveAsset}
+                  onRetryAnalysis={onRetryAnalysis}
+                />
+              ))}
+            </div>
+          ) : assets && assets.length === 0 ? (
+            <div className="text-center py-20">
+              <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No assets yet</p>
+              <p className="text-xs text-slate-400 mt-1">Upload images for AI to use in your designs</p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const COLLAPSED_COUNT = 12; // 2 rows × 6 columns
+
+function AssetGroup({
+  type,
+  items,
+  onRemoveAsset,
+  onRetryAnalysis,
+}: {
+  type: string;
+  items: AssetRecord[];
+  onRemoveAsset: (id: string) => void;
+  onRetryAnalysis: (asset: AssetRecord) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleItems = expanded ? items : items.slice(0, COLLAPSED_COUNT);
+  const hasMore = items.length > COLLAPSED_COUNT;
+
+  return (
+    <div>
+      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+        {ASSET_TYPES.find((t) => t.value === type)?.label || type} ({items.length})
+      </h2>
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+        {visibleItems.map((asset: AssetRecord) => (
                       <div
                         key={asset._id}
                         className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 hover:border-slate-300 transition-colors"
@@ -225,18 +265,18 @@ export default function AssetsPage({
                       </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : assets && assets.length === 0 ? (
-            <div className="text-center py-20">
-              <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">No assets yet</p>
-              <p className="text-xs text-slate-400 mt-1">Upload images for AI to use in your designs</p>
-            </div>
-          ) : null}
-        </div>
-      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-3 flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
+        >
+          {expanded ? (
+            <><ChevronUp size={14} /> Show less</>
+          ) : (
+            <><ChevronDown size={14} /> Show all {items.length}</>
+          )}
+        </button>
+      )}
     </div>
   );
 }
