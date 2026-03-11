@@ -17,7 +17,8 @@ import PostPropertiesPanel from "@/app/components/PostPropertiesPanel";
 
 import Sidebar, { type SidebarTab } from "@/features/design-editor/components/Sidebar";
 import ThemePanel from "@/features/design-editor/components/ThemePanel";
-import AssetsPanel, { type AssetTypeValue } from "@/features/design-editor/components/AssetsPanel";
+import { type AssetTypeValue } from "@/features/design-editor/components/AssetsPanel";
+import AssetsPage from "@/features/design-editor/components/AssetsPage";
 import GeneratePanel from "@/features/design-editor/components/GeneratePanel";
 import PostGrid from "@/features/design-editor/components/PostGrid";
 import DownloadBar from "@/features/design-editor/components/DownloadBar";
@@ -31,6 +32,10 @@ export default function DesignPage() {
 
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const user = useQuery(api.users.currentUser);
+  const workspaces = useQuery(
+    api.workspaces.listByUser,
+    user ? { userId: user._id } : "skip"
+  );
 
   // Fetch workspace data
   const collections = useQuery(
@@ -908,30 +913,15 @@ export default function DesignPage() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
-      <Sidebar activeTab={activeTab} onTabClick={handleTabClick}>
+      <Sidebar
+        activeTab={activeTab}
+        onTabClick={handleTabClick}
+        workspaces={workspaces?.map(w => ({ _id: w._id, name: w.name }))}
+        currentWorkspaceId={workspaceId ?? undefined}
+        currentWorkspaceName={workspace?.name}
+      >
         {activeTab === 'theme' && (
           <ThemePanel currentTheme={currentTheme} setTheme={setTheme} />
-        )}
-        {activeTab === 'assets' && (
-          <AssetsPanel
-            assets={assets}
-            pendingFiles={pendingFiles} setPendingFiles={setPendingFiles}
-            showAssetUploadDialog={showAssetUploadDialog} setShowAssetUploadDialog={setShowAssetUploadDialog}
-            assetTypeSelect={assetTypeSelect} setAssetTypeSelect={setAssetTypeSelect}
-            assetScope={assetScope} setAssetScope={setAssetScope}
-            uploadingAsset={uploadingAsset}
-            onFileSelect={handleFileSelect}
-            onAssetUpload={handleAssetUpload}
-            onRemoveAsset={(id) => removeAsset({ id: id as Id<"assets"> })}
-            onRetryAnalysis={(asset) => {
-              analyzeImage({
-                assetId: asset._id,
-                storageId: asset.fileId,
-                fileName: asset.fileName,
-                assetType: asset.type,
-              }).catch(console.error);
-            }}
-          />
         )}
         {activeTab === 'generate' && (
           <GeneratePanel
@@ -985,8 +975,31 @@ export default function DesignPage() {
         />
       )}
 
+      {/* Assets full page — sits next to sidebar */}
+      {activeTab === 'assets' && (
+        <AssetsPage
+          assets={assets}
+          pendingFiles={pendingFiles} setPendingFiles={setPendingFiles}
+          showAssetUploadDialog={showAssetUploadDialog} setShowAssetUploadDialog={setShowAssetUploadDialog}
+          assetTypeSelect={assetTypeSelect} setAssetTypeSelect={setAssetTypeSelect}
+          assetScope={assetScope} setAssetScope={setAssetScope}
+          uploadingAsset={uploadingAsset}
+          onFileSelect={handleFileSelect}
+          onAssetUpload={handleAssetUpload}
+          onRemoveAsset={(id) => removeAsset({ id: id as Id<"assets"> })}
+          onRetryAnalysis={(asset) => {
+            analyzeImage({
+              assetId: asset._id,
+              storageId: asset.fileId,
+              fileName: asset.fileName,
+              assetType: asset.type,
+            }).catch(console.error);
+          }}
+        />
+      )}
+
       {/* Main Content */}
-      {activeTab !== 'brand' && activeTab !== 'publish' && activeTab !== 'channels' && <main
+      {activeTab !== 'brand' && activeTab !== 'publish' && activeTab !== 'channels' && activeTab !== 'assets' && <main
         className="flex-1 overflow-y-auto p-3 md:p-6 pb-24"
         onClick={(e) => {
           if ((e.target as HTMLElement).closest?.('[data-toolbar-portal]')) return;

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Palette, Upload, Sparkles, Send, X, Building2, LayoutGrid, LinkIcon } from "lucide-react";
-import Link from "next/link";
+import React, { useState, useRef, useEffect } from "react";
+import { Palette, Upload, Sparkles, Send, X, Building2, LayoutGrid, LinkIcon, ChevronDown, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | null;
 
@@ -10,38 +10,94 @@ const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number
   { id: 'brand', icon: Building2, label: 'Brand', fullPage: true },
   { id: 'design', icon: LayoutGrid, label: 'Design', fullPage: true },
   // { id: 'theme', icon: Palette, label: 'Theme' }, // Theme is in Brand page
-  { id: 'assets', icon: Upload, label: 'Assets' },
+  { id: 'assets', icon: Upload, label: 'Assets', fullPage: true },
   { id: 'generate', icon: Sparkles, label: 'Generate' },
   { id: 'publish', icon: Send, label: 'Publish', fullPage: true },
   { id: 'channels', icon: LinkIcon, label: 'Channels', fullPage: true },
 ];
 
+interface WorkspaceItem {
+  _id: string;
+  name: string;
+}
+
 interface SidebarProps {
   activeTab: SidebarTab;
   onTabClick: (tab: SidebarTab) => void;
   children: React.ReactNode;
+  workspaces?: WorkspaceItem[];
+  currentWorkspaceId?: string;
+  currentWorkspaceName?: string;
 }
 
-export default function Sidebar({ activeTab, onTabClick, children }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabClick, children, workspaces, currentWorkspaceId, currentWorkspaceName }: SidebarProps) {
   const activeItem = SIDEBAR_ITEMS.find(i => i.id === activeTab);
   const panelOpen = activeTab !== null && !activeItem?.fullPage;
   const [hoveredTab, setHoveredTab] = useState<SidebarTab>(null);
+  const [showWorkspaces, setShowWorkspaces] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showWorkspaces) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowWorkspaces(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showWorkspaces]);
+
+  const initial = currentWorkspaceName?.charAt(0)?.toUpperCase() || "S";
 
   return (
     <>
       {/* Desktop Icon Rail - hidden on mobile */}
-      <div className="hidden md:flex w-[68px] bg-white flex-col items-center justify-center shrink-0 relative h-full pl-2">
-        {/* Top: Logo — clicks to design view */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2">
+      <div className="hidden md:flex w-[68px] bg-white flex-col items-center justify-center shrink-0 relative h-full pl-2 z-[70]">
+        {/* Top: Workspace switcher */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2" ref={dropdownRef}>
           <button
-            onClick={() => onTabClick('design')}
-            className="w-[42px] h-[42px] rounded-full border border-gray-200 flex items-center justify-center hover:border-gray-300 transition-colors"
-            title="Design"
+            onClick={() => setShowWorkspaces(!showWorkspaces)}
+            className={`w-[42px] h-[42px] rounded-full border flex items-center justify-center transition-colors ${
+              showWorkspaces ? 'border-[#1B4332] shadow-md' : 'border-gray-200 hover:border-gray-300'
+            }`}
+            title={currentWorkspaceName || "Switch Workspace"}
           >
             <span className="w-8 h-8 bg-[#1B4332] rounded-full flex items-center justify-center">
-              <span className="text-white font-black text-xs">S</span>
+              <span className="text-white font-black text-xs">{initial}</span>
             </span>
           </button>
+
+          {/* Workspace dropdown */}
+          {showWorkspaces && workspaces && workspaces.length > 0 && (
+            <div className="absolute left-full ml-3 top-0 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
+              <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Workspaces</p>
+              {workspaces.map((ws) => (
+                <button
+                  key={ws._id}
+                  onClick={() => {
+                    setShowWorkspaces(false);
+                    if (ws._id !== currentWorkspaceId) {
+                      router.push(`/design?workspace=${ws._id}`);
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 transition-colors ${
+                    ws._id === currentWorkspaceId ? 'bg-slate-50' : ''
+                  }`}
+                >
+                  <span className="w-7 h-7 bg-[#1B4332] rounded-full flex items-center justify-center shrink-0">
+                    <span className="text-white font-black text-[10px]">{ws.name.charAt(0).toUpperCase()}</span>
+                  </span>
+                  <span className="text-sm font-medium text-slate-700 truncate flex-1">{ws.name}</span>
+                  {ws._id === currentWorkspaceId && (
+                    <Check size={14} className="text-[#1B4332] shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Center: Pill nav container */}
