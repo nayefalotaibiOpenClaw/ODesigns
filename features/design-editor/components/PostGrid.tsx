@@ -2,7 +2,7 @@
 
 import React, { memo, useCallback, useRef, useState } from "react";
 import { Code, Eye, Trash2, Scaling, Loader2, Check } from "lucide-react";
-import { AspectRatioType } from "@/contexts/EditContext";
+import { AspectRatioType, PostScopeContext } from "@/contexts/EditContext";
 import DynamicPost from "@/app/components/DynamicPost";
 import PostWrapper from "@/app/components/PostWrapper";
 import { Id } from "@/convex/_generated/dataModel";
@@ -278,7 +278,9 @@ export default function PostGrid({
                 />
               </div>
             ) : (
-              <MemoizedPostContent code={code} aspectRatio={aspectRatio} filename={post?.title || id} />
+              <PostScopeContext.Provider value={id}>
+                <MemoizedPostContent code={code} aspectRatio={aspectRatio} filename={post?.title || id} />
+              </PostScopeContext.Provider>
             )}
             {reorderMode && <div className="absolute inset-0 z-10 border-2 border-dashed border-transparent hover:border-[#1B4332]/30 transition-colors" />}
             {selectMode && (

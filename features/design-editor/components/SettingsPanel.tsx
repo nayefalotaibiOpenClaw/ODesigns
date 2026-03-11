@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LayoutGrid, List, Pencil, ArrowUpDown, MousePointer2, Check } from "lucide-react";
+import { LayoutGrid, List, Pencil, ArrowUpDown, MousePointer2, Check, Eye } from "lucide-react";
 import Link from "next/link";
 import { AspectRatioType } from "@/contexts/EditContext";
 import { Id } from "@/convex/_generated/dataModel";
@@ -26,6 +26,9 @@ interface SettingsPanelProps {
   postCount: number;
   deviceType: "iphone" | "android" | "ipad" | "android_tablet" | "desktop";
   setDeviceType: (v: "iphone" | "android" | "ipad" | "android_tablet" | "desktop") => void;
+  hiddenComponents: Set<string>;
+  onRestoreComponent: (id: string) => void;
+  onRestoreAll: () => void;
 }
 
 export default function SettingsPanel({
@@ -39,6 +42,7 @@ export default function SettingsPanel({
   collections, activeCollectionId,
   workspaceId, postCount,
   deviceType, setDeviceType,
+  hiddenComponents, onRestoreComponent, onRestoreAll,
 }: SettingsPanelProps) {
   return (
     <div className="space-y-6">
@@ -186,6 +190,34 @@ export default function SettingsPanel({
               </Link>
             ))}
           </div>
+        </div>
+      )}
+
+      {editMode && hiddenComponents.size > 0 && (
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+            Hidden ({hiddenComponents.size})
+          </label>
+          <div className="space-y-1">
+            {Array.from(hiddenComponents).map((id) => (
+              <div key={id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 border border-gray-100">
+                <span className="text-[11px] font-mono text-gray-500 truncate flex-1 mr-2">{id}</span>
+                <button
+                  onClick={() => onRestoreComponent(id)}
+                  className="p-1.5 rounded-lg hover:bg-white text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Restore component"
+                >
+                  <Eye size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={onRestoreAll}
+            className="w-full mt-2 py-2 rounded-lg text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100 transition-all"
+          >
+            Restore All
+          </button>
         </div>
       )}
 

@@ -26,3 +26,13 @@ export const useParentDragging = () => useContext(ParentDraggingContext);
 // Upload signal — increments when toolbar upload button is clicked
 export const UploadSignalContext = createContext(0);
 export const useUploadSignal = () => useContext(UploadSignalContext);
+
+// Post scope — unique ID per post to scope DraggableWrapper selections
+export const PostScopeContext = createContext<string>("");
+export const usePostScope = () => useContext(PostScopeContext);
+
+// Hidden components — track which DraggableWrapper IDs are hidden
+export const HiddenComponentsContext = createContext<Set<string>>(new Set());
+export const SetHiddenComponentsContext = createContext<(updater: (prev: Set<string>) => Set<string>) => void>(() => {});
+export const useHiddenComponents = () => useContext(HiddenComponentsContext);
+export const useSetHiddenComponents = () => useContext(SetHiddenComponentsContext);

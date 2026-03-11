@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, ArrowUpDown, Pencil, MousePointer2, Download, Paperclip, ArrowUp, Sparkles } from "lucide-react";
+import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, ArrowUpDown, Pencil, MousePointer2, Download, Paperclip, ArrowUp, Sparkles, EyeOff, Eye } from "lucide-react";
 import MobileNavMenu from "@/features/design-editor/components/MobileNavMenu";
 import { downloadPostsAsZip, downloadPostsMultiRatio } from "@/lib/export/download";
-import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext } from "@/contexts/EditContext";
+import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext, HiddenComponentsContext, SetHiddenComponentsContext } from "@/contexts/EditContext";
 import { DeviceContext } from "@/contexts/DeviceContext";
 import { useTheme, useSetTheme, type Theme } from "@/contexts/ThemeContext";
 import Link from "next/link";
@@ -120,6 +120,10 @@ export default function DesignPage() {
   const [gridCols, setGridCols] = useState(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const handleSetSelectedId = useCallback((id: string | null) => setSelectedId(id), []);
+  const [hiddenComponents, setHiddenComponents] = useState<Set<string>>(new Set());
+  const handleSetHiddenComponents = useCallback((updater: (prev: Set<string>) => Set<string>) => {
+    setHiddenComponents(prev => updater(prev));
+  }, []);
   const [toolbarDropdown, setToolbarDropdown] = useState<string | null>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const dragItem = useRef<string | null>(null);
@@ -1198,6 +1202,8 @@ export default function DesignPage() {
           <AspectRatioContext.Provider value={aspectRatio}>
           <SelectedIdContext.Provider value={selectedId}>
           <SetSelectedIdContext.Provider value={handleSetSelectedId}>
+          <HiddenComponentsContext.Provider value={hiddenComponents}>
+          <SetHiddenComponentsContext.Provider value={handleSetHiddenComponents}>
             <PostGrid
               allPostIds={allPostIds}
               posts={posts}
@@ -1226,6 +1232,8 @@ export default function DesignPage() {
               onSelectPost={setSelectedPostId}
               onAdaptRatio={handleAdaptSingleRatio}
             />
+          </SetHiddenComponentsContext.Provider>
+          </HiddenComponentsContext.Provider>
           </SetSelectedIdContext.Provider>
           </SelectedIdContext.Provider>
           </AspectRatioContext.Provider>
@@ -1253,6 +1261,51 @@ export default function DesignPage() {
             >
               <Pencil size={18} />
             </button>
+
+            {/* Hidden components restore — only in edit mode with hidden items */}
+            {editMode && hiddenComponents.size > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setToolbarDropdown(toolbarDropdown === 'hidden' ? null : 'hidden')}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all relative ${toolbarDropdown === 'hidden' ? 'bg-red-50 text-red-500' : 'text-red-400 hover:bg-red-50'}`}
+                  title={`${hiddenComponents.size} hidden component${hiddenComponents.size > 1 ? 's' : ''}`}
+                >
+                  <EyeOff size={18} />
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {hiddenComponents.size}
+                  </span>
+                </button>
+                {toolbarDropdown === 'hidden' && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 py-1.5 min-w-[200px] max-h-[300px] overflow-y-auto">
+                    <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hidden Components</div>
+                    {Array.from(hiddenComponents).map((cid) => (
+                      <button
+                        key={cid}
+                        onClick={() => {
+                          setHiddenComponents(prev => {
+                            const next = new Set(prev);
+                            next.delete(cid);
+                            return next;
+                          });
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        <Eye size={12} className="text-gray-400 shrink-0" />
+                        <span className="font-mono truncate">{cid}</span>
+                      </button>
+                    ))}
+                    <div className="border-t border-gray-100 mt-1 pt-1">
+                      <button
+                        onClick={() => { setHiddenComponents(new Set()); setToolbarDropdown(null); }}
+                        className="w-full px-3 py-2 text-[12px] font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        Restore All
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Aspect Ratio */}
             <div className="relative">

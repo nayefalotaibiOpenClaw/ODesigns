@@ -3,8 +3,8 @@
 import React, { useContext, useCallback, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useMotionValue, useDragControls, type MotionValue, type DragControls } from 'framer-motion';
-import { EditContext, useSelectedId, useSetSelectedId, ParentSelectedContext, ParentDraggingContext, UploadSignalContext } from '@/contexts/EditContext';
-import { Move, RotateCcw, ImagePlus } from 'lucide-react';
+import { EditContext, useSelectedId, useSetSelectedId, ParentSelectedContext, ParentDraggingContext, UploadSignalContext, useHiddenComponents, useSetHiddenComponents, usePostScope } from '@/contexts/EditContext';
+import { Move, RotateCcw, ImagePlus, Trash2 } from 'lucide-react';
 
 /* ── Toolbar variants ──
    "mockup"  → Move + XY position + Rotation XYZ + Reset
@@ -24,10 +24,11 @@ interface ToolbarPortalProps {
   onUpdateTransform: (key: keyof Transforms, value: number) => void;
   onUpload: () => void;
   onReset: () => void;
+  onDelete: () => void;
   dragControls: DragControls;
 }
 
-function ToolbarPortal({ toolbarPos, variant, position, transforms, onSetPosition, onUpdateTransform, onUpload, onReset, dragControls }: ToolbarPortalProps) {
+function ToolbarPortal({ toolbarPos, variant, position, transforms, onSetPosition, onUpdateTransform, onUpload, onReset, onDelete, dragControls }: ToolbarPortalProps) {
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   const rotationAxes = variant === "mockup"
@@ -124,6 +125,16 @@ function ToolbarPortal({ toolbarPos, variant, position, transforms, onSetPositio
         >
           <RotateCcw size={14} />
         </button>
+
+        {/* Delete (hide) */}
+        <div className="w-px h-5 bg-gray-200" />
+        <button
+          onClick={onDelete}
+          className="p-2 rounded-xl hover:bg-red-50 text-red-500 transition-colors"
+          title="Hide component"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </div>,
     document.body
@@ -181,9 +192,14 @@ interface DraggableWrapperProps {
 
 export default function DraggableWrapper({ children, className = "", id, dir, style, variant = "text" }: DraggableWrapperProps) {
   const isEditMode = useContext(EditContext);
+  const postScope = usePostScope();
+  const scopedId = postScope ? `${postScope}::${id}` : id;
   const selectedId = useSelectedId();
   const setSelectedId = useSetSelectedId();
-  const isSelected = isEditMode && selectedId === id;
+  const hiddenComponents = useHiddenComponents();
+  const setHiddenComponents = useSetHiddenComponents();
+  const isHidden = hiddenComponents.has(scopedId);
+  const isSelected = isEditMode && selectedId === scopedId;
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const dragControls = useDragControls();
@@ -240,8 +256,8 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (!isEditMode) return;
     e.stopPropagation();
-    setSelectedId(isSelected ? null : id);
-  }, [isEditMode, isSelected, id, setSelectedId]);
+    setSelectedId(isSelected ? null : scopedId);
+  }, [isEditMode, isSelected, scopedId, setSelectedId]);
 
   const setPosition = useCallback((axis: 'x' | 'y', value: number) => {
     if (axis === 'x') x.set(value);
@@ -271,7 +287,18 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
     setPosVersion(v => v + 1);
   }, [id, x, y]);
 
+  const hideComponent = useCallback(() => {
+    setHiddenComponents(prev => {
+      const next = new Set(prev);
+      next.add(scopedId);
+      return next;
+    });
+    setSelectedId(null);
+  }, [scopedId, setHiddenComponents, setSelectedId]);
+
   const hasTransform = transforms.rotateX !== 0 || transforms.rotateY !== 0 || transforms.rotateZ !== 0;
+
+  if (isHidden) return null;
 
   return (
     <>
@@ -322,6 +349,7 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
         onUpdateTransform={updateTransform}
         onUpload={() => setUploadSignal(s => s + 1)}
         onReset={resetAll}
+        onDelete={hideComponent}
         dragControls={dragControls}
       />}
     </>
