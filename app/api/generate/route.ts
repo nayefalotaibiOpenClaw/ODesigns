@@ -269,7 +269,17 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
     });
   } catch (error: unknown) {
     console.error("Generation error:", error);
-    console.error("Generation error details:", error instanceof Error ? error.message : error);
-    return NextResponse.json({ error: "Generation failed" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+
+    // Parse Gemini-specific errors into user-friendly messages
+    const lower = message.toLowerCase();
+    if (lower.includes("quota") || lower.includes("rate limit") || lower.includes("resource_exhausted") || lower.includes("429")) {
+      return NextResponse.json({ error: "AI service is temporarily unavailable. Please try again in a moment. If this persists, contact support." }, { status: 429 });
+    }
+    if (lower.includes("safety") || lower.includes("blocked") || lower.includes("content_filter")) {
+      return NextResponse.json({ error: "Your prompt was blocked by safety filters. Try rephrasing your description." }, { status: 400 });
+    }
+
+    return NextResponse.json({ error: "Something went wrong while generating. Please try again or contact support." }, { status: 500 });
   }
 }
