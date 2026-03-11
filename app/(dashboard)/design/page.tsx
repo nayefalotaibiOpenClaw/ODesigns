@@ -248,6 +248,7 @@ export default function DesignPage() {
 
     setGenerating(true);
     setGenerateError(null);
+    setUsageWarning(null);
     try {
       // Build context from workspace, branding, and assets
       const context = {
@@ -378,6 +379,7 @@ export default function DesignPage() {
     }
     setGenerating(true);
     setGenerateError(null);
+    setUsageWarning(null);
     try {
       const context = {
         brandName: branding?.brandName || workspace?.name,
@@ -1456,6 +1458,9 @@ export default function DesignPage() {
             )}
             {generateError && (
               <p className="text-xs text-red-500 font-medium mt-2 text-center">{generateError}</p>
+            )}
+            {usageWarning && !generateError && (
+              <p className="text-xs text-amber-600 font-medium mt-2 text-center">{usageWarning}</p>
             )}
           </div>
         )}

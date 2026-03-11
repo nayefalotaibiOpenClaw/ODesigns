@@ -163,21 +163,27 @@ export const incrementUsage = mutation({
     // Check expiry
     if (sub.expiresAt < Date.now()) throw new Error("Subscription expired");
 
-    // Enforce limits — don't allow exceeding them
+    // Track usage — allow this increment even if it slightly exceeds the limit
+    // (tokens are already consumed by the AI). The client will show a warning.
     const newTokens = sub.aiTokensUsed + tokensUsed;
     const newPosts = sub.postsUsed + postsGenerated;
-
-    if (newPosts > sub.postsLimit) {
-      throw new Error(`Post limit exceeded (${sub.postsUsed}/${sub.postsLimit})`);
-    }
-    if (newTokens > sub.aiTokensLimit) {
-      throw new Error(`AI token limit exceeded (${sub.aiTokensUsed}/${sub.aiTokensLimit})`);
-    }
 
     await ctx.db.patch(sub._id, {
       aiTokensUsed: newTokens,
       postsUsed: newPosts,
     });
+
+    // Return whether limits were exceeded so client can warn the user
+    const postsExceeded = newPosts > sub.postsLimit;
+    const tokensExceeded = newTokens > sub.aiTokensLimit;
+
+    if (postsExceeded || tokensExceeded) {
+      throw new Error(
+        postsExceeded
+          ? `Post limit reached (${newPosts}/${sub.postsLimit})`
+          : `AI token limit reached (${newTokens}/${sub.aiTokensLimit})`
+      );
+    }
   },
 });
 
