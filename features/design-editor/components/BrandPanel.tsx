@@ -29,6 +29,8 @@ import {
 import { type Theme } from "@/contexts/ThemeContext";
 import { FONTS } from "@/features/design-editor/constants/fonts";
 import { PALETTES } from "@/features/design-editor/constants/palettes";
+import MobileNavMenu from "./MobileNavMenu";
+import { type SidebarTab } from "./Sidebar";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -120,6 +122,11 @@ interface BrandPanelProps {
   onSaveAllProducts: () => Promise<void>;
   onRemoveProduct: (productSourceUrl: string) => Promise<void>;
   onClose: () => void;
+  activeTab?: SidebarTab;
+  onTabClick?: (tab: SidebarTab) => void;
+  workspaces?: { _id: string; name: string }[];
+  currentWorkspaceId?: string;
+  currentWorkspaceName?: string;
   onUploadLogo: (file: File, variant: "logo" | "logoDark") => Promise<void>;
   onDeleteLogo: (variant: "logo" | "logoDark") => Promise<void>;
   onUpdateBranding: (field: string, value: string) => Promise<void>;
@@ -143,6 +150,11 @@ export default function BrandPanel({
   onSaveAllProducts,
   onRemoveProduct,
   onClose,
+  activeTab,
+  onTabClick,
+  workspaces: wsList,
+  currentWorkspaceId: wsId,
+  currentWorkspaceName: wsName,
   onUploadLogo,
   onDeleteLogo,
   onUpdateBranding,
@@ -233,11 +245,13 @@ export default function BrandPanel({
   return (
     <div className="flex-1 bg-white flex flex-col overflow-hidden">
       {/* ── Floating Nav ── */}
-      <div className="shrink-0 pt-4 pb-2 px-6">
-        <nav className="max-w-4xl mx-auto bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-full shadow-sm px-5 h-14 flex items-center gap-6">
+      <div className="shrink-0 pt-4 pb-2 px-6 relative z-[90]">
+        <nav className="max-w-4xl mx-auto bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-full shadow-sm px-5 h-14 flex items-center gap-4">
+          {onTabClick && <MobileNavMenu activeTab={activeTab ?? 'brand'} onTabClick={onTabClick} workspaces={wsList} currentWorkspaceId={wsId} currentWorkspaceName={wsName} />}
+          {onTabClick && <div className="w-px h-5 bg-slate-200 md:hidden" />}
           {/* Brand name / logo */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+            <div className="w-7 h-7 rounded-full bg-slate-100 items-center justify-center overflow-hidden hidden md:flex">
               {logoUrl ? (
                 <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" />
               ) : (

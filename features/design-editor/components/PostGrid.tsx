@@ -105,7 +105,8 @@ export default function PostGrid({
       style={viewMode === 'grid' ? {
         display: 'grid',
         gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-      } : undefined}
+        '--grid-cols': gridCols,
+      } as React.CSSProperties : undefined}
     >
       {allPostIds.map((id) => {
         const post = posts?.find((p: PostRecord) => p._id === id);

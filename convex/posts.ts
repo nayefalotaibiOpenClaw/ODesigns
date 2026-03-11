@@ -171,6 +171,67 @@ export const updateCodeForRatio = mutation({
   },
 });
 
+// Create multiple posts at the TOP of a collection (order 0..N-1),
+// shifting all existing posts' order up by N so newest are always first.
+export const createBatch = mutation({
+  args: {
+    collectionId: v.id("collections"),
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    language: v.union(v.literal("en"), v.literal("ar")),
+    posts: v.array(
+      v.object({
+        title: v.string(),
+        componentCode: v.string(),
+        device: v.union(
+          v.literal("iphone"),
+          v.literal("android"),
+          v.literal("ipad"),
+          v.literal("android_tablet"),
+          v.literal("desktop"),
+          v.literal("none")
+        ),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const newCount = args.posts.length;
+
+    // Shift all existing posts' order up by newCount
+    const existing = await ctx.db
+      .query("posts")
+      .withIndex("by_collection_order", (q) =>
+        q.eq("collectionId", args.collectionId)
+      )
+      .collect();
+    for (const post of existing) {
+      await ctx.db.patch(post._id, { order: post.order + newCount });
+    }
+
+    // Insert new posts at order 0..N-1
+    const now = Date.now();
+    const ids = [];
+    for (let i = 0; i < newCount; i++) {
+      const id = await ctx.db.insert("posts", {
+        collectionId: args.collectionId,
+        workspaceId: args.workspaceId,
+        userId: args.userId,
+        title: args.posts[i].title,
+        componentCode: args.posts[i].componentCode,
+        language: args.language,
+        device: args.posts[i].device,
+        order: i,
+        assetsUsed: [],
+        status: "draft",
+        createdAt: now,
+        updatedAt: now,
+      });
+      ids.push(id);
+    }
+    return ids;
+  },
+});
+
 export const remove = mutation({
   args: { id: v.id("posts") },
   handler: async (ctx, args) => {

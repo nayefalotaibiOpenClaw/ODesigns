@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState } from "react";
 import { Upload, Image as ImageIcon, X, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import MobileNavMenu from "./MobileNavMenu";
+import { type SidebarTab } from "./Sidebar";
 
 const ASSET_TYPES = [
   { value: "screenshot", label: "Screenshot" },
@@ -37,6 +39,11 @@ interface AssetsPageProps {
   onAssetUpload: () => void;
   onRemoveAsset: (id: string) => void;
   onRetryAnalysis: (asset: AssetRecord) => void;
+  activeTab?: SidebarTab;
+  onTabClick?: (tab: SidebarTab) => void;
+  workspaces?: { _id: string; name: string }[];
+  currentWorkspaceId?: string;
+  currentWorkspaceName?: string;
 }
 
 export default function AssetsPage({
@@ -54,6 +61,11 @@ export default function AssetsPage({
   onAssetUpload,
   onRemoveAsset,
   onRetryAnalysis,
+  activeTab,
+  onTabClick,
+  workspaces,
+  currentWorkspaceId,
+  currentWorkspaceName,
 }: AssetsPageProps) {
   const previewUrls = useMemo(() => {
     return pendingFiles.map((file) => URL.createObjectURL(file));
@@ -77,10 +89,12 @@ export default function AssetsPage({
   return (
     <div className="flex-1 bg-white flex flex-col overflow-hidden">
       {/* Floating Nav */}
-      <div className="shrink-0 pt-4 pb-2 px-6">
+      <div className="shrink-0 pt-4 pb-2 px-6 relative z-[90]">
         <nav className="max-w-4xl mx-auto bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-full shadow-sm px-5 h-14 flex items-center gap-4">
+          {onTabClick && <MobileNavMenu activeTab={activeTab ?? 'assets'} onTabClick={onTabClick} workspaces={workspaces} currentWorkspaceId={currentWorkspaceId} currentWorkspaceName={currentWorkspaceName} />}
+          {onTabClick && <div className="w-px h-5 bg-slate-200 md:hidden" />}
           <div className="flex items-center gap-2 shrink-0">
-            <Upload size={14} className="text-slate-400" />
+            <Upload size={14} className="text-slate-400 hidden md:block" />
             <span className="text-sm font-black text-slate-900">Assets</span>
           </div>
 

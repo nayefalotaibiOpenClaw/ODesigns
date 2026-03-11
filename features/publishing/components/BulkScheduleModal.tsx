@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import DynamicPost from "@/app/components/DynamicPost";
+import PostWrapper from "@/app/components/PostWrapper";
 import {
   Grid3X3,
   Instagram,
@@ -13,6 +15,11 @@ import {
   X,
   Check,
   Loader2,
+  Image,
+  Images,
+  Film,
+  Square,
+  CheckCheck,
 } from "lucide-react";
 
 interface SocialAccount {
@@ -22,7 +29,15 @@ interface SocialAccount {
   status: "active" | "expired" | "revoked";
 }
 
-type BulkStep = "select" | "schedule" | "channels" | "caption" | "preview";
+type ContentType = "image" | "carousel" | "story" | "reel";
+type BulkStep = "select" | "type" | "schedule" | "channels" | "caption" | "preview";
+
+const CONTENT_TYPES: { value: ContentType; label: string; icon: React.ReactNode; desc: string }[] = [
+  { value: "image", label: "Post", icon: <Image className="w-5 h-5" />, desc: "Single image post" },
+  { value: "carousel", label: "Carousel", icon: <Images className="w-5 h-5" />, desc: "Multi-slide carousel (2-10 images)" },
+  { value: "story", label: "Story", icon: <Square className="w-5 h-5" />, desc: "24-hour story" },
+  { value: "reel", label: "Reel", icon: <Film className="w-5 h-5" />, desc: "Short-form video" },
+];
 
 function getProviderIcon(provider: string) {
   switch (provider) {
@@ -43,6 +58,7 @@ export default function BulkScheduleModal({
 }) {
   const [step, setStep] = useState<BulkStep>("select");
   const [selectedPostIds, setSelectedPostIds] = useState<Set<Id<"posts">>>(new Set());
+  const [contentType, setContentType] = useState<ContentType>("image");
   const [frequency, setFrequency] = useState<"daily" | "every_x" | "weekly">("daily");
   const [everyXDays, setEveryXDays] = useState(2);
   const [timesPerDay, setTimesPerDay] = useState(["09:00", "18:00"]);
@@ -53,28 +69,20 @@ export default function BulkScheduleModal({
   });
   const [timezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [selectedAccountIds, setSelectedAccountIds] = useState<Set<Id<"socialAccounts">>>(new Set());
-  const [captionTemplate, setCaptionTemplate] = useState("");
+  const [captionMode, setCaptionMode] = useState<"shared" | "per-post">("shared");
+  const [sharedCaption, setSharedCaption] = useState("");
+  const [perPostCaptions, setPerPostCaptions] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const collections = useQuery(api.collections.listByWorkspace, { workspaceId });
-  const collectionIds = collections?.map((c) => c._id) ?? [];
+  // Refs for hidden post rendering (for image capture)
+  const captureRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  const col1Posts = useQuery(api.posts.listByCollection, collectionIds[0] ? { collectionId: collectionIds[0] } : "skip");
-  const col2Posts = useQuery(api.posts.listByCollection, collectionIds[1] ? { collectionId: collectionIds[1] } : "skip");
-  const col3Posts = useQuery(api.posts.listByCollection, collectionIds[2] ? { collectionId: collectionIds[2] } : "skip");
-
-  const allPosts = useMemo(() => {
-    const posts = [...(col1Posts ?? []), ...(col2Posts ?? []), ...(col3Posts ?? [])];
-    const seen = new Set<string>();
-    return posts.filter((p) => {
-      if (seen.has(p._id)) return false;
-      seen.add(p._id);
-      return true;
-    });
-  }, [col1Posts, col2Posts, col3Posts]);
-
-  const scheduleMutation = useMutation(api.publishing.schedule);
+  // Load ALL posts from workspace (not limited to 3 collections)
+  const allPosts = useQuery(api.posts.listByWorkspace, { workspaceId });
+  const generateUploadUrl = useMutation(api.assets.generateUploadUrl);
+  const scheduleBulk = useMutation(api.publishing.scheduleBulk);
 
   const togglePost = (id: Id<"posts">) => {
     setSelectedPostIds((prev) => {
@@ -82,6 +90,15 @@ export default function BulkScheduleModal({
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  };
+
+  const selectAll = () => {
+    if (!allPosts) return;
+    if (selectedPostIds.size === allPosts.length) {
+      setSelectedPostIds(new Set());
+    } else {
+      setSelectedPostIds(new Set(allPosts.map((p) => p._id)));
+    }
   };
 
   const toggleAccount = (id: Id<"socialAccounts">) => {
@@ -92,8 +109,14 @@ export default function BulkScheduleModal({
     });
   };
 
+  const selectedPosts = useMemo(() => {
+    if (!allPosts) return [];
+    const ids = Array.from(selectedPostIds);
+    return ids.map((id) => allPosts.find((p) => p._id === id)).filter(Boolean) as typeof allPosts;
+  }, [allPosts, selectedPostIds]);
+
   const timeline = useMemo(() => {
-    const items: { postIndex: number; postTitle: string; dateTime: Date; accountName: string; accountId: Id<"socialAccounts"> }[] = [];
+    const items: { postIndex: number; postId: Id<"posts">; postTitle: string; dateTime: Date; accountName: string; accountId: Id<"socialAccounts"> }[] = [];
     const postIds = Array.from(selectedPostIds);
     const accountIds = Array.from(selectedAccountIds);
     const sortedTimes = [...timesPerDay].sort();
@@ -114,12 +137,13 @@ export default function BulkScheduleModal({
         const dateTime = new Date(date);
         dateTime.setHours(hours, minutes, 0, 0);
 
-        const post = allPosts.find((p) => p._id === postIds[postIndex]);
+        const post = allPosts?.find((p) => p._id === postIds[postIndex]);
 
         for (const accountId of accountIds) {
           const account = accounts.find((a) => a._id === accountId);
           items.push({
             postIndex: postIndex + 1,
+            postId: postIds[postIndex],
             postTitle: post?.title || `Post ${postIndex + 1}`,
             dateTime,
             accountName: account?.providerAccountName || "Unknown",
@@ -142,7 +166,6 @@ export default function BulkScheduleModal({
   const handleConfirm = useCallback(async () => {
     if (isSubmitting) return;
 
-    // Check for past dates
     const now = Date.now();
     const hasPastDates = timeline.some((item) => item.dateTime.getTime() <= now);
     if (hasPastDates) {
@@ -152,31 +175,68 @@ export default function BulkScheduleModal({
 
     setError(null);
     setIsSubmitting(true);
+
     try {
-      for (const item of timeline) {
-        const postId = Array.from(selectedPostIds)[item.postIndex - 1];
-        if (!postId) continue;
-        await scheduleMutation({
-          workspaceId,
-          postId,
-          socialAccountId: item.accountId,
-          contentType: "image" as const,
-          caption: captionTemplate,
-          mediaFileIds: [], // TODO: capture post images and upload to storage
-          scheduledFor: item.dateTime.getTime(),
-          timezone,
+      // Step 1: Capture all selected posts as PNGs and upload to storage
+      const postMediaMap = new Map<string, Id<"_storage">[]>();
+      const uniquePostIds = Array.from(selectedPostIds);
+
+      setSubmitProgress(`Capturing ${uniquePostIds.length} post images...`);
+
+      const { toPng } = await import("html-to-image");
+
+      for (let i = 0; i < uniquePostIds.length; i++) {
+        const postId = uniquePostIds[i];
+        setSubmitProgress(`Capturing post ${i + 1} of ${uniquePostIds.length}...`);
+
+        const el = captureRefs.current.get(postId);
+        if (!el) {
+          throw new Error(`Post element not found for capture. Please try again.`);
+        }
+
+        const dataUrl = await toPng(el, { pixelRatio: 2 });
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+
+        const uploadUrl = await generateUploadUrl();
+        const uploadRes = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": "image/png" },
+          body: blob,
         });
+        const { storageId } = await uploadRes.json();
+        postMediaMap.set(postId, [storageId]);
       }
+
+      // Step 2: Build schedule entries and submit in bulk
+      setSubmitProgress("Scheduling posts...");
+
+      const batchId = `bulk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const entries = timeline.map((item) => ({
+        postId: item.postId,
+        socialAccountId: item.accountId,
+        contentType,
+        caption: captionMode === "per-post"
+          ? (perPostCaptions[item.postId] || sharedCaption)
+          : sharedCaption,
+        mediaFileIds: postMediaMap.get(item.postId) || [],
+        scheduledFor: item.dateTime.getTime(),
+        timezone,
+      }));
+
+      await scheduleBulk({ workspaceId, batchId, entries });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to schedule posts");
     } finally {
       setIsSubmitting(false);
+      setSubmitProgress("");
     }
-  }, [isSubmitting, timeline, selectedPostIds, scheduleMutation, workspaceId, captionTemplate, timezone, onClose]);
+  }, [isSubmitting, timeline, selectedPostIds, contentType, captionMode, perPostCaptions, sharedCaption, generateUploadUrl, scheduleBulk, workspaceId, timezone, onClose]);
 
   const steps: { key: BulkStep; label: string }[] = [
     { key: "select", label: "Select Posts" },
+    { key: "type", label: "Content Type" },
     { key: "schedule", label: "Schedule" },
     { key: "channels", label: "Channels" },
     { key: "caption", label: "Caption" },
@@ -188,6 +248,7 @@ export default function BulkScheduleModal({
   const canProceed = () => {
     switch (step) {
       case "select": return selectedPostIds.size > 0;
+      case "type": return true;
       case "schedule": return timesPerDay.length > 0 && startDate;
       case "channels": return selectedAccountIds.size > 0;
       case "caption": return true;
@@ -245,10 +306,21 @@ export default function BulkScheduleModal({
           {/* Step 1: Select Posts */}
           {step === "select" && (
             <div className="space-y-4">
-              <p className="text-sm text-neutral-400">
-                Select the posts you want to schedule. ({selectedPostIds.size} selected)
-              </p>
-              {collections === undefined ? (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-neutral-400">
+                  Select the posts you want to schedule. ({selectedPostIds.size} selected)
+                </p>
+                {allPosts && allPosts.length > 0 && (
+                  <button
+                    onClick={selectAll}
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    {selectedPostIds.size === allPosts.length ? "Deselect All" : "Select All"}
+                  </button>
+                )}
+              </div>
+              {allPosts === undefined ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
                 </div>
@@ -265,16 +337,19 @@ export default function BulkScheduleModal({
                       <button
                         key={post._id}
                         onClick={() => togglePost(post._id)}
-                        className={`relative rounded-xl border p-3 text-left transition-all ${
+                        className={`relative rounded-xl border p-1.5 text-left transition-all ${
                           isSelected ? "border-blue-500 bg-blue-500/10" : "border-neutral-800 bg-neutral-800/50 hover:border-neutral-700"
                         }`}
                       >
-                        <div className="h-20 bg-neutral-700/50 rounded-lg mb-2 flex items-center justify-center">
-                          <Grid3X3 className="w-5 h-5 text-neutral-500" />
+                        {/* Live post thumbnail */}
+                        <div className="aspect-square rounded-lg overflow-hidden bg-neutral-800 mb-1.5">
+                          <div className="w-full h-full" style={{ transform: "scale(0.25)", transformOrigin: "top left", width: "400%", height: "400%" }}>
+                            <DynamicPost code={post.componentCode} />
+                          </div>
                         </div>
-                        <p className="text-xs text-neutral-300 truncate font-medium">{post.title}</p>
+                        <p className="text-xs text-neutral-300 truncate font-medium px-1">{post.title}</p>
                         {isSelected && (
-                          <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                          <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shadow-lg">
                             <Check className="w-3 h-3 text-white" />
                           </div>
                         )}
@@ -286,7 +361,51 @@ export default function BulkScheduleModal({
             </div>
           )}
 
-          {/* Step 2: Configure Schedule */}
+          {/* Step 2: Content Type */}
+          {step === "type" && (
+            <div className="space-y-4">
+              <p className="text-sm text-neutral-400">Choose how these posts will be published.</p>
+              <div className="grid grid-cols-2 gap-3">
+                {CONTENT_TYPES.map((ct) => {
+                  const isSelected = contentType === ct.value;
+                  const isDisabled = ct.value === "carousel" && selectedPostIds.size < 2;
+                  return (
+                    <button
+                      key={ct.value}
+                      onClick={() => !isDisabled && setContentType(ct.value)}
+                      disabled={isDisabled}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                          : isDisabled
+                            ? "border-neutral-800 bg-neutral-800/30 text-neutral-600 cursor-not-allowed"
+                            : "border-neutral-800 bg-neutral-800/50 text-neutral-400 hover:border-neutral-700"
+                      }`}
+                    >
+                      {ct.icon}
+                      <span className="text-sm font-bold">{ct.label}</span>
+                      <span className="text-[10px] text-neutral-500">{ct.desc}</span>
+                      {isDisabled && (
+                        <span className="text-[10px] text-amber-500">Need 2+ posts</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {contentType === "carousel" && (
+                <p className="text-xs text-neutral-500">
+                  All {selectedPostIds.size} selected posts will be combined into a single carousel.
+                </p>
+              )}
+              {contentType === "story" && (
+                <p className="text-xs text-amber-500/80">
+                  Note: Stories don&apos;t support captions on Instagram.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Configure Schedule */}
           {step === "schedule" && (
             <div className="space-y-6">
               <div>
@@ -368,7 +487,7 @@ export default function BulkScheduleModal({
             </div>
           )}
 
-          {/* Step 3: Select Channels */}
+          {/* Step 4: Select Channels */}
           {step === "channels" && (
             <div className="space-y-4">
               <p className="text-sm text-neutral-400">Select which accounts to publish to. ({selectedAccountIds.size} selected)</p>
@@ -376,6 +495,7 @@ export default function BulkScheduleModal({
                 <div className="text-center py-12 text-neutral-500">
                   <Send className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No connected accounts</p>
+                  <p className="text-xs text-neutral-600 mt-1">Connect accounts from the Channels tab first.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -407,26 +527,79 @@ export default function BulkScheduleModal({
             </div>
           )}
 
-          {/* Step 4: Caption */}
+          {/* Step 5: Caption */}
           {step === "caption" && (
             <div className="space-y-4">
-              <p className="text-sm text-neutral-400">Set a default caption for all posts, or leave blank.</p>
-              <textarea
-                value={captionTemplate}
-                onChange={(e) => setCaptionTemplate(e.target.value)}
-                placeholder="Write your caption here..."
-                rows={6}
-                maxLength={2200}
-                className="w-full px-4 py-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white text-sm placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 resize-none"
-              />
-              <p className="text-xs text-neutral-600 text-right">{captionTemplate.length}/2200</p>
+              {/* Mode toggle */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCaptionMode("shared")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    captionMode === "shared"
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      : "bg-neutral-800 text-neutral-400 border border-neutral-700"
+                  }`}
+                >
+                  Same caption for all
+                </button>
+                <button
+                  onClick={() => setCaptionMode("per-post")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    captionMode === "per-post"
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      : "bg-neutral-800 text-neutral-400 border border-neutral-700"
+                  }`}
+                >
+                  Per-post captions
+                </button>
+              </div>
+
+              {captionMode === "shared" ? (
+                <div>
+                  <textarea
+                    value={sharedCaption}
+                    onChange={(e) => setSharedCaption(e.target.value)}
+                    placeholder="Write your caption here... (leave blank for no caption)"
+                    rows={6}
+                    maxLength={2200}
+                    className="w-full px-4 py-3 rounded-xl bg-neutral-800 border border-neutral-700 text-white text-sm placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 resize-none"
+                  />
+                  <p className="text-xs text-neutral-600 text-right mt-1">{sharedCaption.length}/2200</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                  {selectedPosts.map((post) => (
+                    <div key={post._id} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-md overflow-hidden bg-neutral-800 shrink-0">
+                          <div className="w-full h-full" style={{ transform: "scale(0.08)", transformOrigin: "top left", width: "1250%", height: "1250%" }}>
+                            <DynamicPost code={post.componentCode} />
+                          </div>
+                        </div>
+                        <p className="text-xs font-medium text-neutral-300 truncate">{post.title}</p>
+                      </div>
+                      <textarea
+                        value={perPostCaptions[post._id] || ""}
+                        onChange={(e) => setPerPostCaptions((prev) => ({ ...prev, [post._id]: e.target.value }))}
+                        placeholder="Caption for this post..."
+                        rows={3}
+                        maxLength={2200}
+                        className="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white text-xs placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 resize-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Step 5: Preview Timeline */}
+          {/* Step 6: Preview Timeline */}
           {step === "preview" && (
             <div className="space-y-4">
-              <p className="text-sm text-neutral-400">Review the schedule. ({timeline.length} items)</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-neutral-400">Review the schedule. ({timeline.length} items)</p>
+                <span className="text-xs text-neutral-500 bg-neutral-800 px-2 py-1 rounded-md capitalize">{contentType}</span>
+              </div>
               {timeline.length === 0 ? (
                 <p className="text-sm text-neutral-500 text-center py-8">No items. Go back and check settings.</p>
               ) : (
@@ -434,20 +607,34 @@ export default function BulkScheduleModal({
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {timeline.map((item, i) => (
                       <div key={i} className="flex items-center gap-3 px-4 py-3 bg-neutral-800 rounded-lg border border-neutral-700/50">
-                        <span className="text-xs font-mono text-neutral-500 w-8">#{item.postIndex}</span>
+                        <span className="text-xs font-mono text-neutral-500 w-6">#{item.postIndex}</span>
+                        {/* Mini thumbnail */}
+                        <div className="w-8 h-8 rounded-md overflow-hidden bg-neutral-700 shrink-0">
+                          {(() => {
+                            const post = allPosts?.find((p) => p._id === item.postId);
+                            if (!post) return <Grid3X3 className="w-4 h-4 text-neutral-500 m-auto" />;
+                            return (
+                              <div className="w-full h-full" style={{ transform: "scale(0.08)", transformOrigin: "top left", width: "1250%", height: "1250%" }}>
+                                <DynamicPost code={post.componentCode} />
+                              </div>
+                            );
+                          })()}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-neutral-200 truncate">{item.postTitle}</p>
                         </div>
-                        <span className="text-xs text-neutral-400 whitespace-nowrap">
-                          {item.dateTime.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
-                          {item.dateTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
-                        </span>
-                        <span className="text-xs text-neutral-500 truncate max-w-[100px]">@{item.accountName}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {getProviderIcon(accounts.find((a) => a._id === item.accountId)?.provider || "")}
+                          <span className="text-xs text-neutral-400 whitespace-nowrap">
+                            {item.dateTime.toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
+                            {item.dateTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
                   <p className="text-xs text-neutral-500 mt-3">
-                    This will create {timeline.length} scheduled post{timeline.length !== 1 ? "s" : ""}.
+                    This will create {timeline.length} scheduled post{timeline.length !== 1 ? "s" : ""}. Posts will be captured as images and uploaded before scheduling.
                   </p>
                 </>
               )}
@@ -457,36 +644,64 @@ export default function BulkScheduleModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-800">
-          {error && (
-            <p className="text-xs text-red-400 flex-1">{error}</p>
-          )}
-          <button
-            onClick={currentStepIndex === 0 ? onClose : goPrev}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-          >
-            {currentStepIndex === 0 ? "Cancel" : "Back"}
-          </button>
+          <div className="flex-1 min-w-0">
+            {error && <p className="text-xs text-red-400 truncate">{error}</p>}
+            {isSubmitting && submitProgress && <p className="text-xs text-blue-400 truncate">{submitProgress}</p>}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={currentStepIndex === 0 ? onClose : goPrev}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+            >
+              {currentStepIndex === 0 ? "Cancel" : "Back"}
+            </button>
 
-          {step === "preview" ? (
-            <button
-              onClick={handleConfirm}
-              disabled={isSubmitting || timeline.length === 0}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {isSubmitting ? "Scheduling..." : "Confirm & Schedule"}
-            </button>
-          ) : (
-            <button
-              onClick={goNext}
-              disabled={!canProceed()}
-              className="px-5 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Next
-            </button>
-          )}
+            {step === "preview" ? (
+              <button
+                onClick={handleConfirm}
+                disabled={isSubmitting || timeline.length === 0}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isSubmitting ? "Scheduling..." : "Confirm & Schedule"}
+              </button>
+            ) : (
+              <button
+                onClick={goNext}
+                disabled={!canProceed()}
+                className="px-5 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Hidden render area for capturing post images at full resolution */}
+      {(step === "preview" || isSubmitting) && (
+        <div
+          className="fixed"
+          style={{ left: "-9999px", top: 0, width: "1080px", opacity: 0, pointerEvents: "none" }}
+          aria-hidden="true"
+        >
+          {selectedPosts.map((post) => (
+            <div
+              key={post._id}
+              ref={(el) => {
+                if (el) captureRefs.current.set(post._id, el);
+                else captureRefs.current.delete(post._id);
+              }}
+              style={{ width: "1080px", height: "1080px" }}
+            >
+              <PostWrapper aspectRatio="1:1" filename={post.title}>
+                <DynamicPost code={post.componentCode} />
+              </PostWrapper>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -72,6 +72,9 @@ export default function DynamicPost({ code, overrides, onOverridesChange }: Dyna
         `
         const { ${Object.keys(LucideIcons).join(", ")} } = LucideIcons;
         const { useState, useEffect, useRef, useCallback, useMemo: useMemoHook, useContext, Fragment } = React;
+        // Fallback helpers that AI-generated posts may reference
+        const ContentSection = ({ children, className, style, ...props }) =>
+          React.createElement("div", { className, style, ...props }, children);
         ${jsCode}
         return typeof __Component__ !== 'undefined' ? __Component__ : null;
         `

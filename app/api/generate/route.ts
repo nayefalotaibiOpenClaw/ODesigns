@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { prompt, context, count = 1, version = 1, allLayouts = false } = await req.json();
+    const { prompt, context, count = 1, version = 1, allLayouts = false, targetRatio } = await req.json();
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
@@ -117,6 +117,17 @@ export async function POST(req: NextRequest) {
         ? `\nThis is post ${i + 1} of ${postCount}. Make it COMPLETELY different from the others — different layout structure, different visual style, different mood.`
         : '';
 
+      // When a specific ratio is requested, force the AI to design for it
+      const ratioNote = targetRatio
+        ? `\n\n## TARGET ASPECT RATIO: ${targetRatio}
+Design this post SPECIFICALLY for ${targetRatio}. The useAspectRatio() hook will return '${targetRatio}'.
+${targetRatio === '1:1' ? 'This is a SQUARE post (540×540). Keep content minimal — max 1 headline, 1 short subtitle, 1 image. Use compact spacing. Do NOT overflow.' : ''}
+${targetRatio === '9:16' ? 'This is a TALL story post (540×960). You have vertical space — use larger imagery, more content sections, and generous spacing.' : ''}
+${targetRatio === '3:4' ? 'This is a slightly tall post (540×720). Moderate space — balance content density between square and story.' : ''}
+${targetRatio === '4:3' ? 'This is a slightly wide post (720×540). Favor horizontal layouts with side-by-side elements.' : ''}
+${targetRatio === '16:9' ? 'This is a WIDE landscape post (960×540). Use horizontal layouts, wide imagery, short text.' : ''}`
+        : '';
+
       if (engineVersion === 1) {
         return `Generate a social media post for: ${prompt}${postLabel}
 
@@ -127,7 +138,7 @@ Decorations: ${layout.decorations}
 ## YOUR COPY ANGLE: ${angle.angle}
 ${angle.instruction}
 
-Create something stunning and original. Match the quality of the reference examples.${distinctNote}`;
+Create something stunning and original. Match the quality of the reference examples.${distinctNote}${ratioNote}`;
       }
 
       if (engineVersion === 2) {
@@ -136,7 +147,7 @@ Create something stunning and original. Match the quality of the reference examp
 ## YOUR COPY ANGLE: ${angle.angle}
 ${angle.instruction}
 
-Choose your own layout, decorations, and visual approach. Be creative and original — you are NOT restricted to any specific layout template. Use mockups, cards, typography, images, or any combination that best fits the prompt. Match the quality of the reference examples.${distinctNote}`;
+Choose your own layout, decorations, and visual approach. Be creative and original — you are NOT restricted to any specific layout template. Use mockups, cards, typography, images, or any combination that best fits the prompt. Match the quality of the reference examples.${distinctNote}${ratioNote}`;
       }
 
       if (engineVersion === 3) {
@@ -158,12 +169,12 @@ ${assetInfo.join('\n')}
 
 Read the asset metadata above carefully. Use it to craft a post that highlights what this image shows. Write headlines and copy that connect the image content to the brand's message. Choose a layout that makes this image the hero element.
 
-You have complete creative freedom for layout, decorations, and visual approach. The only rules are the component structure and theme system.${distinctNote}`;
+You have complete creative freedom for layout, decorations, and visual approach. The only rules are the component structure and theme system.${distinctNote}${ratioNote}`;
         }
 
         return `Generate a social media post for: ${prompt}${postLabel}
 
-You have complete creative freedom. Choose your own layout, decorations, copy angle, and visual approach. Surprise me with something stunning and original. The only rules are the component structure and theme system from the instructions above.${distinctNote}`;
+You have complete creative freedom. Choose your own layout, decorations, copy angle, and visual approach. Surprise me with something stunning and original. The only rules are the component structure and theme system from the instructions above.${distinctNote}${ratioNote}`;
       }
 
       // V5: Classic — exact production prompt behavior (guided with layout + angle)
@@ -177,7 +188,7 @@ Decorations: ${layout.decorations}
 ## YOUR COPY ANGLE: ${angle.angle}
 ${angle.instruction}
 
-Create something stunning and original. Match the quality of the reference examples.${postCount > 1 ? `\nPost ${i + 1}/${postCount} — MUST be visually distinct from other posts. Different layout, different copy angle, different decorations.` : ''}`;
+Create something stunning and original. Match the quality of the reference examples.${postCount > 1 ? `\nPost ${i + 1}/${postCount} — MUST be visually distinct from other posts. Different layout, different copy angle, different decorations.` : ''}${ratioNote}`;
       }
 
       // V4: Wild — minimal instructions, maximum creativity + mood variation
@@ -199,7 +210,7 @@ Create something stunning and original. Match the quality of the reference examp
 
 Creative direction: ${mood}${featuredAssetHint}
 
-Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a fresh, specific headline that fits the topic and mood above. Every post must have completely different text content.${distinctNote}`;
+Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a fresh, specific headline that fits the topic and mood above. Every post must have completely different text content.${distinctNote}${ratioNote}`;
     }
 
     if (postCount === 1) {

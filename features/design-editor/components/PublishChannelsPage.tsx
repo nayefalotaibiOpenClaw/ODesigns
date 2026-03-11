@@ -28,6 +28,8 @@ import ScheduledPostCard from "@/features/publishing/components/ScheduledPostCar
 import CalendarView from "@/features/publishing/components/CalendarView";
 import BulkScheduleModal from "@/features/publishing/components/BulkScheduleModal";
 import { type ScheduleStatus } from "@/features/publishing/components/helpers";
+import MobileNavMenu from "./MobileNavMenu";
+import { type SidebarTab } from "./Sidebar";
 
 type SubTab = "publish" | "channels";
 type ViewMode = "grid" | "calendar";
@@ -47,6 +49,11 @@ interface PublishChannelsPageProps {
   userId: Id<"users">;
   initialTab?: SubTab;
   onClose: () => void;
+  activeTab?: SidebarTab;
+  onTabClick?: (tab: SidebarTab) => void;
+  workspaces?: { _id: string; name: string }[];
+  currentWorkspaceId?: string;
+  currentWorkspaceName?: string;
 }
 
 export default function PublishChannelsPage({
@@ -54,6 +61,11 @@ export default function PublishChannelsPage({
   userId,
   initialTab = "publish",
   onClose,
+  activeTab,
+  onTabClick,
+  workspaces,
+  currentWorkspaceId,
+  currentWorkspaceName,
 }: PublishChannelsPageProps) {
   const [subTab, setSubTab] = useState<SubTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -131,11 +143,13 @@ export default function PublishChannelsPage({
       )}
 
       {/* Floating Nav */}
-      <div className="shrink-0 pt-4 pb-2 px-6">
+      <div className="shrink-0 pt-4 pb-2 px-6 relative z-[90]">
         <nav className="max-w-4xl mx-auto bg-white/80 backdrop-blur-xl border border-slate-200/50 rounded-full shadow-sm px-5 h-14 flex items-center gap-4">
+          {onTabClick && <MobileNavMenu activeTab={activeTab ?? 'publish'} onTabClick={onTabClick} workspaces={workspaces} currentWorkspaceId={currentWorkspaceId} currentWorkspaceName={currentWorkspaceName} />}
+          {onTabClick && <div className="w-px h-5 bg-slate-200 md:hidden" />}
           {/* Page title */}
           <div className="flex items-center gap-2 shrink-0">
-            {subTab === "publish" ? <Send size={14} className="text-slate-400" /> : <LinkIcon size={14} className="text-slate-400" />}
+            {subTab === "publish" ? <Send size={14} className="text-slate-400 hidden md:block" /> : <LinkIcon size={14} className="text-slate-400 hidden md:block" />}
             <span className="text-sm font-black text-slate-900">{subTab === "publish" ? "Publish" : "Channels"}</span>
           </div>
 
