@@ -1,6 +1,6 @@
 import { action, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 const assetTypeValidator = v.union(
   v.literal("iphone"),
@@ -195,6 +195,8 @@ export const analyzeImage = action({
     storageId: v.id("_storage"),
     fileName: v.string(),
     assetType: v.string(),
+    userId: v.optional(v.id("users")),
+    workspaceId: v.optional(v.id("workspaces")),
   },
   handler: async (ctx, args) => {
     const apiKey = process.env.GOOGLE_AI_API_KEY;
@@ -277,6 +279,24 @@ Respond in this exact JSON format:
       const data = await response.json();
       const text =
         data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+      // Log AI usage if userId provided
+      if (args.userId) {
+        const usageMetadata = data?.usageMetadata;
+        const promptTokens = usageMetadata?.promptTokenCount ?? 0;
+        const completionTokens = usageMetadata?.candidatesTokenCount ?? 0;
+        const totalTokens = usageMetadata?.totalTokenCount ?? 0;
+        await ctx.runMutation(internal.aiUsage.logUsageInternal, {
+          userId: args.userId,
+          workspaceId: args.workspaceId,
+          category: "image_analysis",
+          model: "gemini-3.1-flash-lite-preview",
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          endpoint: "convex/assets.analyzeImage",
+        });
+      }
 
       // Parse JSON from response
       const jsonMatch = text.match(/\{[\s\S]*\}/);

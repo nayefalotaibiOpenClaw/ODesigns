@@ -128,6 +128,7 @@ IMPORTANT:
 
     const result = await model.generateContent(parts);
     const responseText = result.response.text();
+    const usageMetadata = result.response.usageMetadata;
 
     // Parse the JSON response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -138,6 +139,12 @@ IMPORTANT:
         industry: "",
         features: [],
         rawContent: renderedText,
+        usage: {
+          totalTokens: usageMetadata?.totalTokenCount ?? 0,
+          promptTokens: usageMetadata?.promptTokenCount ?? 0,
+          completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
+          model: "gemini-3.1-flash-lite-preview",
+        },
       });
     }
 
@@ -153,6 +160,12 @@ IMPORTANT:
       contact: analysis.contact || null,
       ogImage: null,
       rawContent: renderedText.slice(0, 2000),
+      usage: {
+        totalTokens: usageMetadata?.totalTokenCount ?? 0,
+        promptTokens: usageMetadata?.promptTokenCount ?? 0,
+        completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
+        model: "gemini-3.1-flash-lite-preview",
+      },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "An unexpected error occurred.";

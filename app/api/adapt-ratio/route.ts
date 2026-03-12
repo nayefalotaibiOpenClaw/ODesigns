@@ -43,11 +43,15 @@ export async function POST(req: NextRequest) {
     ]);
 
     const adaptedCode = cleanCode(result.response.text());
+    const usage = result.response.usageMetadata;
 
     return NextResponse.json({
       code: adaptedCode,
       usage: {
-        totalTokens: result.response.usageMetadata?.totalTokenCount ?? 0,
+        totalTokens: usage?.totalTokenCount ?? 0,
+        promptTokens: usage?.promptTokenCount ?? 0,
+        completionTokens: usage?.candidatesTokenCount ?? 0,
+        model: "gemini-3.1-flash-lite-preview",
       },
     });
   } catch (error: unknown) {

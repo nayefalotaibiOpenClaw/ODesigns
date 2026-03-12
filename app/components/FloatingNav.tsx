@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { useLocale } from "@/lib/i18n/context";
 import LanguageSwitcher from "@/lib/i18n/LanguageSwitcher";
 import type { TranslationKey } from "@/lib/i18n/types";
+import { Shield } from "lucide-react";
 
 type ActivePage = "home" | "pricing" | "workspaces" | "channels" | "publish" | "blogs" | "contact";
 
@@ -30,6 +31,7 @@ const NAV_LINKS: { key: ActivePage; href: string; labelKey: TranslationKey; enab
 export default function FloatingNav({ variant = "light", activePage = "home" }: FloatingNavProps) {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const user = useQuery(api.users.currentUser);
+  const isAdmin = useQuery(api.admin.isAdmin);
   const { signOut } = useAuthActions();
   const { t } = useLocale();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -104,6 +106,15 @@ export default function FloatingNav({ variant = "light", activePage = "home" }: 
                 <div className="w-20 h-8 bg-slate-100 rounded-full animate-pulse" />
               ) : isAuthenticated ? (
                 <>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className={`p-2 rounded-full transition-colors ${signOutBtnClass}`}
+                      title="Admin"
+                    >
+                      <Shield className="w-4 h-4" />
+                    </Link>
+                  )}
                   {avatar}
                   <button
                     onClick={() => void signOut()}

@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
+import type * as aiUsage from "../aiUsage.js";
 import type * as assets from "../assets.js";
 import type * as auth from "../auth.js";
 import type * as branding from "../branding.js";
@@ -36,6 +38,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
+  aiUsage: typeof aiUsage;
   assets: typeof assets;
   auth: typeof auth;
   branding: typeof branding;

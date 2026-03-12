@@ -102,20 +102,24 @@ export async function POST(req: NextRequest) {
       }
 
       // 5. Classify links into sections using AI
-      let sections: Awaited<ReturnType<typeof classifySections>> = [];
+      let sections: Awaited<ReturnType<typeof classifySections>>["sections"] = [];
+      let classifyUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
       try {
-        sections = await classifySections(
+        const classifyResult = await classifySections(
           homepageLinks,
           sitemapEntries,
           homepageMarkdown,
           baseUrl
         );
+        sections = classifyResult.sections;
+        classifyUsage = classifyResult.usage;
       } catch (err) {
         console.error("Section classification failed:", err);
       }
 
       // 6. Extract website info using Gemini (similar to fetch-website)
       let websiteInfo: Record<string, unknown> = {};
+      let analysisUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
       try {
         const apiKey = process.env.GOOGLE_AI_API_KEY;
         if (apiKey) {
@@ -158,15 +162,31 @@ Return ONLY the JSON, no markdown fences.`,
           if (jsonMatch) {
             websiteInfo = JSON.parse(jsonMatch[0]);
           }
+
+          const um = analysisResult.response.usageMetadata;
+          analysisUsage = {
+            promptTokens: um?.promptTokenCount ?? 0,
+            completionTokens: um?.candidatesTokenCount ?? 0,
+            totalTokens: um?.totalTokenCount ?? 0,
+          };
         }
       } catch (err) {
         console.error("Website analysis failed:", err);
       }
 
+      // Aggregate usage from classify + analysis
+      const totalUsage = {
+        promptTokens: classifyUsage.promptTokens + analysisUsage.promptTokens,
+        completionTokens: classifyUsage.completionTokens + analysisUsage.completionTokens,
+        totalTokens: classifyUsage.totalTokens + analysisUsage.totalTokens,
+        model: "gemini-3.1-flash-lite-preview",
+      };
+
       return NextResponse.json({
         sections,
         homepageProducts: homepageProducts.slice(0, limit),
         websiteInfo,
+        usage: totalUsage,
         stats: {
           sitemapUrls: sitemapEntries.length,
           homepageLinks: homepageLinks.length,
@@ -240,7 +260,8 @@ Return ONLY the JSON, no markdown fences.`,
       }
 
       const urlsToFetch = productUrls.slice(0, limit);
-      const products: Awaited<ReturnType<typeof extractProductDetails>>[] = [];
+      const products: Awaited<ReturnType<typeof extractProductDetails>>["product"][] = [];
+      let productUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 
       // Fetch product pages in parallel (with concurrency limit of 3)
       const batchSize = 3;
@@ -250,7 +271,10 @@ Return ONLY the JSON, no markdown fences.`,
           batch.map(async (productUrl: string) => {
             try {
               const markdown = await fetchPageViaJina(productUrl);
-              const product = await extractProductDetails(markdown, productUrl);
+              const { product, usage } = await extractProductDetails(markdown, productUrl);
+              productUsage.promptTokens += usage.promptTokens;
+              productUsage.completionTokens += usage.completionTokens;
+              productUsage.totalTokens += usage.totalTokens;
               return product;
             } catch (err) {
               console.error(`Failed to fetch product ${productUrl}:`, err);
@@ -266,6 +290,7 @@ Return ONLY the JSON, no markdown fences.`,
 
       return NextResponse.json({
         products,
+        usage: { ...productUsage, model: "gemini-3.1-flash-lite-preview" },
       });
     }
 

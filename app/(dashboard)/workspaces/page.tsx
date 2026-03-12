@@ -23,6 +23,7 @@ export default function WorkspacesPage() {
   const deleteWorkspace = useMutation(api.workspaces.remove);
   const updateWorkspace = useMutation(api.workspaces.update);
   const updateWebsiteInfo = useMutation(api.workspaces.updateWebsiteInfo);
+  const logAndIncrement = useMutation(api.aiUsage.logAndIncrement);
   const { t } = useLocale();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -51,7 +52,7 @@ export default function WorkspacesPage() {
   };
 
   // Fetch website and save info to workspace (client-side)
-  const fetchAndSaveWebsiteInfo = async (workspaceId: Id<"workspaces">, url: string) => {
+  const fetchAndSaveWebsiteInfo = async (wsId: Id<"workspaces">, url: string) => {
     try {
       const res = await fetch('/api/fetch-website', {
         method: 'POST',
@@ -61,7 +62,7 @@ export default function WorkspacesPage() {
       if (!res.ok) return;
       const data = await res.json();
       await updateWebsiteInfo({
-        id: workspaceId,
+        id: wsId,
         websiteInfo: {
           companyName: data.companyName || "",
           description: data.description || "",
@@ -80,6 +81,18 @@ export default function WorkspacesPage() {
           fetchedAt: Date.now(),
         },
       });
+      // Log website analysis usage
+      if (data.usage) {
+        logAndIncrement({
+          workspaceId: wsId,
+          category: "website_analysis",
+          model: data.usage.model || "gemini-3.1-flash-lite-preview",
+          promptTokens: data.usage.promptTokens || 0,
+          completionTokens: data.usage.completionTokens || 0,
+          totalTokens: data.usage.totalTokens || 0,
+          endpoint: "/api/fetch-website",
+        }).catch(() => { /* silently fail */ });
+      }
     } catch {
       // silently fail — website info is optional
     }

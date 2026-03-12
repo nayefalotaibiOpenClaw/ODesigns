@@ -8,7 +8,7 @@ export async function classifySections(
   sitemapEntries: SitemapEntry[],
   homepageMarkdown: string,
   baseUrl: string
-): Promise<DiscoveredSection[]> {
+): Promise<{ sections: DiscoveredSection[]; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error("GOOGLE_AI_API_KEY is not configured");
@@ -78,15 +78,23 @@ Return ONLY the JSON array. No explanation, no markdown fences.`;
   const result = await model.generateContent([{ text: prompt }]);
   const responseText = result.response.text();
 
+  // Extract usage metadata
+  const usageMetadata = result.response.usageMetadata;
+  const usage = {
+    promptTokens: usageMetadata?.promptTokenCount ?? 0,
+    completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
+    totalTokens: usageMetadata?.totalTokenCount ?? 0,
+  };
+
   // Parse JSON from response
   const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) return [];
+  if (!jsonMatch) return { sections: [] as DiscoveredSection[], usage };
 
   try {
     const sections: DiscoveredSection[] = JSON.parse(jsonMatch[0]);
 
     // Validate and clean
-    return sections
+    const cleaned = sections
       .filter(s => s && s.url && s.name && s.type)
       .slice(0, 30)
       .map(s => ({
@@ -97,8 +105,9 @@ Return ONLY the JSON array. No explanation, no markdown fences.`;
         imageUrl: s.imageUrl || undefined,
         productCount: s.productCount || undefined,
       }));
+    return { sections: cleaned, usage };
   } catch {
-    return [];
+    return { sections: [] as DiscoveredSection[], usage };
   }
 }
 
@@ -107,7 +116,7 @@ Return ONLY the JSON array. No explanation, no markdown fences.`;
 export async function extractProductDetails(
   markdown: string,
   sourceUrl: string
-): Promise<DiscoveredProduct> {
+): Promise<{ product: DiscoveredProduct; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error("GOOGLE_AI_API_KEY is not configured");
@@ -151,28 +160,39 @@ Rules:
   const result = await model.generateContent([{ text: prompt }]);
   const responseText = result.response.text();
 
+  // Extract usage metadata
+  const usageMetadata = result.response.usageMetadata;
+  const usage = {
+    promptTokens: usageMetadata?.promptTokenCount ?? 0,
+    completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
+    totalTokens: usageMetadata?.totalTokenCount ?? 0,
+  };
+
   // Parse JSON
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    return { name: "Unknown Product", sourceUrl };
+    return { product: { name: "Unknown Product", sourceUrl } as DiscoveredProduct, usage };
   }
 
   try {
     const data = JSON.parse(jsonMatch[0]);
     return {
-      name: data.name || "Unknown Product",
-      price: data.price || undefined,
-      currency: data.currency || undefined,
-      originalPrice: data.originalPrice || undefined,
-      discount: data.discount || undefined,
-      imageUrl: data.imageUrl || undefined,
-      additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages.filter(Boolean) : undefined,
-      sourceUrl,
-      brand: data.brand || undefined,
-      description: data.description || undefined,
-      section: data.section || undefined,
+      product: {
+        name: data.name || "Unknown Product",
+        price: data.price || undefined,
+        currency: data.currency || undefined,
+        originalPrice: data.originalPrice || undefined,
+        discount: data.discount || undefined,
+        imageUrl: data.imageUrl || undefined,
+        additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages.filter(Boolean) : undefined,
+        sourceUrl,
+        brand: data.brand || undefined,
+        description: data.description || undefined,
+        section: data.section || undefined,
+      } as DiscoveredProduct,
+      usage,
     };
   } catch {
-    return { name: "Unknown Product", sourceUrl };
+    return { product: { name: "Unknown Product", sourceUrl } as DiscoveredProduct, usage };
   }
 }

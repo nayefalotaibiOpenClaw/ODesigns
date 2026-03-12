@@ -16,6 +16,7 @@ export default defineSchema({
     isAnonymous: v.optional(v.boolean()),
     // Custom fields:
     plan: v.optional(v.union(v.literal("trial"), v.literal("starter"), v.literal("pro"))),
+    role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
     createdAt: v.optional(v.number()),
   })
     .index("email", ["email"]),
@@ -478,6 +479,32 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_workspace", ["workspaceId"]),
+
+  // ─── AI Usage Logs ─────────────────────────────────────
+  aiUsageLogs: defineTable({
+    userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
+    category: v.union(
+      v.literal("generation"),
+      v.literal("adaptation"),
+      v.literal("website_analysis"),
+      v.literal("image_analysis"),
+      v.literal("crawl"),
+      v.literal("classification"),
+      v.literal("product_extraction")
+    ),
+    model: v.string(),
+    promptTokens: v.number(),
+    completionTokens: v.number(),
+    totalTokens: v.number(),
+    estimatedCostUsd: v.number(),
+    endpoint: v.string(),
+    metadata: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_created", ["userId", "createdAt"])
+    .index("by_created", ["createdAt"]),
 
   // ─── Generations ─────────────────────────────────────
   generations: defineTable({

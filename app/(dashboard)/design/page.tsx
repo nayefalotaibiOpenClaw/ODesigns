@@ -57,7 +57,7 @@ export default function DesignPage() {
   const createPost = useMutation(api.posts.create);
   const createPostBatch = useMutation(api.posts.createBatch);
   const createCollection = useMutation(api.collections.create);
-  const incrementUsage = useMutation(api.subscriptions.incrementUsage);
+  const logAndIncrement = useMutation(api.aiUsage.logAndIncrement);
   const getStorageUrl = useMutation(api.assets.getStorageUrl);
 
   // Workspace & branding data for generate context
@@ -216,6 +216,18 @@ export default function DesignPage() {
           fetchedAt: Date.now(),
         },
       });
+      // Log website analysis usage
+      if (data.usage) {
+        logAndIncrement({
+          workspaceId: workspaceId || undefined,
+          category: "website_analysis",
+          model: data.usage.model || "gemini-3.1-flash-lite-preview",
+          promptTokens: data.usage.promptTokens || 0,
+          completionTokens: data.usage.completionTokens || 0,
+          totalTokens: data.usage.totalTokens || 0,
+          endpoint: "/api/fetch-website",
+        }).catch(console.error);
+      }
     } catch {
       // will stay as pending, user can retry again
     } finally {
@@ -311,8 +323,14 @@ export default function DesignPage() {
       setUsageWarning(null);
       if (data.usage) {
         try {
-          const usageResult = await incrementUsage({
-            tokensUsed: data.usage.totalTokens || 0,
+          const usageResult = await logAndIncrement({
+            workspaceId: workspaceId || undefined,
+            category: "generation",
+            model: "gemini-3.1-flash-lite-preview",
+            promptTokens: data.usage.promptTokens || 0,
+            completionTokens: data.usage.completionTokens || 0,
+            totalTokens: data.usage.totalTokens || 0,
+            endpoint: "/api/generate",
             postsGenerated: data.usage.postsGenerated || codes.length,
           });
           if (usageResult?.limitReached) {
@@ -445,8 +463,14 @@ export default function DesignPage() {
       setUsageWarning(null);
       if (data.usage) {
         try {
-          const usageResult = await incrementUsage({
-            tokensUsed: data.usage.totalTokens || 0,
+          const usageResult = await logAndIncrement({
+            workspaceId: workspaceId || undefined,
+            category: "generation",
+            model: "gemini-3.1-flash-lite-preview",
+            promptTokens: data.usage.promptTokens || 0,
+            completionTokens: data.usage.completionTokens || 0,
+            totalTokens: data.usage.totalTokens || 0,
+            endpoint: "/api/generate",
             postsGenerated: data.usage.postsGenerated || codes.length,
           });
           if (usageResult?.limitReached) {
@@ -526,6 +550,18 @@ export default function DesignPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Adapt to ${ratio} failed`);
+      // Log adaptation usage
+      if (data.usage) {
+        logAndIncrement({
+          workspaceId: workspaceId || undefined,
+          category: "adaptation",
+          model: data.usage.model || "gemini-3.1-flash-lite-preview",
+          promptTokens: data.usage.promptTokens || 0,
+          completionTokens: data.usage.completionTokens || 0,
+          totalTokens: data.usage.totalTokens || 0,
+          endpoint: "/api/adapt-ratio",
+        }).catch(console.error);
+      }
       return { ratio, code: data.code };
     });
 
@@ -544,8 +580,20 @@ export default function DesignPage() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `Adapt to ${targetRatio} failed`);
+    // Log adaptation usage
+    if (data.usage) {
+      logAndIncrement({
+        workspaceId: workspaceId || undefined,
+        category: "adaptation",
+        model: data.usage.model || "gemini-3.1-flash-lite-preview",
+        promptTokens: data.usage.promptTokens || 0,
+        completionTokens: data.usage.completionTokens || 0,
+        totalTokens: data.usage.totalTokens || 0,
+        endpoint: "/api/adapt-ratio",
+      }).catch(console.error);
+    }
     await updatePostCodeForRatio({ id: postId, ratio: targetRatio, componentCode: data.code });
-  }, [updatePostCodeForRatio]);
+  }, [updatePostCodeForRatio, logAndIncrement, workspaceId]);
 
   // ── Crawl handlers ──
   const handleCrawlDiscover = async (url: string) => {
@@ -631,6 +679,19 @@ export default function DesignPage() {
           },
         });
       }
+
+      // Log crawl usage
+      if (data.usage) {
+        logAndIncrement({
+          workspaceId: workspaceId || undefined,
+          category: "crawl",
+          model: data.usage.model || "gemini-3.1-flash-lite-preview",
+          promptTokens: data.usage.promptTokens || 0,
+          completionTokens: data.usage.completionTokens || 0,
+          totalTokens: data.usage.totalTokens || 0,
+          endpoint: "/api/crawl-website",
+        }).catch(console.error);
+      }
     } catch (err) {
       console.error("Crawl discover failed:", err);
       await upsertCrawl({
@@ -702,7 +763,7 @@ export default function DesignPage() {
         label: product.name,
       });
 
-      analyzeImage({ assetId, storageId, fileName: product.name, assetType: "product" }).catch(console.error);
+      analyzeImage({ assetId, storageId, fileName: product.name, assetType: "product", userId: user._id, workspaceId }).catch(console.error);
 
       if (crawlData?._id) {
         await markProductSaved({
@@ -912,6 +973,8 @@ export default function DesignPage() {
             storageId,
             fileName: file.name,
             assetType: assetTypeSelect,
+            userId: user._id,
+            workspaceId: assetScope === "workspace" ? workspaceId : undefined,
           }).catch((err) => console.error("Background analysis failed:", err));
         } catch (err) {
           console.error(`Failed to upload ${file.name}:`, err);
@@ -1095,6 +1158,8 @@ export default function DesignPage() {
               storageId: asset.fileId,
               fileName: asset.fileName,
               assetType: asset.type,
+              userId: user?._id,
+              workspaceId: workspaceId || undefined,
             }).catch(console.error);
           }}
         />

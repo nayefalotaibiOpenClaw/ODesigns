@@ -102,6 +102,8 @@ export async function POST(req: NextRequest) {
     const shuffledMoods = [...WILD_MOODS].sort(() => Math.random() - 0.5);
 
     let totalTokensUsed = 0;
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
 
     // Build the user prompt based on engine version:
     // V1 = Guided: assigned layout + copy angle
@@ -233,6 +235,7 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
           totalTokens: totalTokensUsed,
           promptTokens: usage?.promptTokenCount ?? 0,
           completionTokens: usage?.candidatesTokenCount ?? 0,
+          model: "gemini-3.1-flash-lite-preview",
           postsGenerated: 1,
         },
       });
@@ -246,6 +249,8 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
       ]).then(r => {
         const usage = r.response.usageMetadata;
         totalTokensUsed += usage?.totalTokenCount ?? 0;
+        totalPromptTokens += usage?.promptTokenCount ?? 0;
+        totalCompletionTokens += usage?.candidatesTokenCount ?? 0;
         return parseAIResponse(r.response.text());
       })
         .catch(err => {
@@ -268,6 +273,9 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
       imageKeywords: parsed.map(p => p.imageKeywords),
       usage: {
         totalTokens: totalTokensUsed,
+        promptTokens: totalPromptTokens,
+        completionTokens: totalCompletionTokens,
+        model: "gemini-3.1-flash-lite-preview",
         postsGenerated: parsed.length,
       },
     });
