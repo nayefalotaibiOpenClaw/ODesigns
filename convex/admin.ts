@@ -194,21 +194,6 @@ export const listRecentUsage = query({
 
 // ── Admin Mutations (all protected by assertAdmin) ──
 
-// Update a user's plan field directly
-export const updateUserPlan = mutation({
-  args: {
-    targetUserId: v.id("users"),
-    plan: v.union(v.literal("trial"), v.literal("starter"), v.literal("pro")),
-  },
-  handler: async (ctx, args) => {
-    await assertAdmin(ctx);
-    const user = await ctx.db.get(args.targetUserId);
-    if (!user) throw new Error("User not found");
-    await ctx.db.patch(args.targetUserId, { plan: args.plan });
-    return { success: true };
-  },
-});
-
 // Update a user's role
 export const updateUserRole = mutation({
   args: {
@@ -224,8 +209,54 @@ export const updateUserRole = mutation({
   },
 });
 
-// Grant or modify a subscription for a user
-export const grantSubscription = mutation({
+// Update an existing subscription in-place (plan, limits, dates, status)
+export const updateSubscription = mutation({
+  args: {
+    subscriptionId: v.id("subscriptions"),
+    plan: v.optional(v.union(v.literal("trial"), v.literal("starter"), v.literal("pro"))),
+    billingPeriod: v.optional(v.union(v.literal("monthly"), v.literal("yearly"))),
+    status: v.optional(v.union(v.literal("active"), v.literal("expired"), v.literal("cancelled"))),
+    aiTokensLimit: v.optional(v.number()),
+    aiTokensUsed: v.optional(v.number()),
+    postsLimit: v.optional(v.number()),
+    postsUsed: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await assertAdmin(ctx);
+
+    const sub = await ctx.db.get(args.subscriptionId);
+    if (!sub) throw new Error("Subscription not found");
+
+    const patch: Record<string, any> = {};
+    if (args.plan !== undefined) patch.plan = args.plan;
+    if (args.billingPeriod !== undefined) patch.billingPeriod = args.billingPeriod;
+    if (args.status !== undefined) patch.status = args.status;
+    if (args.aiTokensLimit !== undefined) patch.aiTokensLimit = args.aiTokensLimit;
+    if (args.aiTokensUsed !== undefined) patch.aiTokensUsed = args.aiTokensUsed;
+    if (args.postsLimit !== undefined) patch.postsLimit = args.postsLimit;
+    if (args.postsUsed !== undefined) patch.postsUsed = args.postsUsed;
+    if (args.expiresAt !== undefined) patch.expiresAt = args.expiresAt;
+
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(args.subscriptionId, patch);
+    }
+
+    // Keep user.plan in sync
+    if (args.plan !== undefined) {
+      await ctx.db.patch(sub.userId, { plan: args.plan });
+    }
+    // If cancelling, reset user plan to trial
+    if (args.status === "cancelled" || args.status === "expired") {
+      await ctx.db.patch(sub.userId, { plan: "trial" });
+    }
+
+    return { success: true };
+  },
+});
+
+// Create a brand new subscription for a user who has none
+export const createSubscription = mutation({
   args: {
     targetUserId: v.id("users"),
     plan: v.union(v.literal("trial"), v.literal("starter"), v.literal("pro")),
@@ -239,18 +270,6 @@ export const grantSubscription = mutation({
 
     const user = await ctx.db.get(args.targetUserId);
     if (!user) throw new Error("User not found");
-
-    // Expire existing active subscription
-    const existing = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_user_status", (q: any) =>
-        q.eq("userId", args.targetUserId).eq("status", "active")
-      )
-      .first();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, { status: "expired" });
-    }
 
     const now = Date.now();
     const msPerDay = 24 * 60 * 60 * 1000;
@@ -274,99 +293,5 @@ export const grantSubscription = mutation({
     await ctx.db.patch(args.targetUserId, { plan: args.plan });
 
     return { subscriptionId: subId };
-  },
-});
-
-// Update subscription limits (tokens, posts)
-export const updateSubscriptionLimits = mutation({
-  args: {
-    subscriptionId: v.id("subscriptions"),
-    aiTokensLimit: v.optional(v.number()),
-    postsLimit: v.optional(v.number()),
-    expiresAt: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    await assertAdmin(ctx);
-
-    const sub = await ctx.db.get(args.subscriptionId);
-    if (!sub) throw new Error("Subscription not found");
-
-    const patch: Record<string, any> = {};
-    if (args.aiTokensLimit !== undefined) patch.aiTokensLimit = args.aiTokensLimit;
-    if (args.postsLimit !== undefined) patch.postsLimit = args.postsLimit;
-    if (args.expiresAt !== undefined) patch.expiresAt = args.expiresAt;
-
-    if (Object.keys(patch).length > 0) {
-      await ctx.db.patch(args.subscriptionId, patch);
-    }
-
-    return { success: true };
-  },
-});
-
-// Reset AI usage counters on a subscription
-export const resetSubscriptionUsage = mutation({
-  args: {
-    subscriptionId: v.id("subscriptions"),
-    resetTokens: v.optional(v.boolean()),
-    resetPosts: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    await assertAdmin(ctx);
-
-    const sub = await ctx.db.get(args.subscriptionId);
-    if (!sub) throw new Error("Subscription not found");
-
-    const patch: Record<string, any> = {};
-    if (args.resetTokens) patch.aiTokensUsed = 0;
-    if (args.resetPosts) patch.postsUsed = 0;
-
-    if (Object.keys(patch).length > 0) {
-      await ctx.db.patch(args.subscriptionId, patch);
-    }
-
-    return { success: true };
-  },
-});
-
-// Extend subscription expiry
-export const extendSubscription = mutation({
-  args: {
-    subscriptionId: v.id("subscriptions"),
-    additionalDays: v.number(),
-  },
-  handler: async (ctx, args) => {
-    await assertAdmin(ctx);
-
-    const sub = await ctx.db.get(args.subscriptionId);
-    if (!sub) throw new Error("Subscription not found");
-
-    const msPerDay = 24 * 60 * 60 * 1000;
-    const newExpiry = Math.max(sub.expiresAt, Date.now()) + args.additionalDays * msPerDay;
-
-    await ctx.db.patch(args.subscriptionId, {
-      expiresAt: newExpiry,
-      status: "active",
-    });
-
-    return { newExpiresAt: newExpiry };
-  },
-});
-
-// Cancel a subscription
-export const cancelSubscription = mutation({
-  args: {
-    subscriptionId: v.id("subscriptions"),
-  },
-  handler: async (ctx, args) => {
-    await assertAdmin(ctx);
-
-    const sub = await ctx.db.get(args.subscriptionId);
-    if (!sub) throw new Error("Subscription not found");
-
-    await ctx.db.patch(args.subscriptionId, { status: "cancelled" });
-    await ctx.db.patch(sub.userId, { plan: "trial" });
-
-    return { success: true };
   },
 });
