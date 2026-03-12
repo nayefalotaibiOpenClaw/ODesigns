@@ -8,6 +8,8 @@ import {
   LayoutGrid, FileText, ChevronDown, ChevronUp, RotateCcw, CalendarPlus,
   Ban, Zap, X, Check, Save, Plus,
 } from "lucide-react";
+import { useLocale } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/types";
 
 // ── Helpers ──
 
@@ -15,14 +17,16 @@ function fmt$(n: number) {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function fmtDate(ts: number | undefined) {
+function fmtDate(ts: number | undefined, locale: string) {
   if (!ts) return "—";
-  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const l = locale === "ar" ? "ar-SA" : "en-US";
+  return new Date(ts).toLocaleDateString(l, { month: "short", day: "numeric", year: "numeric" });
 }
 
-function fmtDateShort(ts: number | undefined) {
+function fmtDateShort(ts: number | undefined, locale: string) {
   if (!ts) return "—";
-  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const l = locale === "ar" ? "ar-SA" : "en-US";
+  return new Date(ts).toLocaleDateString(l, { month: "short", day: "numeric" });
 }
 
 function fmtDateInput(ts: number) {
@@ -34,15 +38,15 @@ function parseDateInput(s: string): number {
   return new Date(s + "T00:00:00").getTime();
 }
 
-function timeAgo(ts: number) {
+function timeAgo(ts: number, t: (key: TranslationKey) => string) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("admin.justNow");
+  if (mins < 60) return `${mins}${t("admin.mAgo")}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}${t("admin.hAgo")}`;
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${days}${t("admin.dAgo")}`;
 }
 
 function daysLeft(expiresAt: number) {
@@ -142,6 +146,7 @@ const STATUS_BADGE: Record<string, string> = {
 // ── User Row ──
 
 function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onToggle: () => void }) {
+  const { t, locale } = useLocale();
   const [loading, setLoading] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
 
@@ -235,23 +240,23 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
         <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${
           PLAN_BADGE[u.plan || ""] || "bg-neutral-800/50 text-neutral-500 border-neutral-700/30"
         }`}>
-          {u.plan || "none"}
+          {u.plan || t("admin.none")}
         </span>
         <div className="hidden md:flex flex-col gap-1 w-28 shrink-0">
           {sub && isActive ? (
             <>
               <div className="flex items-center justify-between text-[10px] text-neutral-500">
-                <span>Tokens</span>
+                <span>{t("admin.tokens")}</span>
                 <span className="tabular-nums">{pct(sub.aiTokensUsed, sub.aiTokensLimit)}%</span>
               </div>
               <UsageBar used={sub.aiTokensUsed} limit={sub.aiTokensLimit} />
             </>
           ) : (
-            <span className="text-[10px] text-neutral-600">{sub ? sub.status : "No sub"}</span>
+            <span className="text-[10px] text-neutral-600">{sub ? sub.status : t("admin.noSub")}</span>
           )}
         </div>
         <div className="hidden md:block text-xs text-neutral-500 tabular-nums w-12 text-center shrink-0">{u.workspaceCount}</div>
-        <div className="hidden md:block text-xs text-neutral-500 tabular-nums w-20 text-right shrink-0">{fmtDateShort(u.createdAt)}</div>
+        <div className="hidden md:block text-xs text-neutral-500 tabular-nums w-20 text-right shrink-0">{fmtDateShort(u.createdAt, locale)}</div>
         {isExpanded ? <ChevronUp className="w-4 h-4 text-neutral-600 shrink-0" /> : <ChevronDown className="w-4 h-4 text-neutral-600 shrink-0" />}
       </button>
 
@@ -266,43 +271,43 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                 /* ── Edit mode ── */
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-neutral-400">Edit Subscription</span>
+                    <span className="text-xs font-bold text-neutral-400">{t("admin.editSubscription")}</span>
                     <button onClick={() => setEditing(false)} className="text-neutral-600 hover:text-neutral-400"><X className="w-3.5 h-3.5" /></button>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[10px] text-neutral-500 block mb-1">Plan</label>
+                      <label className="text-[10px] text-neutral-500 block mb-1">{t("admin.planLabel")}</label>
                       <select value={editPlan} onChange={e => setEditPlan(e.target.value)}
                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-xs text-neutral-200">
-                        <option value="trial">Trial</option>
-                        <option value="starter">Starter</option>
-                        <option value="pro">Pro</option>
+                        <option value="trial">{t("admin.trial")}</option>
+                        <option value="starter">{t("admin.starter")}</option>
+                        <option value="pro">{t("admin.pro")}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-neutral-500 block mb-1">Period</label>
+                      <label className="text-[10px] text-neutral-500 block mb-1">{t("admin.period")}</label>
                       <select value={editPeriod} onChange={e => setEditPeriod(e.target.value)}
                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-xs text-neutral-200">
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
+                        <option value="monthly">{t("admin.monthly")}</option>
+                        <option value="yearly">{t("admin.yearly")}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-neutral-500 block mb-1">Expires</label>
+                      <label className="text-[10px] text-neutral-500 block mb-1">{t("admin.expires")}</label>
                       <input type="date" value={editExpiresAt} onChange={e => setEditExpiresAt(e.target.value)}
                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-xs text-neutral-200" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <SmallInput label="Token Limit" type="number" value={editTokensLimit}
+                    <SmallInput label={t("admin.tokenLimit")} type="number" value={editTokensLimit}
                       onChange={v => setEditTokensLimit(+v)} suffix={`${(editTokensLimit/1000).toFixed(0)}k`} />
-                    <SmallInput label="Posts Limit" type="number" value={editPostsLimit}
+                    <SmallInput label={t("admin.postsLimit")} type="number" value={editPostsLimit}
                       onChange={v => setEditPostsLimit(+v)} />
                   </div>
                   <button onClick={saveEdit} disabled={loading === "save"}
                     className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5">
                     {loading === "save" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                    Save Changes
+                    {t("admin.saveChanges")}
                   </button>
                 </div>
               ) : (
@@ -317,21 +322,21 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                       {sub.plan}
                     </span>
                     <span className="text-xs text-neutral-500">{sub.billingPeriod || "—"}</span>
-                    <span className="text-xs text-neutral-600">&middot; {fmt$(sub.amountPaid)} paid</span>
+                    <span className="text-xs text-neutral-600">&middot; {fmt$(sub.amountPaid)} {t("admin.paid")}</span>
                   </div>
 
                   {/* Start / End dates */}
                   <div className="flex items-center gap-6 text-xs">
                     <div>
-                      <span className="text-neutral-500">Start: </span>
-                      <span className="text-neutral-300 tabular-nums">{fmtDate(sub.startsAt)}</span>
+                      <span className="text-neutral-500">{t("admin.start")}: </span>
+                      <span className="text-neutral-300 tabular-nums">{fmtDate(sub.startsAt, locale)}</span>
                     </div>
                     <div>
-                      <span className="text-neutral-500">End: </span>
+                      <span className="text-neutral-500">{t("admin.end")}: </span>
                       <span className={`tabular-nums ${daysLeft(sub.expiresAt) <= 5 ? "text-amber-400" : "text-neutral-300"}`}>
-                        {fmtDate(sub.expiresAt)}
+                        {fmtDate(sub.expiresAt, locale)}
                       </span>
-                      <span className="text-neutral-600 ml-1">({daysLeft(sub.expiresAt)}d left)</span>
+                      <span className="text-neutral-600 ms-1">({daysLeft(sub.expiresAt)}{t("admin.daysLeft")})</span>
                     </div>
                   </div>
 
@@ -339,7 +344,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-neutral-400">AI Tokens</span>
+                        <span className="text-neutral-400">{t("admin.aiTokensLabel")}</span>
                         <span className="text-neutral-300 tabular-nums font-medium">
                           {(sub.aiTokensUsed / 1000).toFixed(0)}k / {(sub.aiTokensLimit / 1000).toFixed(0)}k
                         </span>
@@ -348,7 +353,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-neutral-400">Posts</span>
+                        <span className="text-neutral-400">{t("admin.postsLabel")}</span>
                         <span className="text-neutral-300 tabular-nums font-medium">{sub.postsUsed} / {sub.postsLimit}</span>
                       </div>
                       <UsageBar used={sub.postsUsed} limit={sub.postsLimit} color="bg-violet-500" />
@@ -359,19 +364,19 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                   <div className="flex items-center gap-2 flex-wrap pt-1">
                     <button onClick={startEdit}
                       className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg border text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 border-neutral-700/30 transition-colors">
-                      <Save className="w-3 h-3" /> Edit Sub
+                      <Save className="w-3 h-3" /> {t("admin.editSub")}
                     </button>
-                    <ConfirmBtn icon={RotateCcw} label="Reset Usage" loading={loading === "reset"} active={confirm === "reset"}
+                    <ConfirmBtn icon={RotateCcw} label={t("admin.resetUsage")} loading={loading === "reset"} active={confirm === "reset"}
                       onAsk={() => setConfirm("reset")} onCancel={() => setConfirm(null)}
                       onDo={() => run("reset", () => updateSub({ subscriptionId: sub._id, aiTokensUsed: 0, postsUsed: 0 }))} />
-                    <ConfirmBtn icon={CalendarPlus} label="+7 days" loading={loading === "extend7"} active={confirm === "extend7"}
+                    <ConfirmBtn icon={CalendarPlus} label={t("admin.plus7days")} loading={loading === "extend7"} active={confirm === "extend7"}
                       onAsk={() => setConfirm("extend7")} onCancel={() => setConfirm(null)}
                       onDo={() => run("extend7", () => updateSub({
                         subscriptionId: sub._id,
                         expiresAt: Math.max(sub.expiresAt, Date.now()) + 7 * 24 * 60 * 60 * 1000,
                         status: "active",
                       }))} />
-                    <ConfirmBtn icon={CalendarPlus} label="+30 days" loading={loading === "extend30"} active={confirm === "extend30"}
+                    <ConfirmBtn icon={CalendarPlus} label={t("admin.plus30days")} loading={loading === "extend30"} active={confirm === "extend30"}
                       onAsk={() => setConfirm("extend30")} onCancel={() => setConfirm(null)}
                       onDo={() => run("extend30", () => updateSub({
                         subscriptionId: sub._id,
@@ -379,7 +384,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                         status: "active",
                       }))} />
                     {isActive && (
-                      <ConfirmBtn icon={Ban} label="Cancel" variant="danger" loading={loading === "cancel"} active={confirm === "cancel"}
+                      <ConfirmBtn icon={Ban} label={t("admin.cancel")} variant="danger" loading={loading === "cancel"} active={confirm === "cancel"}
                         onAsk={() => setConfirm("cancel")} onCancel={() => setConfirm(null)}
                         onDo={() => run("cancel", () => updateSub({ subscriptionId: sub._id, status: "cancelled" }))} />
                     )}
@@ -390,43 +395,43 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
               /* ── No subscription ── */
               !showCreate ? (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-500">No subscription</span>
+                  <span className="text-sm text-neutral-500">{t("admin.noSubscription")}</span>
                   <button onClick={openCreate}
                     className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors">
-                    <Plus className="w-3 h-3" /> Create subscription
+                    <Plus className="w-3 h-3" /> {t("admin.createSubscription")}
                   </button>
                 </div>
               ) : (
                 /* ── Create form ── */
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-neutral-400">Create Subscription</span>
+                    <span className="text-xs font-bold text-neutral-400">{t("admin.createSubscription")}</span>
                     <button onClick={() => setShowCreate(false)} className="text-neutral-600 hover:text-neutral-400"><X className="w-3.5 h-3.5" /></button>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[10px] text-neutral-500 block mb-1">Plan</label>
+                      <label className="text-[10px] text-neutral-500 block mb-1">{t("admin.planLabel")}</label>
                       <select value={newPlan} onChange={e => { const p = e.target.value as any; setNewPlan(p); applyDefaults(p, newPeriod); }}
                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-xs text-neutral-200">
-                        <option value="trial">Trial</option>
-                        <option value="starter">Starter</option>
-                        <option value="pro">Pro</option>
+                        <option value="trial">{t("admin.trial")}</option>
+                        <option value="starter">{t("admin.starter")}</option>
+                        <option value="pro">{t("admin.pro")}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-neutral-500 block mb-1">Period</label>
+                      <label className="text-[10px] text-neutral-500 block mb-1">{t("admin.period")}</label>
                       <select value={newPeriod} onChange={e => { const p = e.target.value as any; setNewPeriod(p); applyDefaults(newPlan, p); }}
                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1.5 text-xs text-neutral-200">
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
+                        <option value="monthly">{t("admin.monthly")}</option>
+                        <option value="yearly">{t("admin.yearly")}</option>
                       </select>
                     </div>
-                    <SmallInput label="Days" type="number" value={newDays} onChange={v => setNewDays(+v)} />
+                    <SmallInput label={t("admin.days")} type="number" value={newDays} onChange={v => setNewDays(+v)} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <SmallInput label="Token Limit" type="number" value={newTokens} onChange={v => setNewTokens(+v)}
+                    <SmallInput label={t("admin.tokenLimit")} type="number" value={newTokens} onChange={v => setNewTokens(+v)}
                       suffix={`${(newTokens/1000).toFixed(0)}k`} />
-                    <SmallInput label="Posts Limit" type="number" value={newPosts} onChange={v => setNewPosts(+v)} />
+                    <SmallInput label={t("admin.postsLimit")} type="number" value={newPosts} onChange={v => setNewPosts(+v)} />
                   </div>
                   <button onClick={() => run("create", () => createSub({
                     targetUserId: u._id, plan: newPlan, billingPeriod: newPeriod,
@@ -435,7 +440,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                     disabled={loading === "create"}
                     className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5">
                     {loading === "create" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
-                    Create {newPlan.charAt(0).toUpperCase() + newPlan.slice(1)} ({newDays}d)
+                    {t("admin.create")} {newPlan.charAt(0).toUpperCase() + newPlan.slice(1)} ({newDays}d)
                   </button>
                 </div>
               )
@@ -443,7 +448,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
 
             {/* Role toggle */}
             <div className="flex items-center gap-2 pt-1 border-t border-neutral-800/30">
-              <span className="text-[10px] text-neutral-600 uppercase tracking-wide">Role:</span>
+              <span className="text-[10px] text-neutral-600 uppercase tracking-wide">{t("admin.role")}:</span>
               <button
                 onClick={() => run("role", () => updateRole({ targetUserId: u._id, role: u.role === "admin" ? "user" : "admin" }))}
                 disabled={loading === "role"}
@@ -452,7 +457,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                     ? "bg-amber-500/15 text-amber-400 border-amber-500/25 hover:bg-amber-500/25"
                     : "bg-neutral-800/50 text-neutral-500 border-neutral-700/30 hover:bg-neutral-700/40"
                 }`}>
-                {u.role === "admin" ? "admin" : "user"}
+                {u.role === "admin" ? t("admin.adminRole") : t("admin.userRole")}
               </button>
             </div>
           </div>
@@ -468,10 +473,11 @@ function ConfirmBtn({ icon: Icon, label, variant, loading, active, onAsk, onCanc
   icon: React.ElementType; label: string; variant?: "danger"; loading: boolean;
   active: boolean; onAsk: () => void; onCancel: () => void; onDo: () => void;
 }) {
+  const { t } = useLocale();
   if (active) {
     return (
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-amber-400 mr-1">Sure?</span>
+        <span className="text-[10px] text-amber-400 me-1">{t("admin.sure")}</span>
         <button onClick={onDo} disabled={loading}
           className="p-1 rounded-md bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-colors">
           {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
@@ -496,6 +502,7 @@ function ConfirmBtn({ icon: Icon, label, variant, loading, active, onAsk, onCanc
 // ── Main Page ──
 
 export default function AdminOverviewPage() {
+  const { t, dir, locale } = useLocale();
   const overview = useQuery(api.admin.getOverview);
   const allUsers = useQuery(api.admin.listAllUsers);
   const recentUsage = useQuery(api.admin.listRecentUsage);
@@ -517,23 +524,23 @@ export default function AdminOverviewPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div dir={dir} className="space-y-8">
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Dashboard</h1>
-        <p className="text-sm text-neutral-500 mt-1">Platform overview &amp; user management</p>
+        <h1 className="text-2xl font-black tracking-tight">{t("admin.dashboard")}</h1>
+        <p className="text-sm text-neutral-500 mt-1">{t("admin.subtitle")}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Users" value={overview.totalUsers.toLocaleString()} icon={Users} accent="bg-blue-600/20" />
-        <StatCard label="Active Subs" value={overview.activeSubCount.toLocaleString()} icon={CreditCard} accent="bg-emerald-600/20" />
-        <StatCard label="MRR" value={fmt$(overview.mrr)} icon={TrendingUp} accent="bg-violet-600/20" />
-        <StatCard label="AI Cost (30d)" value={fmt$(overview.aiCost30d)} icon={Cpu} accent="bg-amber-600/20" />
-        <StatCard label="Revenue" value={fmt$(overview.totalRevenue)} icon={DollarSign} accent="bg-emerald-600/20" />
-        <StatCard label="New (7d)" value={overview.newUsersLast7d.toLocaleString()} icon={UserPlus} accent="bg-cyan-600/20" />
-        <StatCard label="Workspaces" value={overview.totalWorkspaces.toLocaleString()} icon={LayoutGrid} accent="bg-pink-600/20" />
-        <StatCard label="Posts" value={overview.totalPosts.toLocaleString()} icon={FileText} accent="bg-orange-600/20" />
-        <StatCard label="AI Tokens (30d)" value={`${(overview.totalAiTokens30d / 1000).toFixed(0)}k`} icon={Zap} accent="bg-blue-600/20" />
+        <StatCard label={t("admin.users")} value={overview.totalUsers.toLocaleString()} icon={Users} accent="bg-blue-600/20" />
+        <StatCard label={t("admin.activeSubs")} value={overview.activeSubCount.toLocaleString()} icon={CreditCard} accent="bg-emerald-600/20" />
+        <StatCard label={t("admin.mrr")} value={fmt$(overview.mrr)} icon={TrendingUp} accent="bg-violet-600/20" />
+        <StatCard label={t("admin.aiCost30d")} value={fmt$(overview.aiCost30d)} icon={Cpu} accent="bg-amber-600/20" />
+        <StatCard label={t("admin.revenue")} value={fmt$(overview.totalRevenue)} icon={DollarSign} accent="bg-emerald-600/20" />
+        <StatCard label={t("admin.new7d")} value={overview.newUsersLast7d.toLocaleString()} icon={UserPlus} accent="bg-cyan-600/20" />
+        <StatCard label={t("admin.workspaces")} value={overview.totalWorkspaces.toLocaleString()} icon={LayoutGrid} accent="bg-pink-600/20" />
+        <StatCard label={t("admin.posts")} value={overview.totalPosts.toLocaleString()} icon={FileText} accent="bg-orange-600/20" />
+        <StatCard label={t("admin.aiTokens30d")} value={`${(overview.totalAiTokens30d / 1000).toFixed(0)}k`} icon={Zap} accent="bg-blue-600/20" />
       </div>
 
       {/* Users + Activity */}
@@ -541,17 +548,17 @@ export default function AdminOverviewPage() {
         {/* Users */}
         <div className="xl:col-span-3 bg-neutral-900/60 border border-neutral-800/50 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-neutral-800/50 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-bold text-neutral-300">Users ({allUsers?.length ?? 0})</h2>
-            <input type="text" placeholder="Search users..." value={userSearch}
+            <h2 className="text-sm font-bold text-neutral-300">{t("admin.users")} ({allUsers?.length ?? 0})</h2>
+            <input type="text" placeholder={t("admin.searchUsers")} value={userSearch}
               onChange={e => setUserSearch(e.target.value)}
               className="bg-neutral-800/60 border border-neutral-700/40 rounded-lg px-3 py-1.5 text-xs text-neutral-200 placeholder-neutral-600 w-48 focus:outline-none focus:border-neutral-600" />
           </div>
           <div className="px-5 py-2 flex items-center gap-4 text-[10px] text-neutral-600 uppercase tracking-wider border-b border-neutral-800/30">
-            <div className="flex-1">User</div>
-            <div className="w-16 text-center">Plan</div>
-            <div className="hidden md:block w-28 text-center">Usage</div>
-            <div className="hidden md:block w-12 text-center">WS</div>
-            <div className="hidden md:block w-20 text-right">Joined</div>
+            <div className="flex-1">{t("admin.user")}</div>
+            <div className="w-16 text-center">{t("admin.plan")}</div>
+            <div className="hidden md:block w-28 text-center">{t("admin.usage")}</div>
+            <div className="hidden md:block w-12 text-center">{t("admin.ws")}</div>
+            <div className="hidden md:block w-20 text-end">{t("admin.joined")}</div>
             <div className="w-5" />
           </div>
           <div className="max-h-[600px] overflow-y-auto">
@@ -560,7 +567,7 @@ export default function AdminOverviewPage() {
                 onToggle={() => setExpandedUser(expandedUser === u._id ? null : u._id)} />
             ))}
             {filteredUsers?.length === 0 && (
-              <div className="px-5 py-10 text-center text-neutral-600 text-sm">No users found</div>
+              <div className="px-5 py-10 text-center text-neutral-600 text-sm">{t("admin.noUsersFound")}</div>
             )}
           </div>
         </div>
@@ -568,11 +575,11 @@ export default function AdminOverviewPage() {
         {/* Activity */}
         <div className="xl:col-span-2 bg-neutral-900/60 border border-neutral-800/50 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-neutral-800/50">
-            <h2 className="text-sm font-bold text-neutral-300">AI Activity</h2>
+            <h2 className="text-sm font-bold text-neutral-300">{t("admin.aiActivity")}</h2>
           </div>
           <div className="max-h-[650px] overflow-y-auto">
             {recentUsage?.length === 0 && (
-              <div className="px-5 py-10 text-center text-neutral-600 text-sm">No AI usage logged yet</div>
+              <div className="px-5 py-10 text-center text-neutral-600 text-sm">{t("admin.noAiUsage")}</div>
             )}
             {recentUsage?.map((log) => (
               <div key={log._id} className="px-4 py-3 border-b border-neutral-800/30 hover:bg-neutral-800/15 transition-colors">
@@ -582,14 +589,14 @@ export default function AdminOverviewPage() {
                   }`}>
                     {log.category.replace(/_/g, " ")}
                   </span>
-                  <span className="text-[10px] text-neutral-600 tabular-nums">{timeAgo(log.createdAt)}</span>
+                  <span className="text-[10px] text-neutral-600 tabular-nums">{timeAgo(log.createdAt, t)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-400 truncate max-w-[120px]">
-                    {log.user?.name || log.user?.email || "Unknown"}
+                    {log.user?.name || log.user?.email || t("admin.unknown")}
                   </span>
                   <div className="flex items-center gap-3 text-[11px] text-neutral-500 tabular-nums">
-                    <span>{log.totalTokens.toLocaleString()} tok</span>
+                    <span>{log.totalTokens.toLocaleString()} {t("admin.tok")}</span>
                     <span className="text-neutral-600">${log.estimatedCostUsd.toFixed(4)}</span>
                   </div>
                 </div>

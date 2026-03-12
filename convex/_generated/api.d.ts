@@ -12,6 +12,7 @@ import type * as admin from "../admin.js";
 import type * as aiUsage from "../aiUsage.js";
 import type * as assets from "../assets.js";
 import type * as auth from "../auth.js";
+import type * as blogs from "../blogs.js";
 import type * as branding from "../branding.js";
 import type * as collections from "../collections.js";
 import type * as crons from "../crons.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   aiUsage: typeof aiUsage;
   assets: typeof assets;
   auth: typeof auth;
+  blogs: typeof blogs;
   branding: typeof branding;
   collections: typeof collections;
   crons: typeof crons;

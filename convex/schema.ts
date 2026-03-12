@@ -506,6 +506,22 @@ export default defineSchema({
     .index("by_user_created", ["userId", "createdAt"])
     .index("by_created", ["createdAt"]),
 
+  // ─── Blogs ─────────────────────────────────────────
+  blogs: defineTable({
+    title: v.string(),
+    slug: v.string(),
+    excerpt: v.string(),
+    content: v.string(),
+    coverImage: v.optional(v.string()),
+    author: v.string(),
+    language: v.optional(v.union(v.literal("en"), v.literal("ar"))),
+    publishedAt: v.number(),
+    tags: v.array(v.string()),
+    published: v.boolean(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_published", ["published", "publishedAt"]),
+
   // ─── Generations ─────────────────────────────────────
   generations: defineTable({
     workspaceId: v.id("workspaces"),

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useLocale } from "@/lib/i18n/context";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -15,6 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     isAuthenticated ? {} : "skip"
   );
   const router = useRouter();
+  const { t, dir } = useLocale();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -38,7 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-neutral-100 font-sans">
+    <div dir={dir} className="min-h-screen bg-[#0a0a0a] text-neutral-100 font-sans">
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-16">
         <div className="flex items-center gap-4 mb-8">
           <Link
@@ -46,10 +48,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-300 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to app
+            {t("admin.backToApp")}
           </Link>
           <span className="text-neutral-700">|</span>
-          <span className="text-sm font-bold text-neutral-400">Admin</span>
+          <span className="text-sm font-bold text-neutral-400">{t("admin.title")}</span>
         </div>
         {children}
       </div>

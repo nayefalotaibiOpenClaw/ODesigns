@@ -24,8 +24,8 @@ const NAV_LINKS: { key: ActivePage; href: string; labelKey: TranslationKey; enab
   { key: "channels", href: "/channels", labelKey: "nav.channels", enabled: false },
   { key: "publish", href: "/publish", labelKey: "nav.publish", enabled: false },
   { key: "pricing", href: "/pricing", labelKey: "nav.pricing", enabled: true },
-  { key: "blogs", href: "/blogs", labelKey: "nav.blogs", enabled: false },
-  { key: "contact", href: "/contact", labelKey: "nav.contact", enabled: false },
+  { key: "blogs", href: "/blogs", labelKey: "nav.blogs", enabled: true },
+  { key: "contact", href: "/contact", labelKey: "nav.contact", enabled: true },
 ];
 
 export default function FloatingNav({ variant = "light", activePage = "home" }: FloatingNavProps) {
@@ -87,7 +87,7 @@ export default function FloatingNav({ variant = "light", activePage = "home" }: 
           <div className="flex items-center gap-6">
             <Link href="/" className={`font-black text-lg tracking-tight ${brandColor}`}>oDesigns</Link>
             <div className={`hidden md:flex items-center gap-6 text-sm font-semibold ${linkColor}`}>
-              {NAV_LINKS.map((link) =>
+              {NAV_LINKS.filter(link => link.enabled).map((link) =>
                 renderNavLink(
                   link,
                   `hover:${activeColor} transition-colors`,
@@ -160,15 +160,8 @@ export default function FloatingNav({ variant = "light", activePage = "home" }: 
           </div>
 
           <div className="flex-1 flex flex-col justify-center px-8 gap-2">
-            {NAV_LINKS.map((link) => {
+            {NAV_LINKS.filter(link => link.enabled).map((link) => {
               const isActive = activePage === link.key;
-              if (!link.enabled) {
-                return (
-                  <span key={link.key} className="text-3xl font-black text-slate-300 py-3">
-                    {t(link.labelKey)}
-                  </span>
-                );
-              }
               return (
                 <Link
                   key={link.key}

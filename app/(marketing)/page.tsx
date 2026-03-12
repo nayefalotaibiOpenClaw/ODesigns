@@ -2,8 +2,11 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import FloatingNav from "@/app/components/FloatingNav";
+import Link from "next/link";
+
+// ... existing code ...
 
 // Real post components - Sylo
 import AnalyticsPost from "@/features/posts/templates/sylo/AnalyticsPost";
@@ -196,6 +199,19 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100 overflow-x-hidden">
+      {/* Redesign Comparison Banner */}
+      <div className="bg-slate-900 text-white py-3 px-4 text-center text-sm font-bold flex items-center justify-center gap-4 relative z-[100]">
+        <Sparkles className="w-4 h-4 text-amber-400" />
+        Explore the new landing page redesigns:
+        <div className="flex gap-2">
+          <Link href="/v1" className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors whitespace-nowrap">V1: AI Workflow</Link>
+          <Link href="/v2" className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors whitespace-nowrap">V2: Audience Hub</Link>
+          <Link href="/v3" className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors whitespace-nowrap">V3: Creative Gallery</Link>
+          <Link href="/v4" className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors whitespace-nowrap">V4: The Canvas</Link>
+          <Link href="/v5" className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-colors whitespace-nowrap">V5: Scrollytelling</Link>
+        </div>
+      </div>
+
       <FloatingNav activePage="home" />
 
       {/* Hero Section */}
