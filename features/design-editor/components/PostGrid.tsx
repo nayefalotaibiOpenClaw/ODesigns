@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo, useCallback, useRef, useState } from "react";
-import { Code, Eye, Trash2, Scaling, Loader2, Check, Paintbrush, ImagePlus, Search } from "lucide-react";
+import { Code, Eye, Trash2, Scaling, Loader2, Check, Paintbrush, ImagePlus, Search, Copy, MessageSquare, Tag } from "lucide-react";
 import { AspectRatioType, PostScopeContext } from "@/contexts/EditContext";
 import DynamicPost from "@/app/components/DynamicPost";
 import PostWrapper from "@/app/components/PostWrapper";
@@ -128,6 +128,9 @@ export default function PostGrid({
   // Resize dropdown state
   const [resizeOpenId, setResizeOpenId] = useState<string | null>(null);
   const [adaptingMap, setAdaptingMap] = useState<Record<string, Set<string>>>({});
+  // Caption dropdown state
+  const [captionOpenId, setCaptionOpenId] = useState<string | null>(null);
+  const [captionCopied, setCaptionCopied] = useState(false);
   // Background/image editor state
   const [bgOpenId, setBgOpenId] = useState<string | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
@@ -340,6 +343,12 @@ export default function PostGrid({
                             return { ...prev, [id]: set };
                           });
                         }
+                        // Pre-populate Unsplash with AI-suggested keywords
+                        if (post?.imageKeywords?.length) {
+                          const kw = post.imageKeywords[0];
+                          setUnsplashQuery(kw);
+                          handleUnsplashSearch(kw);
+                        }
                       }
                     }}
                     className={`p-2 rounded-xl transition-colors ${
@@ -475,6 +484,28 @@ export default function PostGrid({
                             {/* Unsplash tab */}
                             {imageTab === 'unsplash' && (
                               <div>
+                                {/* AI keyword chips */}
+                                {post?.imageKeywords && post.imageKeywords.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {post.imageKeywords.map((kw: string, ki: number) => (
+                                      <button
+                                        key={ki}
+                                        onClick={() => {
+                                          setUnsplashQuery(kw);
+                                          handleUnsplashSearch(kw);
+                                        }}
+                                        className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition-colors ${
+                                          unsplashQuery === kw
+                                            ? 'bg-gray-900 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                      >
+                                        {kw}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+
                                 {/* Search input */}
                                 <div className="flex gap-1 mb-2">
                                   <div className="flex-1 flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2">
@@ -539,6 +570,78 @@ export default function PostGrid({
                     );
                   })()}
                 </div>
+
+                {/* Caption & Keywords */}
+                {post?.caption && (
+                  <>
+                    <div className="w-px h-5 bg-gray-200" />
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCaptionOpenId(captionOpenId === id ? null : id);
+                          setCaptionCopied(false);
+                        }}
+                        className={`p-2 rounded-xl transition-colors ${
+                          captionOpenId === id ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                        title="Caption & keywords"
+                      >
+                        <MessageSquare size={14} />
+                      </button>
+                      {captionOpenId === id && (
+                        <div
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-3 z-30 w-[280px]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Caption */}
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Caption</p>
+                          <div className="relative mb-3">
+                            <p className="text-[12px] text-gray-700 leading-relaxed whitespace-pre-wrap">{post.caption}</p>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(post.caption || '');
+                                setCaptionCopied(true);
+                                setTimeout(() => setCaptionCopied(false), 2000);
+                              }}
+                              className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 transition-colors"
+                            >
+                              {captionCopied ? <><Check size={10} className="text-green-500" /> Copied</> : <><Copy size={10} /> Copy caption</>}
+                            </button>
+                          </div>
+
+                          {/* Image Keywords */}
+                          {post.imageKeywords && post.imageKeywords.length > 0 && (
+                            <>
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Suggested Keywords</p>
+                              <div className="flex flex-wrap gap-1">
+                                {post.imageKeywords.map((kw: string, ki: number) => (
+                                  <button
+                                    key={ki}
+                                    onClick={() => {
+                                      setUnsplashQuery(kw);
+                                      handleUnsplashSearch(kw);
+                                      setCaptionOpenId(null);
+                                      setBgOpenId(id);
+                                      setImageTab('unsplash');
+                                      // Select first image if any
+                                      const urls = extractImageUrls(code);
+                                      if (urls.length > 0) setSelectedImageUrl(urls[0]);
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors"
+                                  >
+                                    <Tag size={9} />
+                                    {kw}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 {/* Resize — adapt to other ratios */}
                 {post && onAdaptRatio && (

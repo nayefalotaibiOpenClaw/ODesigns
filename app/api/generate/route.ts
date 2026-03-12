@@ -6,7 +6,7 @@ import { CLASSIC_SYSTEM_PROMPT } from "@/lib/ai/prompts/system-prompt-classic";
 import { COPY_ANGLES } from "@/lib/ai/prompts/copy-angles";
 import { LAYOUT_BLUEPRINTS } from "@/lib/ai/prompts/layout-blueprints";
 import { buildDynamicPrompt } from "@/lib/ai/build-prompt";
-import { cleanCode } from "@/lib/ai/clean-code";
+import { parseAIResponse } from "@/lib/ai/clean-code";
 import type { GenerationContext } from "@/lib/ai/types";
 
 // Note: This route is called from authenticated pages only.
@@ -223,10 +223,12 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
       const usage = result.response.usageMetadata;
       totalTokensUsed = usage?.totalTokenCount ?? 0;
 
-      const code = cleanCode(result.response.text());
+      const parsed = parseAIResponse(result.response.text());
       return NextResponse.json({
-        code,
-        codes: [code],
+        code: parsed.code,
+        codes: [parsed.code],
+        captions: [parsed.caption],
+        imageKeywords: [parsed.imageKeywords],
         usage: {
           totalTokens: totalTokensUsed,
           promptTokens: usage?.promptTokenCount ?? 0,
@@ -244,7 +246,7 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
       ]).then(r => {
         const usage = r.response.usageMetadata;
         totalTokensUsed += usage?.totalTokenCount ?? 0;
-        return cleanCode(r.response.text());
+        return parseAIResponse(r.response.text());
       })
         .catch(err => {
           console.error(`Generation ${i + 1} failed:`, err);
@@ -253,18 +255,20 @@ Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a f
     });
 
     const results = await Promise.all(promises);
-    const codes = results.filter((c): c is string => c !== null);
+    const parsed = results.filter((c): c is NonNullable<typeof c> => c !== null);
 
-    if (codes.length === 0) {
+    if (parsed.length === 0) {
       return NextResponse.json({ error: "All generations failed" }, { status: 500 });
     }
 
     return NextResponse.json({
-      code: codes[0],
-      codes,
+      code: parsed[0].code,
+      codes: parsed.map(p => p.code),
+      captions: parsed.map(p => p.caption),
+      imageKeywords: parsed.map(p => p.imageKeywords),
       usage: {
         totalTokens: totalTokensUsed,
-        postsGenerated: codes.length,
+        postsGenerated: parsed.length,
       },
     });
   } catch (error: unknown) {

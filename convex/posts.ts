@@ -191,6 +191,8 @@ export const createBatch = mutation({
           v.literal("desktop"),
           v.literal("none")
         ),
+        caption: v.optional(v.string()),
+        imageKeywords: v.optional(v.array(v.string())),
       })
     ),
   },
@@ -218,6 +220,8 @@ export const createBatch = mutation({
         userId: args.userId,
         title: args.posts[i].title,
         componentCode: args.posts[i].componentCode,
+        caption: args.posts[i].caption,
+        imageKeywords: args.posts[i].imageKeywords,
         language: args.language,
         device: args.posts[i].device,
         order: i,

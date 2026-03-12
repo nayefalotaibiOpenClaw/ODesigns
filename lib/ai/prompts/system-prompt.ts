@@ -125,5 +125,18 @@ ALL content MUST be fully visible at ANY aspect ratio:
 ## CANVAS (540px base, exports 2x)
 - 1:1 → 540×540, 3:4 → 540×720, 9:16 → 540×960, 4:3 → 720×540, 16:9 → 960×540
 
-## OUTPUT
-Return ONLY the raw component code. No markdown fences, no backticks, no explanation. Start with imports.`;
+## OUTPUT FORMAT
+Return a JSON object with exactly these keys:
+\`\`\`json
+{
+  "code": "// Your full TSX component code here (imports through closing brace)",
+  "caption": "A ready-to-post social media caption with emojis and hashtags (2-3 sentences max)",
+  "imageKeywords": ["keyword1", "keyword2", "keyword3"]
+}
+\`\`\`
+
+Rules:
+- **code**: The full TSX component. No markdown fences inside the code string.
+- **caption**: A compelling social media caption for this post. Include relevant emojis and 3-5 hashtags. Match the brand voice and language (Arabic if the post is Arabic).
+- **imageKeywords**: 3-5 Unsplash search keywords relevant to the post's visual theme (e.g. "modern restaurant", "tablet ordering", "kitchen technology"). Always in English even for Arabic posts.
+- Return ONLY the JSON object. No markdown fences around it, no explanation before or after.`;

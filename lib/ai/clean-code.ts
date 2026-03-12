@@ -1,3 +1,59 @@
+export interface AIPostResult {
+  code: string;
+  caption: string;
+  imageKeywords: string[];
+}
+
+/**
+ * Parse AI response that should be JSON with code, caption, imageKeywords.
+ * Falls back to treating the entire response as raw code if JSON parsing fails.
+ */
+export function parseAIResponse(raw: string): AIPostResult {
+  const trimmed = raw.trim();
+
+  // Try to parse as JSON first
+  try {
+    // Strip markdown fences if the AI wrapped the JSON in them
+    const jsonStr = trimmed
+      .replace(/^```(?:json)?\n?/gm, '')
+      .replace(/```$/gm, '')
+      .trim();
+
+    const parsed = JSON.parse(jsonStr);
+    if (parsed.code && typeof parsed.code === 'string') {
+      return {
+        code: cleanCode(parsed.code),
+        caption: typeof parsed.caption === 'string' ? parsed.caption : '',
+        imageKeywords: Array.isArray(parsed.imageKeywords) ? parsed.imageKeywords : [],
+      };
+    }
+  } catch {
+    // Not valid JSON — try to extract JSON object from the response
+    const jsonMatch = trimmed.match(/\{[\s\S]*"code"\s*:\s*"[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.code && typeof parsed.code === 'string') {
+          return {
+            code: cleanCode(parsed.code),
+            caption: typeof parsed.caption === 'string' ? parsed.caption : '',
+            imageKeywords: Array.isArray(parsed.imageKeywords) ? parsed.imageKeywords : [],
+          };
+        }
+      } catch {
+        // Fall through to raw code handling
+      }
+    }
+  }
+
+  // Fallback: treat entire response as raw TSX code
+  return {
+    code: cleanCode(trimmed),
+    caption: '',
+    imageKeywords: [],
+  };
+}
+
 export function cleanCode(raw: string): string {
   let code = raw;
 

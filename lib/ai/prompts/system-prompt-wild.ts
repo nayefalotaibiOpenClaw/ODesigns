@@ -125,5 +125,16 @@ export default function PostName() {
 7. All visuals CSS-only — gradients, shapes, patterns, shadows, blurs. No external images unless provided as assets.
 8. You may use React hooks (useState, useEffect, useRef, useCallback, useMemo) if needed
 
-## OUTPUT
-Return ONLY raw TSX code. No markdown, no backticks, no explanation.`;
+## OUTPUT FORMAT
+Return a JSON object with exactly these keys:
+\`\`\`json
+{
+  "code": "// Your full TSX component code here",
+  "caption": "A ready-to-post social media caption with emojis and hashtags",
+  "imageKeywords": ["keyword1", "keyword2", "keyword3"]
+}
+\`\`\`
+- **code**: Full TSX component (imports through closing brace). No markdown fences inside.
+- **caption**: Compelling social media caption (2-3 sentences, emojis, 3-5 hashtags). Match brand voice/language.
+- **imageKeywords**: 3-5 Unsplash search keywords for the post's visual theme. Always English.
+- Return ONLY the JSON object. No wrapping, no explanation.`;

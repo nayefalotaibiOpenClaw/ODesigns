@@ -303,6 +303,8 @@ export default function DesignPage() {
       if (!res.ok) throw new Error(data.error || 'Something went wrong while generating. Please try again or contact support.');
 
       const codes: string[] = data.codes || [data.code];
+      const captions: string[] = data.captions || [];
+      const imageKeywords: string[][] = data.imageKeywords || [];
 
       // Track AI token usage in subscription — if limit exceeded, still show posts but warn user
       setUsageWarning(null);
@@ -348,6 +350,8 @@ export default function DesignPage() {
             title: `${generatePrompt.slice(0, 80)} (${i + 1}/${codes.length})`,
             componentCode: code,
             device: "none" as const,
+            caption: captions[i] || undefined,
+            imageKeywords: imageKeywords[i]?.length ? imageKeywords[i] : undefined,
           })),
         });
 
@@ -433,6 +437,8 @@ export default function DesignPage() {
       if (!res.ok) throw new Error(data.error || 'Something went wrong while generating. Please try again or contact support.');
 
       const codes: string[] = data.codes || [data.code];
+      const captionsAll: string[] = data.captions || [];
+      const keywordsAll: string[][] = data.imageKeywords || [];
 
       setUsageWarning(null);
       if (data.usage) {
@@ -474,6 +480,8 @@ export default function DesignPage() {
             title: `${generatePrompt.slice(0, 60)} — Layout ${i + 1}/${codes.length}`,
             componentCode: code,
             device: "none" as const,
+            caption: captionsAll[i] || undefined,
+            imageKeywords: keywordsAll[i]?.length ? keywordsAll[i] : undefined,
           })),
         });
 

@@ -80,5 +80,16 @@ const isTall = ratio === '9:16' || ratio === '3:4';
 ## CANVAS (540px base, exports 2x)
 - 1:1 → 540×540 (1080×1080), 4:5 → 540×675, 9:16 → 540×960, 16:9 → 960×540
 
-## OUTPUT
-Return ONLY the raw component code. No markdown fences, no backticks, no explanation. Start with imports.`;
+## OUTPUT FORMAT
+Return a JSON object with exactly these keys:
+\`\`\`json
+{
+  "code": "// Your full TSX component code here (imports through closing brace)",
+  "caption": "A ready-to-post social media caption with emojis and hashtags (2-3 sentences max)",
+  "imageKeywords": ["keyword1", "keyword2", "keyword3"]
+}
+\`\`\`
+- **code**: Full TSX component. No markdown fences inside the code string. Start with imports.
+- **caption**: Compelling social media caption (2-3 sentences, emojis, 3-5 hashtags). Match brand voice/language.
+- **imageKeywords**: 3-5 Unsplash search keywords for the post's visual theme. Always English.
+- Return ONLY the JSON object. No wrapping, no explanation.`;
