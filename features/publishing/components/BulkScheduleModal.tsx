@@ -112,8 +112,8 @@ export default function BulkScheduleModal({
   const [step, setStep] = useState<BulkStep>("type");
   const [selectedPostIds, setSelectedPostIds] = useState<Id<"posts">[]>([]);
   const [contentType, setContentType] = useState<ContentType>("image");
-  const [frequency, setFrequency] = useState<"daily" | "every_x" | "weekly">("daily");
-  const [everyXDays, setEveryXDays] = useState(2);
+  const [frequency, setFrequency] = useState<"daily" | "pick_days">("daily");
+  const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]); // 0=Sun..6=Sat
   const [timesPerDay, setTimesPerDay] = useState(["09:00", "18:00"]);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -256,80 +256,59 @@ export default function BulkScheduleModal({
       }
     };
 
-    // For carousel — each valid group becomes one scheduled item
-    if (isCarousel) {
-      if (validCarouselGroups.length === 0) return items;
-      const start = new Date(startDate + "T00:00:00");
-      let dayOffset = 0;
-      let groupIdx = 0;
+    // Helper: check if a date qualifies based on frequency
+    const isValidDay = (date: Date) => {
+      if (frequency === "daily") return true;
+      return selectedDays.includes(date.getDay());
+    };
 
-      while (groupIdx < validCarouselGroups.length) {
-        const date = new Date(start);
-        date.setDate(date.getDate() + dayOffset);
+    // Total items to schedule
+    const totalItems = isCarousel ? validCarouselGroups.length : selectedPostIds.length;
+    if (totalItems === 0) return items;
 
-        for (const time of sortedTimes) {
-          if (groupIdx >= validCarouselGroups.length) break;
-          const [hours, minutes] = time.split(":").map(Number);
-          const dateTime = new Date(date);
-          dateTime.setHours(hours, minutes, 0, 0);
-          const group = validCarouselGroups[groupIdx];
-          const originalIndex = carouselGroups.indexOf(group);
-
-          pushForAccounts({
-            postIndex: groupIdx + 1,
-            postId: group[0],
-            postTitle: `Carousel ${groupIdx + 1} (${group.length} slides)`,
-            dateTime,
-            carouselGroupIndex: originalIndex,
-          });
-          groupIdx++;
-        }
-
-        switch (frequency) {
-          case "daily": dayOffset += 1; break;
-          case "every_x": dayOffset += everyXDays; break;
-          case "weekly": dayOffset += 7; break;
-        }
-      }
-      return items;
-    }
-
-    // For post/story/reel — each post is a separate scheduled item
-    if (selectedPostIds.length === 0) return items;
     const start = new Date(startDate + "T00:00:00");
     let dayOffset = 0;
-    let postIndex = 0;
+    let itemIdx = 0;
+    const maxDays = 365; // safety limit
 
-    while (postIndex < selectedPostIds.length) {
+    while (itemIdx < totalItems && dayOffset < maxDays) {
       const date = new Date(start);
       date.setDate(date.getDate() + dayOffset);
+      dayOffset++;
+
+      if (!isValidDay(date)) continue;
 
       for (const time of sortedTimes) {
-        if (postIndex >= selectedPostIds.length) break;
+        if (itemIdx >= totalItems) break;
         const [hours, minutes] = time.split(":").map(Number);
         const dateTime = new Date(date);
         dateTime.setHours(hours, minutes, 0, 0);
 
-        const post = allPosts?.find((p) => p._id === selectedPostIds[postIndex]);
-
-        pushForAccounts({
-          postIndex: postIndex + 1,
-          postId: selectedPostIds[postIndex],
-          postTitle: post?.title || `Post ${postIndex + 1}`,
-          dateTime,
-        });
-        postIndex++;
-      }
-
-      switch (frequency) {
-        case "daily": dayOffset += 1; break;
-        case "every_x": dayOffset += everyXDays; break;
-        case "weekly": dayOffset += 7; break;
+        if (isCarousel) {
+          const group = validCarouselGroups[itemIdx];
+          const originalIndex = carouselGroups.indexOf(group);
+          pushForAccounts({
+            postIndex: itemIdx + 1,
+            postId: group[0],
+            postTitle: `Carousel ${itemIdx + 1} (${group.length} slides)`,
+            dateTime,
+            carouselGroupIndex: originalIndex,
+          });
+        } else {
+          const post = allPosts?.find((p) => p._id === selectedPostIds[itemIdx]);
+          pushForAccounts({
+            postIndex: itemIdx + 1,
+            postId: selectedPostIds[itemIdx],
+            postTitle: post?.title || `Post ${itemIdx + 1}`,
+            dateTime,
+          });
+        }
+        itemIdx++;
       }
     }
 
     return items;
-  }, [selectedPostIds, selectedAccountIds, timesPerDay, startDate, frequency, everyXDays, allPosts, accounts, isCarousel, validCarouselGroups, carouselGroups]);
+  }, [selectedPostIds, selectedAccountIds, timesPerDay, startDate, frequency, selectedDays, allPosts, accounts, isCarousel, validCarouselGroups, carouselGroups]);
 
   const handleConfirm = useCallback(async () => {
     if (isSubmitting) return;
@@ -814,9 +793,8 @@ export default function BulkScheduleModal({
               <label className={`block text-xs font-semibold ${t.textMuted} uppercase tracking-wider mb-3`}>Frequency</label>
               <div className="flex gap-2">
                 {([
-                  { value: "daily" as const, label: "Daily" },
-                  { value: "every_x" as const, label: "Every X days" },
-                  { value: "weekly" as const, label: "Weekly" },
+                  { value: "daily" as const, label: "Every day" },
+                  { value: "pick_days" as const, label: "Pick days" },
                 ]).map((opt) => (
                   <button
                     key={opt.value}
@@ -829,15 +807,30 @@ export default function BulkScheduleModal({
                   </button>
                 ))}
               </div>
-              {frequency === "every_x" && (
-                <div className="mt-3 flex items-center gap-2">
-                  <span className={`text-xs ${t.textSub}`}>Every</span>
-                  <input
-                    type="number" min={2} max={30} value={everyXDays}
-                    onChange={(e) => setEveryXDays(parseInt(e.target.value) || 2)}
-                    className={`w-14 px-2 py-1.5 rounded-lg text-xs text-center ${t.input}`}
-                  />
-                  <span className={`text-xs ${t.textSub}`}>days</span>
+              {frequency === "pick_days" && (
+                <div className="flex gap-1.5 mt-3">
+                  {(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => {
+                    const isActive = selectedDays.includes(i);
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => {
+                          setSelectedDays((prev) =>
+                            isActive
+                              ? prev.length > 1 ? prev.filter((d) => d !== i) : prev // keep at least 1
+                              : [...prev, i].sort()
+                          );
+                        }}
+                        className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all ${
+                          isActive
+                            ? "bg-[#1B4332] text-white"
+                            : `${t.pill}`
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1000,7 +993,7 @@ export default function BulkScheduleModal({
               : `${selectedPostIds.length} post${selectedPostIds.length !== 1 ? 's' : ''}`
             }
             {" · "}
-            {frequency === "daily" ? "every day" : frequency === "weekly" ? "once a week" : `every ${everyXDays} days`}
+            {frequency === "daily" ? "every day" : `${selectedDays.length} day${selectedDays.length !== 1 ? "s" : ""}/week`}
             {" · "}
             {displayTimes.length} time{displayTimes.length !== 1 ? "s" : ""}/day
           </p>
