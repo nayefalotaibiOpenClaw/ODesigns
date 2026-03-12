@@ -147,7 +147,7 @@ export default function DesignPage() {
   const [usageWarning, setUsageWarning] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [generateCount, setGenerateCount] = useState(2);
-  const [generateVersion, setGenerateVersion] = useState<1 | 2 | 3 | 4 | 5>(5);
+  const [generateVersion, setGenerateVersion] = useState<1 | 2 | 3 | 4 | 5 | 6>(5);
   const [codeViewPosts, setCodeViewPosts] = useState<Set<string>>(new Set());
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [fetchingWebsite, setFetchingWebsite] = useState(false);
@@ -554,6 +554,156 @@ export default function DesignPage() {
         setGeneratedPosts(prev => [...newEntries, ...prev]);
         setLocalOrder(prev => [...newEntries.map(e => e.id), ...prev]);
       }
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Something went wrong. Please try again or contact support.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  // Compare all engines: fire 1 post per engine in parallel, save with engine label
+  const ENGINE_LABELS: Record<number, string> = { 1: 'G (Guided)', 2: 'Cr (Creative)', 3: 'F (Free)', 4: 'W (Wild)', 5: 'C (Classic)', 6: 'A (App Store)' };
+  const handleCompareEngines = async () => {
+    if (!generatePrompt.trim() || generating) return;
+    if (canGenerateCheck && !canGenerateCheck.allowed) {
+      setShowLimitModal(true);
+      return;
+    }
+    setGenerating(true);
+    setGenerateError(null);
+    setUsageWarning(null);
+    try {
+      const context = {
+        brandName: branding?.brandName || workspace?.name,
+        tagline: branding?.tagline,
+        website: workspace?.website,
+        industry: workspace?.industry,
+        language: workspace?.defaultLanguage || 'ar' as const,
+        logoUrl: logoUrl || undefined,
+        websiteInfo: workspace?.websiteInfo ? (() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const wi = workspace.websiteInfo as any;
+          return {
+            companyName: wi.companyName || wi.title || "",
+            description: wi.description || "",
+            industry: wi.industry || "",
+            features: wi.features || [],
+            targetAudience: wi.targetAudience,
+            tone: wi.tone,
+            contact: wi.contact,
+            content: wi.rawContent || wi.content || "",
+          };
+        })() : undefined,
+        assets: (assets || [])
+          .filter(a => a.url)
+          .map(a => ({
+            id: a._id,
+            url: a.url || '',
+            type: a.type,
+            label: a.label || a.fileName,
+            description: a.description,
+            aiAnalysis: a.aiAnalysis,
+          })),
+      };
+
+      const versions = [5, 1, 2, 3, 4, 6]; // C, G, Cr, F, W, A
+      const refImgs = chatImages.length > 0 ? chatImages.map(img => ({ base64: img.base64, mimeType: img.mimeType })) : undefined;
+
+      // Fire all engines in parallel, 1 post each
+      const results = await Promise.allSettled(
+        versions.map(v =>
+          fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: generatePrompt,
+              context,
+              count: 1,
+              version: v,
+              referenceImages: refImgs,
+            }),
+          }).then(async res => {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+            return { version: v, code: (data.codes?.[0] || data.code) as string, usage: data.usage };
+          })
+        )
+      );
+
+      // Collect successful results
+      const succeeded: { version: number; code: string; usage?: { promptTokens: number; completionTokens: number; totalTokens: number; postsGenerated: number } }[] = [];
+      for (const r of results) {
+        if (r.status === 'fulfilled') succeeded.push(r.value);
+      }
+
+      if (succeeded.length === 0) {
+        throw new Error('All engine generations failed');
+      }
+
+      // Log combined usage
+      const totalUsage = succeeded.reduce((acc, s) => {
+        if (s.usage) {
+          acc.promptTokens += s.usage.promptTokens || 0;
+          acc.completionTokens += s.usage.completionTokens || 0;
+          acc.totalTokens += s.usage.totalTokens || 0;
+          acc.postsGenerated += s.usage.postsGenerated || 1;
+        }
+        return acc;
+      }, { promptTokens: 0, completionTokens: 0, totalTokens: 0, postsGenerated: 0 });
+
+      if (totalUsage.totalTokens > 0) {
+        try {
+          const usageResult = await logAndIncrement({
+            workspaceId: workspaceId || undefined,
+            category: "generation",
+            model: "gemini-3.1-flash-lite-preview",
+            promptTokens: totalUsage.promptTokens,
+            completionTokens: totalUsage.completionTokens,
+            totalTokens: totalUsage.totalTokens,
+            endpoint: "/api/generate",
+            postsGenerated: totalUsage.postsGenerated,
+          });
+          if (usageResult?.limitReached) setShowLimitModal(true);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : '';
+          if (msg.includes('expired')) setUsageWarning("Your subscription has expired. Please renew to continue generating.");
+          else if (msg.includes('No active subscription')) setUsageWarning("No active subscription found. Please subscribe to continue generating.");
+        }
+      }
+
+      // Save to Convex with engine label in title
+      if (workspaceId && user) {
+        let collectionId = activeCollectionId;
+        if (!collectionId) {
+          collectionId = await createCollection({
+            workspaceId,
+            userId: user._id,
+            name: "Engine Comparison",
+            mode: "social_grid",
+            language: workspace?.defaultLanguage || "ar",
+            aspectRatio: "1:1",
+          });
+        }
+        await createPostBatch({
+          collectionId,
+          workspaceId,
+          userId: user._id,
+          language: workspace?.defaultLanguage || "ar",
+          posts: succeeded.map(s => ({
+            title: `[${ENGINE_LABELS[s.version]}] ${generatePrompt.slice(0, 60)}`,
+            componentCode: s.code,
+            device: "none" as const,
+          })),
+        });
+      } else {
+        const newEntries = succeeded.map(s => ({
+          id: `compare-${s.version}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          code: s.code,
+        }));
+        setGeneratedPosts(prev => [...newEntries, ...prev]);
+        setLocalOrder(prev => [...newEntries.map(e => e.id), ...prev]);
+      }
+      setChatImages([]);
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : 'Something went wrong. Please try again or contact support.');
     } finally {
@@ -1564,6 +1714,7 @@ export default function DesignPage() {
                       { v: 2 as const, label: 'Cr', title: 'Creative' },
                       { v: 3 as const, label: 'F', title: 'Free' },
                       { v: 4 as const, label: 'W', title: 'Wild' },
+                      { v: 6 as const, label: 'A', title: 'App Store Preview' },
                     ]).map(({ v, label, title }) => (
                       <button
                         key={v}
@@ -1606,6 +1757,20 @@ export default function DesignPage() {
                       );
                     })}
                   </div>
+
+                  {/* Compare All Engines */}
+                  <button
+                    onClick={handleCompareEngines}
+                    disabled={generating || !generatePrompt.trim()}
+                    title="Compare all engines (1 post each)"
+                    className={`hidden sm:flex w-7 h-7 rounded-full items-center justify-center text-[10px] font-bold transition-colors ml-1 ${
+                      generating || !generatePrompt.trim()
+                        ? 'bg-slate-200 dark:bg-neutral-700 text-slate-400'
+                        : 'bg-amber-500 text-white hover:bg-amber-600'
+                    }`}
+                  >
+                    {generating ? <Loader2 size={10} className="animate-spin" /> : <Zap size={12} />}
+                  </button>
 
                   {/* Send */}
                   <button
