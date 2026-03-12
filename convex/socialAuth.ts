@@ -96,11 +96,15 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
     );
   }
 
-  const clientId = process.env.META_APP_ID;
-  const clientSecret = process.env.META_APP_SECRET;
   const redirectUri = process.env.META_REDIRECT_URI;
 
-  if (!clientId || !clientSecret || !redirectUri) {
+  // Use platform-specific credentials with fallback to META_* env vars
+  const igClientId = process.env.META_APP_ID;
+  const igClientSecret = process.env.META_APP_SECRET;
+  const fbClientId = process.env.FACEBOOK_APP_ID || process.env.META_APP_ID;
+  const fbClientSecret = process.env.FACEBOOK_APP_SECRET || process.env.META_APP_SECRET;
+
+  if (!redirectUri || !igClientId || !igClientSecret || !fbClientId || !fbClientSecret) {
     return redirect(
       designUrl(state.workspaceId, `social_error=Meta+OAuth+not+configured`)
     );
@@ -114,8 +118,8 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
+          client_id: igClientId,
+          client_secret: igClientSecret,
           grant_type: "authorization_code",
           redirect_uri: redirectUri,
           code,
@@ -132,7 +136,7 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
 
       // Step 2: Exchange for long-lived token (~60 days)
       const longRes = await fetch(
-        `${IG_GRAPH_URL}/access_token?grant_type=ig_exchange_token&client_secret=${clientSecret}&access_token=${shortToken}`
+        `${IG_GRAPH_URL}/access_token?grant_type=ig_exchange_token&client_secret=${igClientSecret}&access_token=${shortToken}`
       );
       if (!longRes.ok) throw new Error(`Instagram API returned HTTP ${longRes.status}`);
       const longData = await longRes.json();
@@ -178,8 +182,8 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
 
     // Step 1: Exchange code for short-lived token
     const tokenUrl = new URL(`${META_GRAPH_URL}/oauth/access_token`);
-    tokenUrl.searchParams.set("client_id", clientId);
-    tokenUrl.searchParams.set("client_secret", clientSecret);
+    tokenUrl.searchParams.set("client_id", fbClientId);
+    tokenUrl.searchParams.set("client_secret", fbClientSecret);
     tokenUrl.searchParams.set("redirect_uri", redirectUri);
     tokenUrl.searchParams.set("code", code);
 
@@ -191,8 +195,8 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
     // Step 2: Exchange for long-lived token (~60 days)
     const longUrl = new URL(`${META_GRAPH_URL}/oauth/access_token`);
     longUrl.searchParams.set("grant_type", "fb_exchange_token");
-    longUrl.searchParams.set("client_id", clientId);
-    longUrl.searchParams.set("client_secret", clientSecret);
+    longUrl.searchParams.set("client_id", fbClientId);
+    longUrl.searchParams.set("client_secret", fbClientSecret);
     longUrl.searchParams.set("fb_exchange_token", tokenData.access_token);
 
     const longRes = await fetch(longUrl.toString());

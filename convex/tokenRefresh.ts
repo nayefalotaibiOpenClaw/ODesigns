@@ -23,9 +23,9 @@ export const refreshSingle = internalAction({
         tokenExpiresAt: Date.now() + (data.expires_in || 5184000) * 1000,
       });
     } else if (account.provider === "facebook") {
-      const clientId = process.env.META_APP_ID;
-      const clientSecret = process.env.META_APP_SECRET;
-      if (!clientId || !clientSecret) throw new Error("Meta credentials not configured");
+      const clientId = process.env.FACEBOOK_APP_ID || process.env.META_APP_ID;
+      const clientSecret = process.env.FACEBOOK_APP_SECRET || process.env.META_APP_SECRET;
+      if (!clientId || !clientSecret) throw new Error("Facebook credentials not configured");
 
       const url = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
       url.searchParams.set("grant_type", "fb_exchange_token");
@@ -115,11 +115,11 @@ export const refreshExpiring = internalAction({
           console.log(`Refreshed Instagram token for account ${account._id}`);
         } else if (account.provider === "facebook") {
           // Facebook user-level long-lived tokens use fb_exchange_token
-          const clientId = process.env.META_APP_ID;
-          const clientSecret = process.env.META_APP_SECRET;
+          const clientId = process.env.FACEBOOK_APP_ID || process.env.META_APP_ID;
+          const clientSecret = process.env.FACEBOOK_APP_SECRET || process.env.META_APP_SECRET;
 
           if (!clientId || !clientSecret) {
-            console.error("Meta credentials not configured for token refresh");
+            console.error("Facebook credentials not configured for token refresh");
             continue;
           }
 

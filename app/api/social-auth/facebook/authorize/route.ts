@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const clientId = process.env.META_APP_ID;
+  const clientId = process.env.FACEBOOK_APP_ID;
   const redirectUri = process.env.META_REDIRECT_URI;
-  const appSecret = process.env.META_APP_SECRET;
+  const hmacSecret = process.env.META_APP_SECRET; // shared HMAC signing key
+  const appSecret = process.env.FACEBOOK_APP_SECRET;
 
-  if (!clientId || !redirectUri || !appSecret) {
+  if (!clientId || !redirectUri || !hmacSecret || !appSecret) {
     return NextResponse.json(
       { error: "Facebook OAuth not configured" },
       { status: 500 }
@@ -34,7 +35,8 @@ export async function GET(request: NextRequest) {
     })
   ).toString("base64");
 
-  const signature = createHmac("sha256", appSecret).update(payload).digest("base64url");
+  // Use META_APP_SECRET for HMAC so callback can verify with single key
+  const signature = createHmac("sha256", hmacSecret).update(payload).digest("base64url");
   const state = `${signature}.${payload}`;
 
   const authUrl = getFacebookAuthUrl({ clientId, redirectUri, state });
