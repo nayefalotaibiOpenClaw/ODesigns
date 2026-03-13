@@ -43,15 +43,13 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
         if (ctx.language) wildContext.push(`Language: ${ctx.language === 'ar' ? 'Arabic (use dir="rtl" on DraggableWrapper, text-right on text)' : 'English'}`);
         if (ctx.assets && ctx.assets.length > 0) {
           const shuffledAssets = shuffle(ctx.assets);
-          const assetLines = shuffledAssets.map((a, idx) => {
+          const assetLines = shuffledAssets.map((a) => {
             let line = `- ${a.type}: ${a.url}`;
-            if (idx === 0 && postCount > 1) line += ' ⭐ (USE THIS as the primary/featured image)';
-            if (a.label) line += `\n  Label: ${a.label}`;
-            if (a.description) line += `\n  Description: ${a.description}`;
-            if (a.aiAnalysis) line += `\n  AI Analysis: ${a.aiAnalysis}`;
+            if (a.label) line += ` — ${a.label}`;
+            if (a.aiAnalysis) line += `\n  Shows: ${a.aiAnalysis}`;
             return line;
           }).join('\n');
-          wildContext.push(`Available images (use with <img>):\n${assetLines}`);
+          wildContext.push(`Available images (optional — use only if they fit your design):\n${assetLines}`);
         }
         if (ctx.logoUrl) wildContext.push(`Logo URL: ${ctx.logoUrl}`);
       }
@@ -66,21 +64,23 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
       (i) => {
         const mood = shuffledMoods[i % shuffledMoods.length];
 
-        let featuredAssetHint = '';
+        let assetNote = '';
         if (availableAssets.length > 0) {
           const asset = availableAssets[i % availableAssets.length];
-          const details: string[] = [`Image: ${asset.url} (${asset.type})`];
-          if (asset.label) details.push(`What it shows: ${asset.label}`);
-          if (asset.description) details.push(`Details: ${asset.description}`);
-          if (asset.aiAnalysis) details.push(`Analysis: ${asset.aiAnalysis}`);
-          featuredAssetHint = `\n\nFeatured image for this post — make it the hero:\n${details.join('\n')}\nRead the metadata and craft content that connects to what this image shows.`;
+          const details: string[] = [];
+          if (asset.label) details.push(asset.label);
+          if (asset.description) details.push(asset.description);
+          if (asset.aiAnalysis) details.push(asset.aiAnalysis);
+          assetNote = details.length > 0
+            ? `\n\nAvailable image (optional — use only if it fits): ${asset.url}\nContext: ${details.join('. ')}`
+            : `\n\nAvailable image (optional): ${asset.url}`;
         }
 
-        return `Topic: ${prompt}
+        return `Brand/Topic: ${prompt}
 
-Creative direction: ${mood}${featuredAssetHint}
+Creative mood: ${mood}
 
-Write UNIQUE headline text and copy — do NOT reuse generic phrases. Invent a fresh, specific headline that fits the topic and mood above. Every post must have completely different text content.${buildDistinctNote(i, postCount)}${buildRatioNote(targetRatio)}`;
+Write original copy for this brand — a bold headline and supporting message that tells a story or sells a vision. Then design a post around that copy. Do NOT just list features. Think like a creative agency.${assetNote}${buildDistinctNote(i, postCount)}${buildRatioNote(targetRatio)}`;
       },
       referenceImages,
       model,
