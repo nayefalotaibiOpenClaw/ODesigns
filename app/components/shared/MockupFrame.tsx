@@ -78,7 +78,7 @@ export default function MockupFrame({
   const ratioGroup = isTall ? "tall" : isWide ? "wide" : "square";
 
   const defaultSize = SIZES[resolvedDevice][ratioGroup];
-  const [size, setSize] = useState({ w: defaultSize.w, h: defaultSize.h });
+  const [size, setSize] = useState<{ w: number; h: number }>({ w: defaultSize.w, h: defaultSize.h });
   const resizingRef = useRef(false);
   const startRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
 

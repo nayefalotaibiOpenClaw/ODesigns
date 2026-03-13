@@ -30,15 +30,27 @@ import { MockupFrame } from './shared';          // Device mockup (optional) —
 // Any icon from 'lucide-react'
 \`\`\`
 
-## THEME — NEVER hardcode colors
+## THEME — USE THESE COLORS FOR EVERYTHING
 \`\`\`tsx
 const t = useTheme();
-// COLORS: t.primary (dark bg), t.primaryDark (darkest), t.primaryLight (light text/bg)
-//         t.accent, t.accentLight, t.accentLime, t.accentGold, t.accentOrange, t.border
-// FONT:   t.font → font FAMILY string (e.g. "Changa"). NOT a color!
-//         ⚠ NEVER use t.font as a color value. Use it ONLY for fontFamily.
-//         ⚠ NEVER use font-sans, font-serif, font-mono classes — they override the brand font.
-//         The root div sets fontFamily: t.font, all children inherit it automatically.
+// COLORS (use via style={{ }} props — NEVER hardcode hex, NEVER use Tailwind color classes):
+//   t.primary      — main dark background (e.g. deep green)
+//   t.primaryDark  — darkest shade
+//   t.primaryLight — light shade (for text on dark bg, or light backgrounds)
+//   t.accent       — brand accent color (e.g. medium green)
+//   t.accentLight  — lighter accent
+//   t.accentLime   — bright highlight (e.g. lime green)
+//   t.accentGold   — warm highlight
+//   t.accentOrange — warm accent
+//   t.border       — border color
+//
+// ⚠ EVERY color in your design MUST come from t.* — backgrounds, text, borders, shadows, icons, cards, EVERYTHING.
+// ⚠ NEVER use white, black, gray, or any hardcoded color. Use t.primaryLight instead of white, t.primaryDark instead of black.
+// ⚠ NEVER use Tailwind color classes like bg-white, text-gray-500, border-gray-200. Use style={{ }} with t.* values.
+//
+// FONT: t.font → font FAMILY string (e.g. "Changa"). NOT a color!
+//   ⚠ NEVER use t.font as a color. Use it ONLY for fontFamily.
+//   ⚠ NEVER use font-sans, font-serif, font-mono — the root div sets the brand font, children inherit it.
 \`\`\`
 
 ## RESPONSIVE
@@ -52,9 +64,12 @@ const isWide = ratio === '16:9' || ratio === '4:3';
 - **<EditableText>** — Wrap ALL visible text. Props: as ("h2"|"p"|"span"|"h3"), className, style.
 - **<DraggableWrapper>** — Wrap content sections. Props: id (unique), className, style, dir ("rtl" for Arabic).
 
-## OPTIONAL: DEVICE MOCKUP
-- **<MockupFrame>** — Shows an image inside a phone/tablet/desktop frame. Props: id, src. Auto-sizes.
-- Only use when the user wants a device screenshot shown. If user says no mockup, don't use it.
+## ASSETS
+Each asset has a type and AI analysis — use these to decide WHERE to place the image:
+- **background** → full-bleed \`<img>\` behind content (add gradient overlay for readability)
+- **iphone/ipad/desktop/screenshot** → inside \`<MockupFrame id="mockup" src={url} />\`
+- **product** → transparent PNG, use as \`<img>\` with drop-shadow directly in the design
+- **logo** → small brand mark in header/corner
 
 ## DESIGN FREEDOM
 You can build ANY custom visual elements with divs, flexbox, grid, and Tailwind:
@@ -74,7 +89,7 @@ The design should feel like a real creative agency made it — polished, bold, w
 4. Wrap every visible text in \`<EditableText>\`
 5. Wrap content sections in \`<DraggableWrapper id="unique-id">\`
 6. Export: \`export default function PostName() { ... }\`
-7. Root div: \`className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans" style={{ backgroundColor: t.primary, fontFamily: t.font }}\`
+7. Root div: \`className="relative w-full h-full shadow-2xl overflow-hidden mx-auto" style={{ backgroundColor: t.primary, fontFamily: t.font }}\`
 8. No external images unless provided as assets
 9. Use isTall/isWide to adapt layout for different ratios
 

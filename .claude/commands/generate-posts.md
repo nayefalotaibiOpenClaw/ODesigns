@@ -30,46 +30,24 @@ You are a social media post designer. Generate creative Instagram post designs a
 
 ### Shared Components — USE THESE
 
-Import from `./shared` or `./shared/IPhoneMockup` etc:
+Import from `./shared`:
 
-#### `<IPhoneMockup src="/screenshot.jpg" />`
-Renders a complete iPhone frame (bezels, buttons, notch, glass reflections). Fills its parent container — wrap in a sized div:
+#### `<MockupFrame id="mockup" src="/screenshot.jpg" />`
+Unified device mockup that auto-detects device type (iPhone/iPad/Android/Desktop) and auto-sizes based on aspect ratio. No manual sizing needed:
 ```tsx
-import { IPhoneMockup } from './shared';
-// In post:
-<div className={isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}>
-  <IPhoneMockup src="/1.jpg" />
-</div>
-```
-Props: `src` (required), `alt`, `notch` ("pill" | "notch"), `className`
-- Upload button appears automatically when parent DraggableWrapper is selected
+import { MockupFrame } from './shared';
+// Basic usage — just provide id and src:
+<MockupFrame id="mockup" src="/1.jpg" />
 
-#### `<IPadMockup src="/screenshot.jpg" />`
-Renders a complete iPad frame (bezels, buttons, camera, home indicator). Fills its parent container — wrap in a sized div:
-```tsx
-import { IPadMockup } from './shared';
-// Landscape (default):
-<div className={isTall ? 'w-full h-[300px]' : 'w-[320px] h-[220px]'}>
-  <IPadMockup src="/pos-screen.jpg" />
-</div>
-// Portrait:
-<div className={isTall ? 'w-[260px] h-[360px]' : 'w-[200px] h-[280px]'}>
-  <IPadMockup src="/pos-screen.jpg" orientation="portrait" />
-</div>
+// Override device if needed:
+<MockupFrame id="mockup" src="/pos-screen.jpg" device="tablet" />
+<MockupFrame id="mockup" src="/pos-screen.jpg" device="desktop" />
 ```
-Props: `src` (required), `alt`, `orientation` ("landscape" | "portrait"), `className`
-- Upload button appears automatically when parent DraggableWrapper is selected
-
-#### `<DesktopMockup src="/screenshot.jpg" />`
-Renders a macOS browser window (traffic lights, address bar, stand). Fills its parent container — wrap in a sized div:
-```tsx
-import { DesktopMockup } from './shared';
-<div className={isTall ? 'w-full h-[350px]' : 'w-[360px] h-[240px]'}>
-  <DesktopMockup src="/pos-screen.jpg" url="app.sylo.com" />
-</div>
-```
-Props: `src` (required), `alt`, `trafficLights` (boolean, default true), `url` (string for address bar), `className`
-- Upload button appears automatically when parent DraggableWrapper is selected
+Props: `id` (required), `src` (required), `alt`, `device` ("phone" | "tablet" | "desktop" — optional, auto-detected from useDeviceType()), `className`
+- Auto-sizes based on aspect ratio (tall/square/wide)
+- Resizable in edit mode (drag handle at bottom-right)
+- Upload button appears automatically when selected
+- NEVER manually size with w-[]/h-[] classes — MockupFrame handles this
 
 #### `<PostHeader id="mypost" subtitle="ANALYTICS" badge={...} />`
 Renders the SYLO logo + subtitle + optional badge:
@@ -146,16 +124,14 @@ Apply colors via inline `style` props, NOT Tailwind color classes:
 
 ### Aspect Ratio Support — MANDATORY
 
-Every post with a phone mockup MUST handle 1:1 and tall (9:16, 3:4) ratios:
+MockupFrame auto-sizes based on aspect ratio, so no manual sizing is needed. But you can still use `useAspectRatio()` for other responsive layout decisions:
 
 ```tsx
 const ratio = useAspectRatio();
 const isTall = ratio === '9:16' || ratio === '3:4';
 
-// Mockup sizing:
-<div className={isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}>
-  <IPhoneMockup src="/screenshot.jpg" />
-</div>
+// MockupFrame handles its own sizing — just place it:
+<MockupFrame id="mockup" src="/screenshot.jpg" />
 ```
 
 ### DraggableWrapper — MANDATORY
@@ -220,13 +196,11 @@ import EditableText from './EditableText';
 import DraggableWrapper from './DraggableWrapper';
 import { useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
-import { IPhoneMockup, PostHeader, PostFooter, FloatingCard } from './shared';
+import { MockupFrame, PostHeader, PostFooter, FloatingCard } from './shared';
 import { Sparkles } from 'lucide-react';
 
 export default function FeatureNamePost() {
-  const ratio = useAspectRatio();
   const t = useTheme();
-  const isTall = ratio === '9:16' || ratio === '3:4';
 
   return (
     <div className="relative w-full max-w-[600px] aspect-square shadow-2xl rounded-xl overflow-hidden mx-auto font-sans"
@@ -245,10 +219,8 @@ export default function FeatureNamePost() {
         </DraggableWrapper>
 
         {/* Mockup area */}
-        <div className="flex-1 flex items-center justify-center relative mt-4">
-          <DraggableWrapper id="mockup-feature" className={`relative z-20 ${isTall ? 'w-[300px] h-[580px]' : 'w-[230px] h-[360px]'}`}>
-            <IPhoneMockup src="/screenshot.jpg" />
-          </DraggableWrapper>
+        <div className="flex-1 min-h-0 flex items-center justify-center relative mt-4">
+          <MockupFrame id="mockup-feature" src="/screenshot.jpg" />
           <FloatingCard id="stat-feature" icon={<Sparkles size={16}/>} label="Stat" value="+99%" className="absolute -right-8 top-16" rotate={3} />
         </div>
 

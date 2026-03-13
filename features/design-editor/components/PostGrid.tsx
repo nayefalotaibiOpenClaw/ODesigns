@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo, useCallback, useRef, useState } from "react";
-import { Code, Eye, Trash2, Scaling, Loader2, Check, Paintbrush, ImagePlus, Search, Copy, MessageSquare, Tag } from "lucide-react";
+import { Code, Eye, Trash2, Scaling, Loader2, Check, Paintbrush, ImagePlus, Search, Copy, MessageSquare, Tag, Smartphone } from "lucide-react";
 import { AspectRatioType, PostScopeContext } from "@/contexts/EditContext";
 import DynamicPost from "@/app/components/DynamicPost";
 import PostWrapper from "@/app/components/PostWrapper";
@@ -21,6 +21,35 @@ function extractImageUrls(code: string): string[] {
 /** Replace one URL with another everywhere in the code */
 function replaceImageUrl(code: string, oldUrl: string, newUrl: string): string {
   return code.split(oldUrl).join(newUrl);
+}
+
+/** Check if post code contains a device mockup */
+function hasMockup(code: string): boolean {
+  return /MockupFrame|IPhoneMockup|IPadMockup|DesktopMockup|AndroidPhoneMockup|AndroidTabletMockup/.test(code);
+}
+
+/** Inject a MockupFrame into post code before PostFooter or before last closing tags */
+function injectMockup(code: string, src: string): string {
+  const mockupSnippet = `
+        {/* Mockup */}
+        <div className="flex-1 min-h-0 flex items-center justify-center relative">
+          <MockupFrame id="mockup" src="${src}" />
+        </div>`;
+
+  // Try to insert before <PostFooter
+  const footerIdx = code.lastIndexOf('<PostFooter');
+  if (footerIdx !== -1) {
+    return code.slice(0, footerIdx) + mockupSnippet + '\n\n        ' + code.slice(footerIdx);
+  }
+
+  // Fallback: insert before the last two closing </div> tags (content wrapper + root)
+  const closingPattern = /(\s*<\/div>\s*<\/div>\s*)$/;
+  const match = code.match(closingPattern);
+  if (match && match.index !== undefined) {
+    return code.slice(0, match.index) + mockupSnippet + '\n' + code.slice(match.index);
+  }
+
+  return code;
 }
 
 /** Replace first backgroundColor value */
@@ -570,6 +599,27 @@ export default function PostGrid({
                     );
                   })()}
                 </div>
+
+                {/* Add Mockup — only show if post has no mockup */}
+                {!hasMockup(code) && (
+                  <>
+                    <div className="w-px h-5 bg-gray-200" />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Find first screenshot asset URL, or use placeholder
+                        const screenshotAsset = assets?.find(a => a.url && ['iphone', 'ipad', 'desktop', 'screenshot'].includes(a.type));
+                        const mockupSrc = screenshotAsset?.url || '/1.jpg';
+                        const newCode = injectMockup(code, mockupSrc);
+                        updateCode(id, newCode);
+                      }}
+                      className="p-2 rounded-xl hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
+                      title="Add device mockup"
+                    >
+                      <Smartphone size={14} />
+                    </button>
+                  </>
+                )}
 
                 {/* Caption & Keywords */}
                 {post?.caption && (

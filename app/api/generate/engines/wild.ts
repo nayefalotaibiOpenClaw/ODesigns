@@ -32,49 +32,50 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
     const postCount = Math.min(Math.max(1, Number(count) || 1), 8);
 
     const shuffledMoods = shuffle(WILD_MOODS);
-    const availableAssets = context?.assets?.filter(a => a.type !== 'logo') || [];
 
-    // Build per-post system prompt with shuffled assets
-    function buildWildSystemPrompt(postIndex: number): string {
+    // Split assets by type for smarter per-post assignment
+    const allAssets = context?.assets || [];
+    const backgrounds = shuffle(allAssets.filter(a => a.type === 'background'));
+    const screenshots = shuffle(allAssets.filter(a => ['iphone', 'ipad', 'desktop', 'screenshot'].includes(a.type)));
+    const products = shuffle(allAssets.filter(a => a.type === 'product'));
+    const logoUrl = (context as GenerationContext)?.logoUrl;
+
+    // Build per-post system prompt — only brand context, NO full asset list
+    function buildWildSystemPrompt(): string {
       const wildContext: string[] = [];
       if (context) {
         const ctx = context as GenerationContext;
         if (ctx.brandName) wildContext.push(`Brand: ${ctx.brandName}`);
         if (ctx.language) wildContext.push(`Language: ${ctx.language === 'ar' ? 'Arabic (use dir="rtl" on DraggableWrapper, text-right on text)' : 'English'}`);
-        if (ctx.assets && ctx.assets.length > 0) {
-          const shuffledAssets = shuffle(ctx.assets);
-          const assetLines = shuffledAssets.map((a) => {
-            let line = `- ${a.type}: ${a.url}`;
-            if (a.label) line += ` — ${a.label}`;
-            if (a.aiAnalysis) line += `\n  Shows: ${a.aiAnalysis}`;
-            return line;
-          }).join('\n');
-          wildContext.push(`Available images (optional — use only if they fit your design):\n${assetLines}`);
+        if (ctx.websiteInfo) {
+          const wi = ctx.websiteInfo;
+          if (wi.companyName) wildContext.push(`Company: ${wi.companyName}`);
+          if (wi.description) wildContext.push(`About: ${wi.description}`);
+          if (wi.features?.length) wildContext.push(`Features: ${wi.features.join(', ')}`);
         }
-        if (ctx.logoUrl) wildContext.push(`Logo URL: ${ctx.logoUrl}`);
+        if (logoUrl) wildContext.push(`Logo URL: ${logoUrl}`);
       }
       return wildContext.length > 0
-        ? `${WILD_SYSTEM_PROMPT}\n\n## CONTEXT\n${wildContext.join('\n')}`
+        ? `${WILD_SYSTEM_PROMPT}\n\n## BRAND CONTEXT\n${wildContext.join('\n')}`
         : WILD_SYSTEM_PROMPT;
     }
 
     return await runGeneration(
       postCount,
-      (i) => buildWildSystemPrompt(i),
+      () => buildWildSystemPrompt(),
       (i) => {
         const mood = shuffledMoods[i % shuffledMoods.length];
 
-        let assetNote = '';
-        if (availableAssets.length > 0) {
-          const asset = availableAssets[i % availableAssets.length];
-          const details: string[] = [];
-          if (asset.label) details.push(asset.label);
-          if (asset.description) details.push(asset.description);
-          if (asset.aiAnalysis) details.push(asset.aiAnalysis);
-          assetNote = details.length > 0
-            ? `\n\nAvailable image (optional — use only if it fits): ${asset.url}\nContext: ${details.join('. ')}`
-            : `\n\nAvailable image (optional): ${asset.url}`;
+        // List all assets — AI picks what fits its design
+        const assetLines: string[] = [];
+        for (const a of shuffle([...backgrounds, ...screenshots, ...products])) {
+          const typeLabel = ['iphone', 'ipad', 'desktop', 'screenshot'].includes(a.type)
+            ? 'screenshot' : a.type;
+          assetLines.push(`- ${typeLabel}: ${a.url}${a.aiAnalysis ? ` — ${a.aiAnalysis}` : ''}`);
         }
+        const assetNote = assetLines.length > 0
+          ? `\n\nAvailable images (pick ONE that fits your design — do NOT use multiple):\n${assetLines.join('\n')}`
+          : '';
 
         return `Brand/Topic: ${prompt}
 
