@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, Component as ReactComponent } from "react";
 import { transform } from "sucrase";
 import EditableText from "./EditableText";
 import DraggableWrapper from "./DraggableWrapper";
@@ -12,6 +12,35 @@ import { useDeviceType } from "@/contexts/DeviceContext";
 import { OverrideProvider, PostConfigOverrides } from "./OverrideContext";
 import { SelectedElementProvider } from "./SelectedElementContext";
 import ContextualToolbar from "./ContextualToolbar";
+
+/* ── Error Boundary — catches runtime render errors from AI-generated code ── */
+class PostErrorBoundary extends ReactComponent<
+  { children: React.ReactNode },
+  { hasError: boolean; error: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: "" };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+  componentDidCatch(error: Error) {
+    console.error("DynamicPost render error:", error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/30 text-red-500 p-6 text-center gap-2">
+          <span className="text-2xl">⚠</span>
+          <span className="text-xs font-bold">Post render error</span>
+          <span className="text-[10px] opacity-60 max-w-[80%] truncate">{this.state.error}</span>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface DynamicPostProps {
   code: string;
@@ -117,23 +146,27 @@ export default function DynamicPost({ code, overrides, onOverridesChange }: Dyna
   // Overrides provide instant visual feedback; baked into code on deselect
   if (overrides && onOverridesChange) {
     return (
-      <OverrideProvider overrides={overrides} onChange={onOverridesChange}>
-        <SelectedElementProvider>
-          <Component />
-          <ContextualToolbar />
-        </SelectedElementProvider>
-      </OverrideProvider>
+      <PostErrorBoundary>
+        <OverrideProvider overrides={overrides} onChange={onOverridesChange}>
+          <SelectedElementProvider>
+            <Component />
+            <ContextualToolbar />
+          </SelectedElementProvider>
+        </OverrideProvider>
+      </PostErrorBoundary>
     );
   }
 
   // Read-only overrides: keep styles visible until Convex code updates (prevents flash)
   if (overrides && overrides.elements && Object.keys(overrides.elements).length > 0) {
     return (
-      <OverrideProvider overrides={overrides} onChange={() => {}}>
-        <Component />
-      </OverrideProvider>
+      <PostErrorBoundary>
+        <OverrideProvider overrides={overrides} onChange={() => {}}>
+          <Component />
+        </OverrideProvider>
+      </PostErrorBoundary>
     );
   }
 
-  return <Component />;
+  return <PostErrorBoundary><Component /></PostErrorBoundary>;
 }

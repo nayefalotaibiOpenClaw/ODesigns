@@ -26,16 +26,19 @@ import EditableText from './EditableText';       // Wrap ALL visible text
 import DraggableWrapper from './DraggableWrapper'; // Wrap content sections (props: id, className, style, dir)
 import { useAspectRatio } from './EditContext';
 import { useTheme } from './ThemeContext';
-import { MockupFrame, PostHeader, PostFooter, FloatingCard } from './shared';
+import { MockupFrame } from './shared';          // Device mockup (optional) — props: id, src
 // Any icon from 'lucide-react'
 \`\`\`
 
 ## THEME — NEVER hardcode colors
 \`\`\`tsx
 const t = useTheme();
-// t.primary (dark bg), t.primaryDark (darkest), t.primaryLight (light bg/text on dark)
-// t.accent, t.accentLight, t.accentLime, t.accentGold, t.accentOrange
-// t.border, t.font
+// COLORS: t.primary (dark bg), t.primaryDark (darkest), t.primaryLight (light text/bg)
+//         t.accent, t.accentLight, t.accentLime, t.accentGold, t.accentOrange, t.border
+// FONT:   t.font → font FAMILY string (e.g. "Changa"). NOT a color!
+//         ⚠ NEVER use t.font as a color value. Use it ONLY for fontFamily.
+//         ⚠ NEVER use font-sans, font-serif, font-mono classes — they override the brand font.
+//         The root div sets fontFamily: t.font, all children inherit it automatically.
 \`\`\`
 
 ## RESPONSIVE
@@ -49,11 +52,9 @@ const isWide = ratio === '16:9' || ratio === '4:3';
 - **<EditableText>** — Wrap ALL visible text. Props: as ("h2"|"p"|"span"|"h3"), className, style.
 - **<DraggableWrapper>** — Wrap content sections. Props: id (unique), className, style, dir ("rtl" for Arabic).
 
-## OPTIONAL SHARED COMPONENTS (use only when they fit your design)
-- **<PostHeader>** — Brand header. Props: id, title, subtitle, badge, variant, logoUrl
-- **<PostFooter>** — Brand footer. Props: id, label, text, icon, variant
-- **<FloatingCard>** — Stat card. Props: id, icon, label, value, className, rotate, borderColor, animation
-- **<MockupFrame>** — Device mockup. Props: id, src. Only use when the user wants a device screenshot shown.
+## OPTIONAL: DEVICE MOCKUP
+- **<MockupFrame>** — Shows an image inside a phone/tablet/desktop frame. Props: id, src. Auto-sizes.
+- Only use when the user wants a device screenshot shown. If user says no mockup, don't use it.
 
 ## DESIGN FREEDOM
 You can build ANY custom visual elements with divs, flexbox, grid, and Tailwind:

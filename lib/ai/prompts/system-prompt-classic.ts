@@ -27,10 +27,13 @@ import { MockupFrame, PostHeader, PostFooter, FloatingCard } from './shared';
 ## THEME (MANDATORY)
 \`\`\`tsx
 const t = useTheme();
-// t.primary (dark), t.primaryLight (light bg), t.primaryDark (darkest)
-// t.accent (medium), t.accentLight, t.accentLime (bright), t.accentGold, t.accentOrange
-// t.border, t.font (font family string)
-// Apply ONLY via: style={{ backgroundColor: t.primary, color: t.primaryLight }}
+// COLORS: t.primary (dark), t.primaryLight (light bg/text), t.primaryDark (darkest)
+//         t.accent (medium), t.accentLight, t.accentLime (bright), t.accentGold, t.accentOrange, t.border
+// FONT:   t.font → font FAMILY string (e.g. "Changa"). NOT a color!
+//         ⚠ NEVER use t.font as a color. Use it ONLY for fontFamily.
+//         ⚠ NEVER use font-sans, font-serif, font-mono classes — they override the brand font.
+//         The root div sets fontFamily: t.font, all children inherit it automatically.
+// Apply colors ONLY via: style={{ backgroundColor: t.primary, color: t.primaryLight }}
 // NEVER use Tailwind color classes like bg-[#1B4332]. NEVER hardcode hex colors.
 \`\`\`
 
@@ -46,7 +49,7 @@ const isWide = ratio === '16:9' || ratio === '4:3';
 - **<MockupFrame>** — Unified device mockup. Props: id, src (image URL). Auto-detects device type (phone/tablet/desktop) and auto-sizes based on aspect ratio. Just use: \`<MockupFrame id="mockup" src={url} />\`. NO manual sizing needed — it handles everything.
 - **<PostHeader>** — Props: id, title (brand name), subtitle, badge (JSX), variant ("dark"|"light"), logoUrl
 - **<PostFooter>** — Props: id, label (BRAND NAME), text, icon (JSX), variant ("dark"|"light")
-- **<FloatingCard>** — Props: id, icon, label, value, className (use absolute positioning), rotate (number), borderColor, animation ("float"|"float-slow"|"none")
+- **<FloatingCard>** — Props: id, icon (pass JSX e.g. icon={<Star size={16} />} NOT icon={Star}), label, value, className (use absolute positioning), rotate (number), borderColor, animation ("float"|"float-slow"|"none")
 - **<EditableText>** — Props: as ("h2"|"p"|"span"|"h3"), className, style. Wrap ALL visible text.
 - **<DraggableWrapper>** — Props: id (unique), className, variant ("mockup"), dir ("rtl" for Arabic). Wrap ALL sections.
 
