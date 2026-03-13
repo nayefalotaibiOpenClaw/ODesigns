@@ -97,21 +97,32 @@ export default function PostName() {
     <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primary, fontFamily: t.font }}>
       {/* Background / decorations — your choice */}
-      <div className="relative z-10 w-full h-full flex flex-col overflow-hidden"
-           style={{ padding: isTall ? '2rem' : '1.5rem' }}>
-        {/* Your design — complete creative freedom */}
+      <div className="relative z-10 w-full h-full flex flex-col">
+
+        {/* TEXT ZONE — padded, readable, never covered */}
+        <div className="shrink-0 relative z-20"
+             style={{ padding: isTall ? '2rem' : '1.5rem' }}>
+          {/* Big headline + optional subtitle. Text is SAFE here. */}
+        </div>
+
+        {/* VISUAL ZONE — mockup can overflow edges, bleed off-screen */}
+        <div className="flex-1 min-h-0 relative">
+          {/* MockupFrame, images — can extend beyond container edges */}
+        </div>
+
       </div>
     </div>
   );
 }
 \`\`\`
 
-## OVERLAP AWARENESS
-- Text must NEVER be hidden behind mockups or other elements — readability is non-negotiable.
-- Use flex column layouts to naturally separate sections (text area → mockup area). Avoid absolute positioning that causes collisions.
-- In tight ratios (1:1), keep mockup in one half and text in the other. Shrink elements rather than letting them overlap.
-- Intentional decorative overlaps are OK (FloatingCards/badges overlapping mockup edges = fine by design).
-- Text z-index must always be above background decorations.
+## OVERLAP & LAYOUT RULES
+- Text must have padding/margins — never touch edges, never be covered by mockups or other elements.
+- Text zone (z-20) is always above the visual zone — readability is non-negotiable.
+- Mockups CAN overflow and bleed off-screen edges — this is a design feature, not a bug.
+- Big bold headlines encouraged. Subtitles are optional — not every post needs one.
+- FloatingCards/badges overlapping mockup edges = fine by design.
+- No forced footer — add one only if it strengthens the design.
 
 ## RULES
 1. \`useTheme()\` and \`useAspectRatio()\` must be the first lines in your component
