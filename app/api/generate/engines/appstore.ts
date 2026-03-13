@@ -67,25 +67,12 @@ const isWide = ratio === '16:9' || ratio === '4:3';
 
 ## AVAILABLE COMPONENTS
 
-**<MockupFrame>** — Device mockup that auto-sizes. Props: id (string), src (image URL), device ("phone"|"tablet"|"desktop", auto-detected if omitted).
-Place inside a flex container — it handles its own sizing. Example:
-\`\`\`tsx
-<div className="flex-1 min-h-0 flex items-center justify-center relative">
-  <MockupFrame id="mockup" src={imageUrl} />
-</div>
-\`\`\`
+**<MockupFrame>** — Device mockup that auto-sizes. Props: id (string), src (image URL), device ("phone"|"tablet"|"desktop").
+**<FloatingCard>** — Annotation card. Props: id, icon (JSX), label (max 12 chars), value (max 16 chars), rotate, borderColor, variant, animation. **Must be inside the mockup-area container so they move with the mockup.**
+**<EditableText>** — Wrap ALL visible text. Props: as ("h2"|"p"|"span"|"h3"), className, style.
+**<DraggableWrapper>** — Wrap ALL content sections. Props: id (unique string), className, style, dir ("rtl" for Arabic).
 
-**<PostHeader>** — Brand header. Props: id, title, subtitle, badge (JSX), variant ("dark"|"light"), logoUrl.
-
-**<PostFooter>** — Brand footer. Props: id, label, text, icon (JSX), variant ("dark"|"light").
-
-**<FloatingCard>** — Annotation card. Props: id, icon (JSX), label, value, className, rotate (number), borderColor, variant ("default"|"glass"|"pill"|"glow"|"dark"|"outline"|"gradient"), animation ("animate-float"|"animate-float-slow"|"none").
-
-**<EditableText>** — Props: as ("h2"|"p"|"span"|"h3"), className, style. Wrap ALL visible text.
-
-**<DraggableWrapper>** — Props: id (unique string), className, style, dir ("rtl" for Arabic). Wrap ALL content sections.
-
-## COMPONENT SKELETON
+## COMPONENT SKELETON — DO NOT change this flex structure
 \`\`\`tsx
 export default function PostName() {
   const t = useTheme();
@@ -97,18 +84,24 @@ export default function PostName() {
     <div className="relative w-full h-full shadow-2xl overflow-hidden mx-auto font-sans"
          style={{ backgroundColor: t.primary, fontFamily: t.font }}>
       {/* Background / decorations — your choice */}
-      <div className="relative z-10 w-full h-full flex flex-col">
 
-        {/* TEXT ZONE — padded, readable, never covered */}
-        <div className="shrink-0 relative z-20"
-             style={{ padding: isTall ? '2rem' : '1.5rem' }}>
-          {/* Big headline + optional subtitle. Text is SAFE here. */}
-        </div>
+      <div className="relative z-10 w-full h-full flex flex-col"
+           style={{ padding: isTall ? '1.5rem' : '1.25rem' }}>
 
-        {/* VISUAL ZONE — mockup can overflow edges, bleed off-screen */}
-        <div className="flex-1 min-h-0 relative">
-          {/* MockupFrame, images — can extend beyond container edges */}
-        </div>
+        {/* HEADLINE — shrink-0: takes only the space text needs, never more */}
+        <DraggableWrapper id="headline" className="shrink-0 mb-2">
+          <EditableText as="h2" className="font-bold leading-[0.95]"
+            style={{ fontSize: 'clamp(2rem, 6vw, 4rem)', color: t.primaryLight }}>
+            Your Headline
+          </EditableText>
+        </DraggableWrapper>
+
+        {/* MOCKUP AREA — flex-1: takes ALL remaining space. Mockup overflows naturally. */}
+        <DraggableWrapper id="mockup-area"
+          className="flex-1 min-h-0 relative flex items-start justify-center">
+          <MockupFrame id="mockup" src="..." />
+          {/* FloatingCards go HERE — positioned relative to mockup, they move with it */}
+        </DraggableWrapper>
 
       </div>
     </div>
@@ -116,20 +109,20 @@ export default function PostName() {
 }
 \`\`\`
 
-## OVERLAP & LAYOUT RULES
-- Text must have padding/margins — never touch edges, never be covered by mockups or other elements.
-- Text zone (z-20) is always above the visual zone — readability is non-negotiable.
-- Mockups CAN overflow and bleed off-screen edges — this is a design feature, not a bug.
-- Big bold headlines encouraged. Subtitles are optional — not every post needs one.
-- FloatingCards/badges overlapping mockup edges = fine by design.
-- No forced footer — add one only if it strengthens the design.
+## LAYOUT RULES
+1. **Flex flow, NOT absolute positioning.** The flex column auto-adjusts: title grows → mockup moves down. No overlap.
+2. **Fluid typography.** Use \`clamp(min, preferred, max)\` for font sizes. Headline: \`clamp(2rem, 6vw, 4rem)\`. This prevents giant text breaking layout.
+3. **Content limits.** Headline: max 2 lines. Subtitle: max 1 short line (optional). FloatingCard label: max 12 chars, value: max 16 chars.
+4. **Anchored floating elements.** FloatingCards must be INSIDE the mockup-area container with \`absolute\` positioning relative to it. They move with the mockup, not the canvas.
+5. Mockup overflows naturally — outer \`overflow-hidden\` clips at canvas edge.
+6. No forced footer or header — only if it strengthens the design.
 
 ## RULES
 1. \`useTheme()\` and \`useAspectRatio()\` must be the first lines in your component
 2. ALL colors via theme — never hardcode hex values
 3. ALL visible text wrapped in \`<EditableText>\`
 4. ALL content sections wrapped in \`<DraggableWrapper id="unique-id">\`
-5. Use \`flex-1 min-h-0\` on flexible content areas to prevent overflow
+5. NEVER use absolute positioning for text or mockup layout — use the flex structure above
 6. Export exactly one component: \`export default function PostName() { ... }\`
 
 ## OUTPUT FORMAT

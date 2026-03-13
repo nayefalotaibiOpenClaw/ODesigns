@@ -564,7 +564,7 @@ export default function DesignPage() {
   };
 
   // Compare all engines: fire 1 post per engine in parallel, save with engine label
-  const ENGINE_LABELS: Record<number, string> = { 1: 'G (Guided)', 2: 'Cr (Creative)', 3: 'F (Free)', 4: 'W (Wild)', 5: 'C (Classic)', 6: 'A (App Store)' };
+  const ENGINE_LABELS: Record<number, string> = { 1: 'G (Guided)', 2: 'Cr (Creative)', 3: 'F (Free)', 4: 'W (Wild)', 5: 'C (Classic)', 6: 'A (App Store)', 7: 'AG (App Store Guided)' };
   const handleCompareEngines = async () => {
     if (!generatePrompt.trim() || generating) return;
     if (canGenerateCheck && !canGenerateCheck.allowed) {
@@ -1729,6 +1729,7 @@ export default function DesignPage() {
                       { v: 3 as const, label: 'F', title: 'Free' },
                       { v: 4 as const, label: 'W', title: 'Wild' },
                       { v: 6 as const, label: 'A', title: 'App Store Preview' },
+                      { v: 7 as const, label: 'AG', title: 'App Store Guided' },
                     ]).map(({ v, label, title }) => (
                       <button
                         key={v}

@@ -6,6 +6,7 @@ import { generate as generateFree } from "./engines/free";
 import { generate as generateWild } from "./engines/wild";
 import { generate as generateClassic } from "./engines/classic";
 import { generate as generateAppstore } from "./engines/appstore";
+import { generate as generateAppstoreGuided } from "./engines/appstore-guided";
 
 /**
  * Engine Router
@@ -15,7 +16,8 @@ import { generate as generateAppstore } from "./engines/appstore";
  * version=3 → Free (F)       — asset-driven, complete freedom
  * version=4 → Wild (W)       — minimal prompt, mood variations
  * version=5 → Classic (C)    — production-proven prompt
- * version=6 → App Store (A)  — forced MockupFrame + screenshot
+ * version=6 → App Store (A)  — creative MockupFrame + screenshot
+ * version=7 → App Store Guided (AG) — pre-defined layout variants
  *
  * Each engine has its own file in ./engines/ — fully independent.
  */
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
-    const engineVersion = allLayouts ? 1 : Math.min(Math.max(1, Number(version) || 1), 6);
+    const engineVersion = allLayouts ? 1 : Math.min(Math.max(1, Number(version) || 1), 7);
 
     const engineReq = {
       prompt: body.prompt,
@@ -52,6 +54,8 @@ export async function POST(req: NextRequest) {
         return generateClassic(engineReq);
       case 6:
         return generateAppstore(engineReq);
+      case 7:
+        return generateAppstoreGuided(engineReq);
       default:
         return generateClassic(engineReq);
     }
