@@ -353,7 +353,7 @@ export default function DesignPage() {
           const usageResult = await logAndIncrement({
             workspaceId: workspaceId || undefined,
             category: "generation",
-            model: "gemini-3.1-flash-lite-preview",
+            model: data.usage.model || "gemini-3.1-flash-lite-preview",
             promptTokens: data.usage.promptTokens || 0,
             completionTokens: data.usage.completionTokens || 0,
             totalTokens: data.usage.totalTokens || 0,

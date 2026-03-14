@@ -598,6 +598,7 @@ export default function AdminOverviewPage() {
                     {log.user?.name || log.user?.email || t("admin.unknown")}
                   </span>
                   <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-neutral-500 tabular-nums">
+                    <span className="text-[9px] text-slate-300 dark:text-neutral-600">{log.model?.replace("gemini-3.1-", "").replace("-preview", "")}</span>
                     <span>{log.totalTokens.toLocaleString()} {t("admin.tok")}</span>
                     <span className="text-slate-300 dark:text-neutral-600">${log.estimatedCostUsd.toFixed(4)}</span>
                   </div>
