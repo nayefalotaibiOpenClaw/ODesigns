@@ -508,6 +508,10 @@ export default function DesignPage() {
   // ── Crawl handlers ──
   const handleCrawlDiscover = async (url: string) => {
     if (!workspaceId || !user) return;
+
+    // Save the website URL to the workspace so fetch-section can use it
+    await updateWorkspace({ id: workspaceId, website: url });
+
     await upsertCrawl({
       workspaceId,
       url,

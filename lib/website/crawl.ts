@@ -207,14 +207,17 @@ export async function extractLinks(markdown: string, baseUrl: string): Promise<s
 
 // ── extractProductsFromMarkdown ──
 
-// Currency patterns: KD, KWD, $, USD, EUR, SAR, AED, GBP, etc.
-const PRICE_REGEX = /(?:(?:KW?D|SAR|AED|USD|EUR|GBP|QAR|BHD|OMR|JOD|EGP|TRY)\s*[\d,.]+|[\d,.]+\s*(?:KW?D|SAR|AED|USD|EUR|GBP|QAR|BHD|OMR|JOD|EGP|TRY)|[$\u20AC\u00A3\u00A5\u20B9]\s*[\d,.]+|[\d,.]+\s*[$\u20AC\u00A3\u00A5\u20B9])/gi;
+// Currency patterns: KD, KWD, $, USD, EUR, SAR, AED, GBP, Arabic symbols (د.ك, ر.س, د.إ), etc.
+const PRICE_REGEX = /(?:(?:KW?D|SAR|AED|USD|EUR|GBP|QAR|BHD|OMR|JOD|EGP|TRY|د\.ك|د\.إ|ر\.س|ر\.ق|د\.ب|ر\.ع|د\.أ|ج\.م|ل\.ت)\s*[\d,.]+|[\d,.]+\s*(?:KW?D|SAR|AED|USD|EUR|GBP|QAR|BHD|OMR|JOD|EGP|TRY|د\.ك|د\.إ|ر\.س|ر\.ق|د\.ب|ر\.ع|د\.أ|ج\.م|ل\.ت)|[$\u20AC\u00A3\u00A5\u20B9]\s*[\d,.]+|[\d,.]+\s*[$\u20AC\u00A3\u00A5\u20B9])/gi;
 
 const CURRENCY_MAP: Record<string, string> = {
   KD: "KWD", KWD: "KWD", SAR: "SAR", AED: "AED", USD: "USD",
   EUR: "EUR", GBP: "GBP", QAR: "QAR", BHD: "BHD", OMR: "OMR",
   JOD: "JOD", EGP: "EGP", TRY: "TRY",
   "$": "USD", "\u20AC": "EUR", "\u00A3": "GBP", "\u00A5": "JPY", "\u20B9": "INR",
+  // Arabic currency symbols
+  "د.ك": "KWD", "د.إ": "AED", "ر.س": "SAR", "ر.ق": "QAR",
+  "د.ب": "BHD", "ر.ع": "OMR", "د.أ": "JOD", "ج.م": "EGP", "ل.ت": "TRY",
 };
 
 function extractCurrency(priceStr: string): string | undefined {
@@ -227,6 +230,75 @@ function extractCurrency(priceStr: string): string | undefined {
 function extractNumericPrice(priceStr: string): string {
   const nums = priceStr.match(/[\d,.]+/);
   return nums ? nums[0] : priceStr;
+}
+
+// Common navigation / UI element patterns to skip
+const NAV_UI_PATTERNS = [
+  /^(express|same[- ]?day)\s+delivery$/i,
+  /^(no\s+)?address\s+hassle$/i,
+  /^(premium|free)\s+(flowers|gifts|shipping)/i,
+  /^(view|edit)\s+(my\s+)?profile$/i,
+  /^my\s+(orders?|subscriptions?|account|wishlist|addresses?|wallet|notifications?)$/i,
+  /^(sign\s+in|log\s+in|sign\s+up|register|log\s+out|sign\s+out)$/i,
+  /^(cart|shopping\s+cart|bag|checkout)$/i,
+  /^(menu|search|close|back|home|share|copy|print)$/i,
+  /^(notifications?|settings?|preferences?)$/i,
+  /^(flag|logo|icon|badge|banner|arrow|chevron)$/i,
+  /^(download|install)\s+(the\s+)?app$/i,
+  /^(follow\s+us|connect|social)$/i,
+  /^(terms|privacy|policy|faq|help|support|about|contact)$/i,
+  /^(customer\s+service|live\s+chat)$/i,
+  /^[\w-]+[-_](icon|logo|badge)$/i,      // e.g. "cartIcon", "cart-icon"
+  /^(icon|logo|img|image)\s*\d*$/i,       // "icon", "Image", "img2"
+  /^category$/i,                           // generic "Category" alt text
+  /^(explore|discover|browse|view\s+all)$/i,
+  /^(delivery\s+to|ship\s+to|location)$/i,
+];
+
+const NAV_UI_IMAGE_PATTERNS = [
+  /\/(icon|icons|logo|logos|badge|badges|sprite|sprites|favicon)\//i,
+  /[-_](icon|logo|badge|sprite|favicon)\./i,
+  /\.(svg)(\?|$)/i,    // SVGs are almost always icons/UI
+  /\/static\/(media|icons)\//i,
+  /\/assets\/(icons|logos)\//i,
+  /\/nav[-_/]/i,
+  /\/header[-_/]/i,
+  /\/footer[-_/]/i,
+  /\bflag[-_.]?\b/i,
+  /\bcart[-_.]icon/i,
+  /\bdelivery[-_.]icon/i,
+];
+
+/**
+ * Clean Jina alt-text artifacts.
+ * Jina Reader adds prefixes like "Image 1:", "list-item", etc.
+ */
+function cleanAltText(alt: string): string {
+  return alt
+    .replace(/^Image\s+\d+:\s*/i, "")   // "Image 1: Product" → "Product"
+    .replace(/^list-item/i, "")           // "list-itemFlowers" → "Flowers"
+    .trim();
+}
+
+function isNavOrUiElement(name: string, imageUrl?: string): boolean {
+  const trimmedName = name.trim();
+
+  // Check name against nav/UI patterns
+  for (const pattern of NAV_UI_PATTERNS) {
+    if (pattern.test(trimmedName)) return true;
+  }
+
+  // Very short names (1-2 chars) are likely icons
+  if (trimmedName.length <= 2) return true;
+
+  // Check image URL against nav/UI image patterns
+  if (imageUrl) {
+    for (const pattern of NAV_UI_IMAGE_PATTERNS) {
+      if (pattern.test(imageUrl)) return true;
+    }
+  }
+
+  return false;
 }
 
 export async function extractProductsFromMarkdown(
@@ -242,13 +314,21 @@ export async function extractProductsFromMarkdown(
 
   const flushProduct = () => {
     if (currentName && (currentImage || currentPrices.length > 0)) {
+      // Skip navigation/UI elements
+      if (isNavOrUiElement(currentName, currentImage)) {
+        currentImage = undefined;
+        currentName = undefined;
+        currentPrices = [];
+        return;
+      }
+
       const price = currentPrices[0];
       const originalPrice = currentPrices.length > 1 ? currentPrices[1] : undefined;
 
       let discount: string | undefined;
       if (price && originalPrice) {
-        const p = parseFloat(extractNumericPrice(price).replace(",", ""));
-        const o = parseFloat(extractNumericPrice(originalPrice).replace(",", ""));
+        const p = parseFloat(extractNumericPrice(price).replace(/,/g, ""));
+        const o = parseFloat(extractNumericPrice(originalPrice).replace(/,/g, ""));
         if (o > p && o > 0) {
           discount = `${Math.round(((o - p) / o) * 100)}%`;
         }
@@ -272,41 +352,88 @@ export async function extractProductsFromMarkdown(
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Image line
-    const imgMatch = trimmed.match(/!\[([^\]]*)\]\(([^)]+)\)/);
-    if (imgMatch) {
-      // If we already have a name buffered, flush before starting new product
-      if (currentName) flushProduct();
-      currentImage = imgMatch[2].trim();
-      // Use alt text as fallback name
-      if (imgMatch[1] && !currentName) {
-        currentName = imgMatch[1].trim();
-      }
-      continue;
-    }
-
-    // Heading or bold text (product name)
-    const headingMatch = trimmed.match(/^#{1,4}\s+(.+)/) || trimmed.match(/^\*\*(.+?)\*\*/);
-    if (headingMatch) {
-      const text = headingMatch[1].trim();
-      // Skip very long "headings" — likely descriptions
-      if (text.length <= 120) {
-        if (currentName && currentName !== text) flushProduct();
-        currentName = text;
-      }
-      continue;
-    }
-
-    // Price line
-    const priceMatches = trimmed.match(PRICE_REGEX);
-    if (priceMatches && currentName) {
-      currentPrices.push(...priceMatches);
-      continue;
-    }
-
-    // Blank line or separator can indicate product boundary
+    // Blank line or separator → product boundary
     if (trimmed === "" || trimmed === "---") {
       if (currentName) flushProduct();
+      continue;
+    }
+
+    // Extract all parts from the line in one pass.
+    // Many e-commerce sites (via Jina) put image + price + heading on a single line, e.g.:
+    //   [![Image 98: Product Name](img_url) KWD 90 ### Product Name](link)
+    // We need to extract image, price, and heading from the same line.
+
+    let remaining = trimmed;
+
+    // 1. Extract image if present (anywhere in line)
+    const imgMatch = remaining.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+    if (imgMatch) {
+      const altText = cleanAltText(imgMatch[1] || "");
+      const imgUrl = imgMatch[2].trim();
+
+      // New image means new product — flush any buffered one
+      if (currentName) flushProduct();
+
+      currentImage = imgUrl;
+      // Use cleaned alt text as fallback name
+      if (altText) {
+        currentName = altText;
+      }
+
+      // Remove the image markdown from remaining text so we can parse price/heading
+      remaining = remaining.replace(imgMatch[0], " ");
+    }
+
+    // 2. Extract heading from remaining text (### Name or **Name**)
+    // Capture everything after ### until end of string, then clean trailing link syntax
+    const headingMatch = remaining.match(/#{1,4}\s+(.+)/) || remaining.match(/\*\*(.+?)\*\*/);
+    if (headingMatch) {
+      const text = headingMatch[1].trim()
+        // Strip trailing markdown link syntax e.g. "](https://...)" or just "]"
+        .replace(/\]\([^)]*\)\s*$/, "")
+        .replace(/\]\s*$/, "")
+        .trim();
+      if (text.length >= 3 && text.length <= 120) {
+        // Heading is a better name than alt text — prefer it
+        currentName = text;
+      }
+      // Remove heading from remaining
+      remaining = remaining.replace(headingMatch[0], " ");
+    }
+
+    // 3. Extract prices from remaining text
+    const priceMatches = remaining.match(PRICE_REGEX);
+    if (priceMatches && currentName) {
+      currentPrices.push(...priceMatches);
+    }
+
+    // 4. If this line had no image but looks like a standalone heading (at line start)
+    if (!imgMatch && !headingMatch) {
+      const standaloneHeading = trimmed.match(/^#{1,4}\s+(.+)/);
+      if (standaloneHeading) {
+        const text = standaloneHeading[1].trim();
+        if (text.length >= 3 && text.length <= 120) {
+          if (currentName && currentName !== text) flushProduct();
+          currentName = text;
+        }
+        continue;
+      }
+
+      const standaloneBold = trimmed.match(/^\*\*(.+?)\*\*/);
+      if (standaloneBold) {
+        const text = standaloneBold[1].trim();
+        if (text.length >= 3 && text.length <= 120) {
+          if (currentName && currentName !== text) flushProduct();
+          currentName = text;
+        }
+        continue;
+      }
+
+      // Standalone price line (no image or heading on this line)
+      if (priceMatches && currentName) {
+        // Prices already captured above
+        continue;
+      }
     }
   }
 

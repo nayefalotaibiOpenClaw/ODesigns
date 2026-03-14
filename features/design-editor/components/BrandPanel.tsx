@@ -324,12 +324,15 @@ export default function BrandPanel({
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
                       <Upload size={18} className="text-white" />
                     </div>
-                    <button
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => { e.stopPropagation(); onDeleteLogo("logo"); }}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all z-10 shadow-sm"
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onDeleteLogo("logo"); } }}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all z-10 shadow-sm cursor-pointer"
                     >
                       <X size={10} className="text-white" />
-                    </button>
+                    </span>
                   </>
                 ) : (
                   <div className="flex flex-col items-center gap-1">
@@ -350,12 +353,15 @@ export default function BrandPanel({
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
                       <Upload size={18} className="text-white" />
                     </div>
-                    <button
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => { e.stopPropagation(); onDeleteLogo("logoDark"); }}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all z-10 shadow-sm text-slate-500"
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onDeleteLogo("logoDark"); } }}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all z-10 shadow-sm text-slate-500 cursor-pointer"
                     >
                       <X size={10} />
-                    </button>
+                    </span>
                   </>
                 ) : (
                   <div className="flex flex-col items-center gap-1">

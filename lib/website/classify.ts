@@ -111,6 +111,127 @@ Return ONLY the JSON array. No explanation, no markdown fences.`;
   }
 }
 
+/**
+ * Find where product content likely starts in the markdown.
+ * Looks for price patterns which signal real product listings.
+ */
+function findProductContentStart(markdown: string): number {
+  // Look for the first occurrence of a price-like pattern
+  const priceSignals = [
+    /(?:KW?D|SAR|AED|USD|EUR|GBP|د\.ك|د\.إ|ر\.س)\s*[\d,.]+/,
+    /[\d,.]+\s*(?:KW?D|SAR|AED|USD|EUR|GBP|د\.ك|د\.إ|ر\.س)/,
+    /[$€£¥₹]\s*[\d,.]+/,
+    /[\d,.]+\s*[$€£¥₹]/,
+  ];
+  for (const regex of priceSignals) {
+    const match = markdown.match(regex);
+    if (match && match.index !== undefined) {
+      // Go back to the start of the line
+      const lineStart = markdown.lastIndexOf("\n", match.index);
+      return Math.max(0, lineStart);
+    }
+  }
+  return 0;
+}
+
+// ── extractProductsFromPage ──
+
+/**
+ * AI reads page markdown and returns products directly.
+ * Works for any e-commerce site, any language, any currency.
+ * One AI call per page — simple, reliable, global.
+ */
+export async function extractProductsFromPage(
+  markdown: string,
+  sourceUrl: string,
+  limit: number = 20
+): Promise<{ products: DiscoveredProduct[]; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) {
+    return { products: [], usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
+  }
+
+  // Smart trimming: many e-commerce pages have huge nav/header sections.
+  // Find where product-like content starts and prioritize that.
+  let cappedMarkdown: string;
+  const productSignalIndex = findProductContentStart(markdown);
+  if (productSignalIndex > 5000 && markdown.length > 20000) {
+    // Include some context from before products + all product content
+    const before = markdown.slice(Math.max(0, productSignalIndex - 2000), productSignalIndex);
+    const products = markdown.slice(productSignalIndex, productSignalIndex + 18000);
+    cappedMarkdown = before + products;
+  } else {
+    cappedMarkdown = markdown.slice(0, 20000);
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
+
+  const prompt = `Extract products for sale from this e-commerce page.
+
+## Page URL: ${sourceUrl}
+
+## Page content (Jina Reader markdown):
+${cappedMarkdown}
+
+## Task:
+Return a JSON array of products found on this page. Each product must have a name, price, and image.
+
+ONLY include real products for sale (items with prices).
+SKIP: category thumbnails, banners, navigation icons, brand logos, occasion images, UI elements.
+
+Return up to ${limit} products as a JSON array (no markdown fences):
+[
+  {
+    "name": "product name in original language",
+    "price": "numeric price (e.g. 25.000, 129.99)",
+    "currency": "ISO code (KWD, USD, EUR, SAR, AED, GBP, CNY, JPY, etc.)",
+    "originalPrice": "price before discount or null",
+    "discount": "e.g. 20% or null",
+    "imageUrl": "absolute image URL",
+    "brand": "brand name or null"
+  }
+]
+
+Currency conversion: KD/د.ك→KWD, $/USD, €/EUR, £/GBP, ر.س→SAR, د.إ→AED, ¥→JPY/CNY, ₹→INR
+If no products found, return []
+Return ONLY the JSON array.`;
+
+  const result = await model.generateContent([{ text: prompt }]);
+  const responseText = result.response.text();
+
+  const usageMetadata = result.response.usageMetadata;
+  const usage = {
+    promptTokens: usageMetadata?.promptTokenCount ?? 0,
+    completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
+    totalTokens: usageMetadata?.totalTokenCount ?? 0,
+  };
+
+  const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) return { products: [], usage };
+
+  try {
+    const items: Array<Record<string, unknown>> = JSON.parse(jsonMatch[0]);
+    const products: DiscoveredProduct[] = items
+      .filter(item => item && item.name && item.price)
+      .slice(0, limit)
+      .map(item => ({
+        name: String(item.name),
+        price: String(item.price),
+        currency: item.currency ? String(item.currency) : undefined,
+        originalPrice: item.originalPrice ? String(item.originalPrice) : undefined,
+        discount: item.discount ? String(item.discount) : undefined,
+        imageUrl: item.imageUrl ? String(item.imageUrl) : undefined,
+        sourceUrl,
+        brand: item.brand ? String(item.brand) : undefined,
+      }));
+
+    return { products, usage };
+  } catch {
+    return { products: [], usage };
+  }
+}
+
 // ── extractProductDetails ──
 
 export async function extractProductDetails(
