@@ -415,6 +415,237 @@ describe("Token encryption integration", () => {
   });
 });
 
+// ─── Rate Limiting 429 Verification ─────────────────────────────────
+// Thorough verification that 429 responses are correct and complete.
+
+describe("Rate limiting 429 response verification", () => {
+  beforeEach(() => {
+    vi.mock("server-only", () => ({}));
+    vi.mock("next/server", () => ({
+      NextResponse: {
+        json: (body: unknown, init?: { status?: number; headers?: Record<string, string> }) => ({
+          body,
+          status: init?.status ?? 200,
+          headers: init?.headers ?? {},
+        }),
+      },
+    }));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  function makeRequest(ip?: string): Request {
+    const headers = new Headers();
+    if (ip) headers.set("x-forwarded-for", ip);
+    return new Request("https://example.com/api/test", { headers });
+  }
+
+  it("429 response contains all required headers", async () => {
+    const { aiRateLimiter } = await import("../lib/security/rate-limit");
+
+    // Exhaust limit
+    for (let i = 0; i < 20; i++) {
+      aiRateLimiter.check(makeRequest(), "header-check-user");
+    }
+
+    const result = aiRateLimiter.check(makeRequest(), "header-check-user") as any;
+    expect(result).not.toBeNull();
+    expect(result.status).toBe(429);
+    expect(result.headers["Retry-After"]).toBeDefined();
+    expect(Number(result.headers["Retry-After"])).toBeGreaterThan(0);
+    expect(Number(result.headers["Retry-After"])).toBeLessThanOrEqual(60);
+    expect(result.headers["X-RateLimit-Limit"]).toBe("20");
+    expect(result.headers["X-RateLimit-Remaining"]).toBe("0");
+    expect(result.body.error).toBe("Too many requests. Please try again later.");
+  });
+
+  it("429 response body does not leak internal details", async () => {
+    const { aiRateLimiter } = await import("../lib/security/rate-limit");
+
+    for (let i = 0; i < 20; i++) {
+      aiRateLimiter.check(makeRequest(), "leak-check-user");
+    }
+
+    const result = aiRateLimiter.check(makeRequest(), "leak-check-user") as any;
+    const bodyStr = JSON.stringify(result.body);
+
+    // Should not contain IP addresses, user IDs, or timestamps
+    expect(bodyStr).not.toContain("leak-check-user");
+    expect(bodyStr).not.toContain("timestamp");
+    expect(bodyStr).not.toContain("ip");
+    // Only contains the generic error message
+    expect(Object.keys(result.body)).toEqual(["error"]);
+  });
+
+  it("multiple blocked requests all get 429", async () => {
+    const { aiRateLimiter } = await import("../lib/security/rate-limit");
+
+    for (let i = 0; i < 20; i++) {
+      aiRateLimiter.check(makeRequest(), "multi-block-user");
+    }
+
+    // All subsequent requests should be 429
+    for (let i = 0; i < 5; i++) {
+      const result = aiRateLimiter.check(makeRequest(), "multi-block-user") as any;
+      expect(result).not.toBeNull();
+      expect(result.status).toBe(429);
+    }
+  });
+
+  it("websiteRateLimiter 429 has correct limit header", async () => {
+    const { websiteRateLimiter } = await import("../lib/security/rate-limit");
+
+    for (let i = 0; i < 30; i++) {
+      websiteRateLimiter.check(makeRequest(), "web-429-user");
+    }
+
+    const result = websiteRateLimiter.check(makeRequest(), "web-429-user") as any;
+    expect(result.status).toBe(429);
+    expect(result.headers["X-RateLimit-Limit"]).toBe("30");
+  });
+});
+
+// ─── Backward Compatibility: Unencrypted Token Handling ─────────────
+// Verify that decrypt handles all forms of legacy/plaintext tokens.
+
+describe("Backward compatibility for unencrypted tokens", () => {
+  const TEST_KEY = randomBytes(32).toString("base64");
+
+  beforeEach(() => {
+    process.env.TOKEN_ENCRYPTION_KEY = TEST_KEY;
+  });
+
+  afterEach(() => {
+    delete process.env.TOKEN_ENCRYPTION_KEY;
+    vi.resetModules();
+  });
+
+  it("passes through Facebook-style access tokens unchanged", async () => {
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    // Real Facebook tokens look like this (no colons)
+    const fbToken = "EAAGm0PX4ZCpsBOxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    expect(await decrypt(fbToken)).toBe(fbToken);
+  });
+
+  it("passes through Instagram-style tokens unchanged", async () => {
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    const igToken = "IGQVJWZAkRCdlJPLWVFTl95Nm1IZAVZA0cVVfSm1hUGNL";
+    expect(await decrypt(igToken)).toBe(igToken);
+  });
+
+  it("passes through simple alphanumeric tokens", async () => {
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    const simpleToken = "abc123def456ghi789";
+    expect(await decrypt(simpleToken)).toBe(simpleToken);
+  });
+
+  it("correctly decrypts newly encrypted tokens (migration path)", async () => {
+    const { encrypt, decrypt } = await import("../convex/lib/encryption");
+
+    // Simulate: old token gets encrypted on next write, then decrypted on read
+    const oldToken = "EAAGm0PX4ZCpsBOxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+    // Step 1: encrypt on write (e.g., updateToken mutation)
+    const encrypted = await encrypt(oldToken);
+    expect(encrypted).toContain(":"); // Now in encrypted format
+
+    // Step 2: decrypt on read (e.g., getWithTokens query)
+    const decrypted = await decrypt(encrypted);
+    expect(decrypted).toBe(oldToken);
+  });
+
+  it("handles tokens with URL-safe base64 characters", async () => {
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    // Some OAuth tokens use URL-safe base64 (no colons)
+    const urlSafeToken = "ya29.a0AfB_byC-dEf_gHiJk-lMnOp_qRsTuVwXyZ0123456789";
+    expect(await decrypt(urlSafeToken)).toBe(urlSafeToken);
+  });
+
+  it("handles empty string", async () => {
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    expect(await decrypt("")).toBe("");
+  });
+
+  it("does not corrupt tokens containing base64-like patterns", async () => {
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    // Edge case: token that looks like it could be base64 but has no colon
+    const tricky = "aGVsbG8gd29ybGQ=";
+    expect(await decrypt(tricky)).toBe(tricky);
+  });
+});
+
+// ─── Encryption Key Configuration ───────────────────────────────────
+// Verify behavior when TOKEN_ENCRYPTION_KEY is missing or invalid.
+
+describe("TOKEN_ENCRYPTION_KEY configuration", () => {
+  afterEach(() => {
+    delete process.env.TOKEN_ENCRYPTION_KEY;
+    vi.resetModules();
+  });
+
+  it("encrypt throws clear error when key is missing", async () => {
+    delete process.env.TOKEN_ENCRYPTION_KEY;
+    vi.resetModules();
+    const { encrypt } = await import("../convex/lib/encryption");
+
+    await expect(encrypt("test")).rejects.toThrow("TOKEN_ENCRYPTION_KEY");
+  });
+
+  it("decrypt of legacy token works even without key set (no colon = passthrough)", async () => {
+    delete process.env.TOKEN_ENCRYPTION_KEY;
+    vi.resetModules();
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    // Legacy tokens don't need the key since they bypass decryption
+    const legacy = "EAAGm0PX4ZCpsBOxxxx";
+    expect(await decrypt(legacy)).toBe(legacy);
+  });
+
+  it("decrypt of encrypted token falls back gracefully when key is missing", async () => {
+    // First encrypt with a key
+    process.env.TOKEN_ENCRYPTION_KEY = randomBytes(32).toString("base64");
+    vi.resetModules();
+    const { encrypt } = await import("../convex/lib/encryption");
+    const encrypted = await encrypt("test-token");
+
+    // Without the key, decrypt catches the error and returns the encrypted string as-is
+    // This is the backward-compat behavior: unrecognized strings pass through
+    delete process.env.TOKEN_ENCRYPTION_KEY;
+    vi.resetModules();
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    const result = await decrypt(encrypted);
+    // Returns the encrypted string unchanged (catch block fallback)
+    expect(result).toBe(encrypted);
+  });
+
+  it("decrypt with wrong key returns original string (fails gracefully)", async () => {
+    // Encrypt with key A
+    process.env.TOKEN_ENCRYPTION_KEY = randomBytes(32).toString("base64");
+    vi.resetModules();
+    const { encrypt } = await import("../convex/lib/encryption");
+    const encrypted = await encrypt("secret-token");
+
+    // Try to decrypt with key B
+    process.env.TOKEN_ENCRYPTION_KEY = randomBytes(32).toString("base64");
+    vi.resetModules();
+    const { decrypt } = await import("../convex/lib/encryption");
+
+    // Should fall back to returning the encrypted string as-is (catch block)
+    const result = await decrypt(encrypted);
+    expect(result).toBe(encrypted);
+  });
+});
+
 // ─── Rate Limiting Integration Check (Issue #27) ────────────────────
 // Verify that API routes actually import and use rate limiters.
 
