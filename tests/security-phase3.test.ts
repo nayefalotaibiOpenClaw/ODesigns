@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { randomBytes } from "crypto";
 
+/** Shape returned by the mocked NextResponse.json() in these tests. */
+interface MockResponse {
+  body: { error: string };
+  status: number;
+  headers: Record<string, string>;
+}
+
 // ─── Rate Limiting Tests (Issue #27) ────────────────────────────────
 // We test the rate limiter logic by dynamically importing it with mocks.
 
@@ -53,8 +60,8 @@ describe("Rate Limiting", () => {
     const req = makeRequest();
     const result = aiRateLimiter.check(req, "spam-user");
     expect(result).not.toBeNull();
-    expect((result as any).status).toBe(429);
-    expect((result as any).body.error).toContain("Too many requests");
+    expect((result as MockResponse).status).toBe(429);
+    expect((result as MockResponse).body.error).toContain("Too many requests");
   });
 
   it("rate limits per-user independently", async () => {
@@ -82,7 +89,7 @@ describe("Rate Limiting", () => {
     // 31st from same IP should be blocked
     const result = websiteRateLimiter.check(makeRequest("10.0.0.1"));
     expect(result).not.toBeNull();
-    expect((result as any).status).toBe(429);
+    expect((result as MockResponse).status).toBe(429);
 
     // Different IP should still work
     const result2 = websiteRateLimiter.check(makeRequest("10.0.0.2"));
@@ -98,9 +105,9 @@ describe("Rate Limiting", () => {
 
     const result = aiRateLimiter.check(makeRequest(), "retry-user");
     expect(result).not.toBeNull();
-    expect((result as any).headers["Retry-After"]).toBeDefined();
-    expect((result as any).headers["X-RateLimit-Limit"]).toBe("20");
-    expect((result as any).headers["X-RateLimit-Remaining"]).toBe("0");
+    expect((result as MockResponse).headers["Retry-After"]).toBeDefined();
+    expect((result as MockResponse).headers["X-RateLimit-Limit"]).toBe("20");
+    expect((result as MockResponse).headers["X-RateLimit-Remaining"]).toBe("0");
   });
 
   it("website limiter allows 30 requests per minute", async () => {
@@ -113,7 +120,7 @@ describe("Rate Limiting", () => {
 
     const result = websiteRateLimiter.check(makeRequest(), "web-user");
     expect(result).not.toBeNull();
-    expect((result as any).status).toBe(429);
+    expect((result as MockResponse).status).toBe(429);
   });
 });
 
@@ -451,7 +458,7 @@ describe("Rate limiting 429 response verification", () => {
       aiRateLimiter.check(makeRequest(), "header-check-user");
     }
 
-    const result = aiRateLimiter.check(makeRequest(), "header-check-user") as any;
+    const result = aiRateLimiter.check(makeRequest(), "header-check-user") as MockResponse;
     expect(result).not.toBeNull();
     expect(result.status).toBe(429);
     expect(result.headers["Retry-After"]).toBeDefined();
@@ -469,7 +476,7 @@ describe("Rate limiting 429 response verification", () => {
       aiRateLimiter.check(makeRequest(), "leak-check-user");
     }
 
-    const result = aiRateLimiter.check(makeRequest(), "leak-check-user") as any;
+    const result = aiRateLimiter.check(makeRequest(), "leak-check-user") as MockResponse;
     const bodyStr = JSON.stringify(result.body);
 
     // Should not contain IP addresses, user IDs, or timestamps
@@ -489,7 +496,7 @@ describe("Rate limiting 429 response verification", () => {
 
     // All subsequent requests should be 429
     for (let i = 0; i < 5; i++) {
-      const result = aiRateLimiter.check(makeRequest(), "multi-block-user") as any;
+      const result = aiRateLimiter.check(makeRequest(), "multi-block-user") as MockResponse;
       expect(result).not.toBeNull();
       expect(result.status).toBe(429);
     }
@@ -502,7 +509,7 @@ describe("Rate limiting 429 response verification", () => {
       websiteRateLimiter.check(makeRequest(), "web-429-user");
     }
 
-    const result = websiteRateLimiter.check(makeRequest(), "web-429-user") as any;
+    const result = websiteRateLimiter.check(makeRequest(), "web-429-user") as MockResponse;
     expect(result.status).toBe(429);
     expect(result.headers["X-RateLimit-Limit"]).toBe("30");
   });
