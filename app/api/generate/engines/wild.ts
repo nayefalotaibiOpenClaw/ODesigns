@@ -15,6 +15,7 @@ import {
   shuffle,
   buildRatioNote,
   buildContextPostsSection,
+  buildContextAssetsSection,
 } from "../_shared";
 
 const WILD_MOODS = [
@@ -30,7 +31,7 @@ const WILD_MOODS = [
 
 export async function generate(req: GenerateRequest): Promise<NextResponse> {
   try {
-    const { prompt, context, count = 1, targetRatio, referenceImages, model, contextPosts } = req;
+    const { prompt, context, count = 1, targetRatio, referenceImages, model, contextPosts, contextAssets } = req;
     const postCount = Math.min(Math.max(1, Number(count) || 1), 8);
 
     const { client: gemini, modelId: resolvedModel } = getModel(model);
@@ -52,10 +53,12 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
     }
 
     const contextPostsSection = buildContextPostsSection(contextPosts);
+    const contextAssetsSection = buildContextAssetsSection(contextAssets);
     const systemPrompt = [
       WILD_SYSTEM_PROMPT,
       brandContext.length > 0 ? `## BRAND CONTEXT\n${brandContext.join('\n')}` : '',
       contextPostsSection,
+      contextAssetsSection,
     ].filter(Boolean).join('\n\n');
 
     // Build asset list

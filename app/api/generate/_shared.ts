@@ -4,6 +4,14 @@ import { parseAIResponse } from "@/lib/ai/clean-code";
 import type { GenerationContext } from "@/lib/ai/types";
 
 // ─── Types ───────────────────────────────────────────────────────
+export interface ContextAsset {
+  url: string;
+  type: string;
+  label?: string;
+  description?: string;
+  aiAnalysis?: string;
+}
+
 export interface GenerateRequest {
   prompt: string;
   context?: GenerationContext;
@@ -12,6 +20,7 @@ export interface GenerateRequest {
   referenceImages?: { base64: string; mimeType: string }[];
   model?: string;
   contextPosts?: string[];
+  contextAssets?: ContextAsset[];
 }
 
 export interface EngineResult {
@@ -37,7 +46,7 @@ export interface GenerateResponse {
 // ─── Gemini Client ───────────────────────────────────────────────
 const ALLOWED_MODELS = [
   "gemini-3.1-flash-lite-preview",
-  "gemini-3.1-flash-preview",
+  "gemini-3-flash-preview",
   "gemini-3.1-pro-preview",
 ];
 const DEFAULT_MODEL = "gemini-3.1-flash-lite-preview";
@@ -165,7 +174,14 @@ export function handleGenerationError(error: unknown): NextResponse {
   if (lower.includes("safety") || lower.includes("blocked") || lower.includes("content_filter")) {
     return NextResponse.json({ error: "Your prompt was blocked by safety filters. Try rephrasing your description." }, { status: 400 });
   }
-  return NextResponse.json({ error: "Something went wrong while generating. Please try again or contact support." }, { status: 500 });
+  if (lower.includes("too large") || lower.includes("token") || lower.includes("length") || lower.includes("size")) {
+    return NextResponse.json({ error: "Prompt too large — try selecting fewer context posts or using a shorter prompt." }, { status: 400 });
+  }
+  if (lower.includes("not found") || lower.includes("model")) {
+    return NextResponse.json({ error: `Model error: ${message.slice(0, 120)}` }, { status: 400 });
+  }
+  // Pass through the actual error message for debugging
+  return NextResponse.json({ error: `Generation failed: ${message.slice(0, 200)}` }, { status: 500 });
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -269,4 +285,48 @@ The user selected existing posts they love and wants MORE LIKE THEM. Match the s
 ${summaries.join('\n\n')}
 
 Generate content that captures the SAME creative energy, headline style, and mood as these references.`;
+}
+
+// ─── Context Assets ─────────────────────────────────────────────
+const MAX_CONTEXT_ASSETS = 8;
+
+export function buildContextAssetsSection(contextAssets?: ContextAsset[]): string {
+  if (!contextAssets || contextAssets.length === 0) return '';
+
+  const limited = contextAssets.slice(0, MAX_CONTEXT_ASSETS);
+
+  const assetLines = limited.map((a, i) => {
+    const lines: string[] = [`### Priority Asset ${i + 1} (${a.type})`];
+    lines.push(`- URL: ${a.url}`);
+    if (a.label) lines.push(`- Label: ${a.label}`);
+    if (a.description) lines.push(`- Description: ${a.description}`);
+    if (a.aiAnalysis) lines.push(`- AI Analysis: ${a.aiAnalysis}`);
+
+    // Usage hint based on type
+    switch (a.type) {
+      case 'background':
+        lines.push('- USE AS: Full-bleed background image with gradient overlay');
+        break;
+      case 'iphone': case 'screenshot': case 'ipad': case 'desktop':
+        lines.push('- USE AS: <MockupFrame id="mockup" src={url} /> — feature prominently');
+        break;
+      case 'product':
+        lines.push('- USE AS: Hero product image with drop-shadow, positioned creatively');
+        break;
+      case 'logo':
+        lines.push('- USE AS: Pass to PostHeader via logoUrl prop');
+        break;
+      default:
+        lines.push('- USE AS: Best placement based on the analysis');
+    }
+    return lines.join('\n');
+  }).join('\n\n');
+
+  return `\n\n## USER-SELECTED ASSETS (MANDATORY)
+The user specifically chose these assets. You MUST use ONLY these assets in the generated post.
+- Do NOT use any other assets from the ASSETS section above — ignore them completely.
+- Every asset listed below MUST appear in the post.
+- Use the correct component/approach for each asset type.
+
+${assetLines}`;
 }

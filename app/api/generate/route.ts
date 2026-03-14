@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       referenceImages: body.referenceImages,
       model: body.model,
       contextPosts: body.contextPosts,
+      contextAssets: body.contextAssets,
     };
 
     switch (Number(version)) {

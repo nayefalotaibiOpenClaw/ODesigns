@@ -47,6 +47,7 @@ export function buildDynamicPrompt(context: GenerationContext): string {
     logoUrl,
     websiteInfo,
     assets,
+    hasSelectedAssets,
   } = context;
 
   const isArabic = language === "ar";
@@ -75,8 +76,20 @@ export function buildDynamicPrompt(context: GenerationContext): string {
   }
 
   // ── Available assets — grouped by type ──
+  // When user selected specific assets, skip the general list so AI only uses selected ones
   const assetTypes: string[] = [];
-  if (assets && assets.length > 0) {
+  if (hasSelectedAssets) {
+    // Still collect asset types for example selection, but don't list URLs
+    if (assets && assets.length > 0) {
+      for (const a of assets) {
+        const key = a.type || "other";
+        if (!assetTypes.includes(key)) assetTypes.push(key);
+      }
+    }
+    sections.push(
+      `## ASSETS\nThe user has selected specific assets below — use ONLY those. Do NOT use any other image URLs.`
+    );
+  } else if (assets && assets.length > 0) {
     const grouped: Record<string, AssetInfo[]> = {};
     for (const a of assets) {
       const key = a.type || "other";

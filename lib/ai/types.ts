@@ -32,4 +32,6 @@ export interface GenerationContext {
   logoUrl?: string;
   websiteInfo?: WebsiteInfo;
   assets: AssetInfo[];
+  /** When true, skip the general ASSETS section — context assets handle it */
+  hasSelectedAssets?: boolean;
 }

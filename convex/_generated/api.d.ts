@@ -27,6 +27,7 @@ import type * as seedAll from "../seedAll.js";
 import type * as socialAccounts from "../socialAccounts.js";
 import type * as socialAuth from "../socialAuth.js";
 import type * as subscriptions from "../subscriptions.js";
+import type * as threadsAuth from "../threadsAuth.js";
 import type * as tokenRefresh from "../tokenRefresh.js";
 import type * as twitterAuth from "../twitterAuth.js";
 import type * as users from "../users.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   socialAccounts: typeof socialAccounts;
   socialAuth: typeof socialAuth;
   subscriptions: typeof subscriptions;
+  threadsAuth: typeof threadsAuth;
   tokenRefresh: typeof tokenRefresh;
   twitterAuth: typeof twitterAuth;
   users: typeof users;

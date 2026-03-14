@@ -17,17 +17,19 @@ import {
   buildRatioNote,
   buildDistinctNote,
   buildContextPostsSection,
+  buildContextAssetsSection,
 } from "../_shared";
 
 export async function generate(req: GenerateRequest): Promise<NextResponse> {
   try {
-    const { prompt, context, count = 1, targetRatio, referenceImages, model, contextPosts } = req;
+    const { prompt, context, count = 1, targetRatio, referenceImages, model, contextPosts, contextAssets } = req;
     const postCount = Math.min(Math.max(1, Number(count) || 1), 8);
 
     // System prompt: classic + dynamic brand context + reference posts
     const dynamicSection = context ? buildDynamicPrompt(context as GenerationContext) : "";
     const contextPostsSection = buildContextPostsSection(contextPosts);
-    const systemPrompt = [CLASSIC_SYSTEM_PROMPT, dynamicSection, contextPostsSection]
+    const contextAssetsSection = buildContextAssetsSection(contextAssets);
+    const systemPrompt = [CLASSIC_SYSTEM_PROMPT, dynamicSection, contextPostsSection, contextAssetsSection]
       .filter(Boolean)
       .join('\n\n');
 

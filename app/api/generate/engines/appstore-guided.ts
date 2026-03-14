@@ -17,6 +17,7 @@ import {
   buildRatioNote,
   buildContextPostsSection,
   buildContextPostsSummary,
+  buildContextAssetsSection,
 } from "../_shared";
 
 /* ── AI Content Schema ─────────────────────────────────────────── */
@@ -455,7 +456,7 @@ function parseContent(text: string): AIContent | null {
 
 export async function generate(req: GenerateRequest): Promise<NextResponse> {
   try {
-    const { prompt, context, count = 1, targetRatio, referenceImages, model, contextPosts } = req;
+    const { prompt, context, count = 1, targetRatio, referenceImages, model, contextPosts, contextAssets } = req;
     const postCount = Math.min(Math.max(1, Number(count) || 1), 8);
 
     const { client: gemini, modelId: resolvedModel } = getModel(model);
@@ -494,6 +495,7 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
     let totalCompletion = 0;
 
     const contextPostsSection = buildContextPostsSummary(contextPosts) + buildContextPostsSection(contextPosts);
+    const contextAssetsSection = buildContextAssetsSection(contextAssets);
 
     const promises = Array.from({ length: postCount }, async (_, i) => {
       const template = shuffledTemplates[i % shuffledTemplates.length];
@@ -508,7 +510,7 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
       const screenshotUrl2 = asset2?.url || '';
 
       const hasContext = contextPosts && contextPosts.length > 0;
-      const systemPrompt = buildSystemPrompt(template) + brandContext + contextPostsSection;
+      const systemPrompt = buildSystemPrompt(template) + brandContext + contextPostsSection + contextAssetsSection;
       const userPrompt = hasContext
         ? `Create App Store preview content for: ${prompt}
 

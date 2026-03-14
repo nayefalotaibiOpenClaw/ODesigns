@@ -930,7 +930,7 @@ export default function DesignPage() {
     setContextAssets(prev => {
       const exists = prev.find(a => a.id === asset._id);
       if (exists) return prev.filter(a => a.id !== asset._id);
-      if (prev.length >= 4) return prev; // cap at 4
+      if (prev.length >= 8) return prev; // cap at 8
       return [...prev, { id: asset._id, url: asset.url, type: asset.type, label: asset.label || asset.fileName, description: asset.description, aiAnalysis: asset.aiAnalysis }];
     });
   }, []);
@@ -1538,7 +1538,7 @@ export default function DesignPage() {
                         </div>
                         {contextAssets.length > 0 && (
                           <div className="px-3 pb-2 border-t border-slate-100 dark:border-neutral-800 pt-2">
-                            <span className="text-[10px] text-slate-400">{contextAssets.length}/4 assets selected</span>
+                            <span className="text-[10px] text-slate-400">{contextAssets.length}/8 assets selected</span>
                           </div>
                         )}
                       </div>

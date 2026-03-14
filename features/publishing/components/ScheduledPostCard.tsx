@@ -27,7 +27,7 @@ interface ScheduledPost {
 
 interface SocialAccount {
   _id: Id<"socialAccounts">;
-  provider: "facebook" | "instagram" | "tiktok" | "twitter";
+  provider: "facebook" | "instagram" | "tiktok" | "twitter" | "threads";
   providerAccountName: string;
 }
 

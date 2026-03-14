@@ -260,7 +260,7 @@ function PostSection({
   }>;
   accounts: Array<{
     _id: Id<"socialAccounts">;
-    provider: "facebook" | "instagram" | "tiktok" | "twitter";
+    provider: "facebook" | "instagram" | "tiktok" | "twitter" | "threads";
     providerAccountName: string;
   }>;
   onCancel: (id: Id<"scheduledPosts">) => void;
