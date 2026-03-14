@@ -400,7 +400,7 @@ export const handleDataDeletion = httpAction(async (ctx, request) => {
     console.error("Data deletion callback error:", err);
     return new Response(
       JSON.stringify({
-        url: "https://odesigns.studio/data-deletion",
+        url: `${process.env.APP_URL || "https://odesigns.app"}/data-deletion`,
         confirmation_code: `del_error_${Date.now()}`,
       }),
       {
