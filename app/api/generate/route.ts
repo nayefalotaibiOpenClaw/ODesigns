@@ -7,6 +7,7 @@ import { generate as generateWild } from "./engines/wild";
 import { generate as generateClassic } from "./engines/classic";
 import { generate as generateAppstoreGuided } from "./engines/appstore-guided";
 import { requireAuth } from "@/lib/auth/api-auth";
+import { aiRateLimiter } from "@/lib/security/rate-limit";
 
 /**
  * Engine Router
@@ -20,6 +21,9 @@ import { requireAuth } from "@/lib/auth/api-auth";
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult.error) return authResult.error;
+
+  const rateLimitResponse = aiRateLimiter.check(req, authResult.user._id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     // Verify authentication and active subscription

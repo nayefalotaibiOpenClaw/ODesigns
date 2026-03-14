@@ -55,7 +55,7 @@ export const listByCollection = query({
       .withIndex("by_collection_order", (q) =>
         q.eq("collectionId", args.collectionId)
       )
-      .collect();
+      .take(500);
   },
 });
 
@@ -69,7 +69,7 @@ export const listByWorkspace = query({
     return await ctx.db
       .query("posts")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-      .collect();
+      .take(500);
   },
 });
 
@@ -98,7 +98,7 @@ export const getVariants = query({
       .withIndex("by_source_post", (q) =>
         q.eq("sourcePostId", args.sourcePostId)
       )
-      .collect();
+      .take(100);
   },
 });
 

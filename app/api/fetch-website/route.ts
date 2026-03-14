@@ -3,12 +3,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { extractBodyText } from "@/lib/website/extract-text";
 import { requireAuth } from "@/lib/auth/api-auth";
 import { validateExternalUrl } from "@/lib/security/url-validation";
+import { websiteRateLimiter } from "@/lib/security/rate-limit";
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult.error) return authResult.error;
+
+  const rateLimitResponse = websiteRateLimiter.check(req, authResult.user._id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const { url, screenshotBase64 } = await req.json();
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest) {
       });
 
       if (!res.ok) {
-        return NextResponse.json({ error: `Failed to fetch website: ${res.status}` }, { status: 502 });
+        return NextResponse.json({ error: "Failed to fetch website." }, { status: 502 });
       }
 
       const html = await res.text();
@@ -65,8 +69,8 @@ export async function POST(req: NextRequest) {
         renderedText = `META DESCRIPTION: ${metaInfo}\n\n${renderedText}`;
       }
     } catch (fetchError) {
-      const msg = fetchError instanceof Error ? fetchError.message : "Fetch failed";
-      return NextResponse.json({ error: `Could not reach website: ${msg}` }, { status: 502 });
+      console.error("Website fetch error:", fetchError);
+      return NextResponse.json({ error: "Could not reach website." }, { status: 502 });
     }
 
     // Cap text to avoid token overflow
@@ -179,12 +183,12 @@ IMPORTANT:
       },
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+    const message = err instanceof Error ? err.message : "";
     if (message.includes("timeout") || message.includes("abort")) {
       return NextResponse.json({ error: "Request timed out." }, { status: 504 });
     }
     console.error("fetch-website error:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to process website." }, { status: 500 });
   }
 }
 

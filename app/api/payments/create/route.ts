@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     try {
       data = JSON.parse(responseText);
     } catch {
-      console.error("UPayments returned non-JSON:", responseText.slice(0, 500));
+      console.error("UPayments returned non-JSON response for orderId:", orderId, "httpStatus:", response.status);
       return NextResponse.json(
         { error: "Payment gateway returned invalid response" },
         { status: 502 }
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!response.ok || !data.status) {
-      console.error("UPayments error:", data);
+      console.error("UPayments charge failed: orderId=%s httpStatus=%d", orderId, response.status);
       return NextResponse.json(
         { error: "Payment creation failed" },
         { status: 500 }
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
       orderId,
     });
   } catch (error) {
-    console.error("Payment create error:", error);
+    console.error("Payment create error:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

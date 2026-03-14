@@ -166,7 +166,7 @@ export function handleGenerationError(error: unknown): NextResponse {
   const lower = message.toLowerCase();
 
   if (lower.includes("api key")) {
-    return NextResponse.json({ error: "API key not configured" }, { status: 500 });
+    return NextResponse.json({ error: "AI service is not properly configured." }, { status: 500 });
   }
   if (lower.includes("quota") || lower.includes("rate limit") || lower.includes("resource_exhausted") || lower.includes("429")) {
     return NextResponse.json({ error: "AI service is temporarily unavailable. Please try again in a moment. If this persists, contact support." }, { status: 429 });
@@ -178,10 +178,9 @@ export function handleGenerationError(error: unknown): NextResponse {
     return NextResponse.json({ error: "Prompt too large — try selecting fewer context posts or using a shorter prompt." }, { status: 400 });
   }
   if (lower.includes("not found") || lower.includes("model")) {
-    return NextResponse.json({ error: `Model error: ${message.slice(0, 120)}` }, { status: 400 });
+    return NextResponse.json({ error: "AI model configuration error. Please contact support." }, { status: 400 });
   }
-  // Pass through the actual error message for debugging
-  return NextResponse.json({ error: `Generation failed: ${message.slice(0, 200)}` }, { status: 500 });
+  return NextResponse.json({ error: "Generation failed. Please try again." }, { status: 500 });
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────

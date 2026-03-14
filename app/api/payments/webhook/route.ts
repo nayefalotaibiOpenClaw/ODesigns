@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const result = await response.json();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Webhook proxy error:", error);
+    console.error("Webhook proxy error:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json({ status: "ok" }); // Always 200 for UPayments
   }
 }

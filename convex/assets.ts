@@ -106,7 +106,7 @@ export const listForWorkspace = query({
     const workspaceAssets = await ctx.db
       .query("assets")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-      .collect();
+      .take(200);
 
     // User's global assets
     const globalAssets = await ctx.db
@@ -114,7 +114,7 @@ export const listForWorkspace = query({
       .withIndex("by_user_scope", (q) =>
         q.eq("userId", userId).eq("scope", "global")
       )
-      .collect();
+      .take(200);
 
     const all = [...workspaceAssets, ...globalAssets];
 
@@ -146,7 +146,7 @@ export const listGlobal = query({
       .withIndex("by_user_scope", (q) =>
         q.eq("userId", userId).eq("scope", "global")
       )
-      .collect();
+      .take(200);
 
     return await Promise.all(
       assets.map(async (asset) => ({
@@ -175,7 +175,7 @@ export const listByType = query({
       .withIndex("by_workspace_type", (q) =>
         q.eq("workspaceId", args.workspaceId).eq("type", args.type)
       )
-      .collect();
+      .take(200);
 
     // Global assets of this type
     const globalAssets = (await ctx.db
@@ -183,7 +183,7 @@ export const listByType = query({
       .withIndex("by_user_scope", (q) =>
         q.eq("userId", userId).eq("scope", "global")
       )
-      .collect()
+      .take(200)
     ).filter((a) => a.type === args.type);
 
     const all = [...workspaceAssets, ...globalAssets];

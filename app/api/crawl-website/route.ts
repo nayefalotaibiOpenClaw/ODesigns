@@ -9,12 +9,16 @@ import {
 import { classifySections, extractProductDetails } from "@/lib/website/classify";
 import { requireAuth } from "@/lib/auth/api-auth";
 import { validateExternalUrl } from "@/lib/security/url-validation";
+import { websiteRateLimiter } from "@/lib/security/rate-limit";
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult.error) return authResult.error;
+
+  const rateLimitResponse = websiteRateLimiter.check(req, authResult.user._id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const body = await req.json();
@@ -221,9 +225,9 @@ Return ONLY the JSON, no markdown fences.`,
       try {
         sectionMarkdown = await fetchPageViaJina(sectionUrl);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Fetch failed";
+        console.error("Section page fetch failed:", err);
         return NextResponse.json(
-          { error: `Could not fetch section page: ${msg}` },
+          { error: "Could not fetch section page." },
           { status: 502 }
         );
       }
@@ -310,11 +314,11 @@ Return ONLY the JSON, no markdown fences.`,
       { status: 400 }
     );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+    const message = err instanceof Error ? err.message : "";
     if (message.includes("timeout") || message.includes("abort")) {
       return NextResponse.json({ error: "Request timed out." }, { status: 504 });
     }
     console.error("crawl-website error:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to crawl website." }, { status: 500 });
   }
 }

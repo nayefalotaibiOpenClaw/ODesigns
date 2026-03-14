@@ -5,6 +5,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { cleanCode } from "@/lib/ai/clean-code";
 import { requireAuth } from "@/lib/auth/api-auth";
+import { aiRateLimiter } from "@/lib/security/rate-limit";
 
 const ADAPT_SYSTEM_PROMPT = `You are a social media post layout adapter. You will receive an existing React/TSX post component and a target aspect ratio. Your job is to REWRITE the component so it looks perfect at the target ratio.
 
@@ -29,6 +30,9 @@ Return ONLY the raw component code. No markdown fences, no backticks, no explana
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth();
   if (authResult.error) return authResult.error;
+
+  const rateLimitResponse = aiRateLimiter.check(req, authResult.user._id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
