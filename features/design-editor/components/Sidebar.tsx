@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Upload, Send, X, Building2, LayoutGrid, LinkIcon, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/i18n/context";
+import { localizeHref } from "@/lib/i18n/utils";
 import type { TranslationKey } from "@/lib/i18n/types";
 
 export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | null;
@@ -33,7 +34,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, onTabClick, children, workspaces, currentWorkspaceId, currentWorkspaceName }: SidebarProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const activeItem = SIDEBAR_ITEMS.find(i => i.id === activeTab);
   const panelOpen = activeTab !== null && activeTab !== 'generate' && !activeItem?.fullPage;
   const [hoveredTab, setHoveredTab] = useState<SidebarTab>(null);
@@ -83,7 +84,7 @@ export default function Sidebar({ activeTab, onTabClick, children, workspaces, c
                   onClick={() => {
                     setShowWorkspaces(false);
                     if (ws._id !== currentWorkspaceId) {
-                      router.push(`/design?workspace=${ws._id}`);
+                      router.push(localizeHref(`/design?workspace=${ws._id}`, locale));
                     }
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors ${

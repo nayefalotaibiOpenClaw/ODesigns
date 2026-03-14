@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cairo } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
 import Providers from "./components/Providers";
+import { LOCALES, DEFAULT_LOCALE, RTL_LOCALES, type Locale } from "@/lib/i18n/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,8 +22,10 @@ const cairo = Cairo({
   weight: ["400", "600", "700", "900"],
 });
 
+const BASE_URL = "https://odesigns.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://odesigns.app"),
+  metadataBase: new URL(BASE_URL),
   title: {
     default: "oDesigns — AI Social Media Post Generator & Design Tool",
     template: "%s | oDesigns",
@@ -43,11 +46,11 @@ export const metadata: Metadata = {
     title: "oDesigns — AI Social Media Post Generator",
     description:
       "Create stunning social media posts in seconds with AI. Generate on-brand designs and publish across all platforms from one dashboard.",
-    url: "https://odesigns.app",
+    url: BASE_URL,
     siteName: "oDesigns",
     images: [
       {
-        url: "https://odesigns.app/og-image.png",
+        url: `${BASE_URL}/og-image.png`,
         width: 1200,
         height: 1200,
         alt: "oDesigns — AI-powered social media post generator",
@@ -60,7 +63,7 @@ export const metadata: Metadata = {
     title: "oDesigns — AI Social Media Post Generator",
     description:
       "Create stunning social media posts in seconds with AI. Design, schedule, and publish from one dashboard.",
-    images: ["https://odesigns.app/og-image.png"],
+    images: [`${BASE_URL}/og-image.png`],
   },
   robots: {
     index: true,
@@ -74,7 +77,10 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://odesigns.app",
+    canonical: BASE_URL,
+    languages: Object.fromEntries(
+      LOCALES.filter((l) => l !== DEFAULT_LOCALE).map((l) => [l, `${BASE_URL}/${l}`])
+    ),
   },
   other: {
     "fb:app_id": "810967764709045",
@@ -86,19 +92,26 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerStore = await headers();
   const cookieStore = await cookies();
-  const supportedLocales = ["en", "ar", "es", "pt", "fr", "tr", "id"] as const;
-  type SupportedLocale = typeof supportedLocales[number];
-  const rawLocale = cookieStore.get("locale")?.value;
-  const locale: SupportedLocale = supportedLocales.includes(rawLocale as SupportedLocale) ? (rawLocale as SupportedLocale) : "en";
-  const dir = locale === "ar" ? "rtl" : "ltr";
+
+  // Locale from middleware x-locale header (preferred), then cookie, then default
+  const localeFromHeader = headerStore.get("x-locale");
+  const localeFromCookie = cookieStore.get("locale")?.value;
+  const locale: Locale =
+    (LOCALES as readonly string[]).includes(localeFromHeader ?? "")
+      ? (localeFromHeader as Locale)
+      : (LOCALES as readonly string[]).includes(localeFromCookie ?? "")
+        ? (localeFromCookie as Locale)
+        : DEFAULT_LOCALE;
+  const dir = RTL_LOCALES.includes(locale) ? "rtl" : "ltr";
 
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "oDesigns",
-    url: "https://odesigns.app",
-    logo: "https://odesigns.app/og-image.png",
+    url: BASE_URL,
+    logo: `${BASE_URL}/og-image.png`,
     description:
       "AI-powered social media post generator. Create, schedule, and publish stunning designs across Instagram, Facebook, Threads, and Twitter.",
     sameAs: [],
@@ -108,7 +121,7 @@ export default async function RootLayout({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "oDesigns",
-    url: "https://odesigns.app",
+    url: BASE_URL,
     applicationCategory: "DesignApplication",
     operatingSystem: "Web",
     description:
@@ -121,7 +134,7 @@ export default async function RootLayout({
     },
   };
 
-  // JSON-LD structured data for search engines (static, no user input)
+  // JSON-LD structured data (static constants, no user input)
   const structuredData = JSON.stringify([organizationJsonLd, softwareJsonLd]);
 
   return (
@@ -130,13 +143,14 @@ export default async function RootLayout({
         <head>
           <script
             type="application/ld+json"
+            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: structuredData }}
           />
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${cairo.variable} antialiased`}
         >
-          <Providers>{children}</Providers>
+          <Providers initialLocale={locale}>{children}</Providers>
         </body>
       </html>
     </ConvexAuthNextjsServerProvider>

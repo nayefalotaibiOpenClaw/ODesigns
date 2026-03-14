@@ -17,7 +17,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
 
 export default function BillingPage() {

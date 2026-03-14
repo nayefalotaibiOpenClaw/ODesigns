@@ -10,7 +10,7 @@ import {
   Lock,
   Check,
 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useTheme as useNextTheme } from "next-themes";
 import { PostPreview, socialPosts } from "./shared";
 import { useLocale } from "@/lib/i18n/context";

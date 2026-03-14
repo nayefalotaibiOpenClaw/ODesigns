@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";

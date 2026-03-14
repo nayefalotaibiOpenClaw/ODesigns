@@ -5,7 +5,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Suspense, useEffect, useState, useRef } from "react";
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
 
 export default function PaymentSuccessPage() {

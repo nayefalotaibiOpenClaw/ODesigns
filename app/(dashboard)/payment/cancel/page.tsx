@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { XCircle, Loader2 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
 
 export default function PaymentCancelPage() {

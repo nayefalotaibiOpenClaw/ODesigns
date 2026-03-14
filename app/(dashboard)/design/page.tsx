@@ -7,7 +7,7 @@ import { downloadPostsAsZip, downloadPostsMultiRatio } from "@/lib/export/downlo
 import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext, HiddenComponentsContext, SetHiddenComponentsContext } from "@/contexts/EditContext";
 import { DeviceContext } from "@/contexts/DeviceContext";
 import { useTheme, useSetTheme, type Theme } from "@/contexts/ThemeContext";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useSearchParams } from "next/navigation";
 import { useConvexAuth, useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";

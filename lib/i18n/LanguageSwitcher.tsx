@@ -2,7 +2,7 @@
 
 import { useLocale } from "./context";
 import { useState, useRef, useEffect } from "react";
-import type { Locale } from "./types";
+import type { Locale } from "./config";
 
 const LANGUAGES: { code: Locale; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "EN" },

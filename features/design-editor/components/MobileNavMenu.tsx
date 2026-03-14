@@ -5,6 +5,7 @@ import { X, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SIDEBAR_ITEMS, type SidebarTab } from "./Sidebar";
 import { useLocale } from "@/lib/i18n/context";
+import { localizeHref } from "@/lib/i18n/utils";
 
 interface WorkspaceItem {
   _id: string;
@@ -23,7 +24,7 @@ export default function MobileNavMenu({ activeTab, onTabClick, workspaces, curre
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   useEffect(() => {
     if (!open) return;
@@ -63,7 +64,7 @@ export default function MobileNavMenu({ activeTab, onTabClick, workspaces, curre
                   onClick={() => {
                     setOpen(false);
                     if (ws._id !== currentWorkspaceId) {
-                      router.push(`/design?workspace=${ws._id}`);
+                      router.push(localizeHref(`/design?workspace=${ws._id}`, locale));
                     }
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${

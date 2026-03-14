@@ -4,9 +4,10 @@ import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useEffect, useCallback } from "react";
 import { Check, Sparkles, Zap, Crown, Loader2, X, AlertCircle, ArrowDown, ArrowUp, Gift } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/i18n/context";
+import { localizeHref } from "@/lib/i18n/utils";
 import FloatingNav from "@/app/components/FloatingNav";
 import type { TranslationKey } from "@/lib/i18n/types";
 
@@ -111,7 +112,7 @@ export default function PricingPage() {
 
   const handleSubscribe = async (planId: "starter" | "pro") => {
     if (!user) {
-      router.replace("/login");
+      router.replace(localizeHref("/login", locale));
       return;
     }
 
@@ -197,7 +198,7 @@ export default function PricingPage() {
 
   const handleStartTrial = async () => {
     if (!user) {
-      router.replace("/login");
+      router.replace(localizeHref("/login", locale));
       return;
     }
     setStartingTrial(true);
