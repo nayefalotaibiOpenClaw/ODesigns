@@ -220,7 +220,7 @@ export async function publishPhotoToTikTok(params: {
       "Content-Type": contentType,
       "Content-Length": String(imageData.length),
     },
-    body: imageData,
+    body: imageData as unknown as BodyInit,
   });
 
   if (!uploadRes.ok) {

@@ -112,7 +112,7 @@ export default function BulkScheduleModal({
   const [step, setStep] = useState<BulkStep>("type");
   const [selectedPostIds, setSelectedPostIds] = useState<Id<"posts">[]>([]);
   const [contentType, setContentType] = useState<ContentType>("image");
-  const [frequency, setFrequency] = useState<"daily" | "pick_days">("daily");
+  const [frequency, setFrequency] = useState<"now" | "daily" | "pick_days">("daily");
   const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]); // 0=Sun..6=Sat
   const [timesPerDay, setTimesPerDay] = useState(["09:00", "18:00"]);
   const [startDate, setStartDate] = useState(() => {
@@ -258,13 +258,41 @@ export default function BulkScheduleModal({
 
     // Helper: check if a date qualifies based on frequency
     const isValidDay = (date: Date) => {
-      if (frequency === "daily") return true;
+      if (frequency === "daily" || frequency === "now") return true;
       return selectedDays.includes(date.getDay());
     };
 
     // Total items to schedule
     const totalItems = isCarousel ? validCarouselGroups.length : selectedPostIds.length;
     if (totalItems === 0) return items;
+
+    // "Now" mode: schedule all posts for 1 minute from now
+    if (frequency === "now") {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 1, 0, 0);
+      for (let i = 0; i < totalItems; i++) {
+        if (isCarousel) {
+          const group = validCarouselGroups[i];
+          const originalIndex = carouselGroups.indexOf(group);
+          pushForAccounts({
+            postIndex: i + 1,
+            postId: group[0],
+            postTitle: `Carousel ${i + 1} (${group.length} slides)`,
+            dateTime: now,
+            carouselGroupIndex: originalIndex,
+          });
+        } else {
+          const post = allPosts?.find((p) => p._id === selectedPostIds[i]);
+          pushForAccounts({
+            postIndex: i + 1,
+            postId: selectedPostIds[i],
+            postTitle: post?.title || `Post ${i + 1}`,
+            dateTime: now,
+          });
+        }
+      }
+      return items;
+    }
 
     const start = new Date(startDate + "T00:00:00");
     let dayOffset = 0;
@@ -445,7 +473,7 @@ export default function BulkScheduleModal({
     switch (step) {
       case "type": return true;
       case "select": return isCarousel ? validCarouselGroups.length > 0 : selectedPostIds.length > 0;
-      case "schedule": return timesPerDay.length > 0 && startDate;
+      case "schedule": return frequency === "now" || (timesPerDay.length > 0 && startDate);
       case "channels": return skipChannels || selectedAccountIds.size > 0;
       case "preview": return timeline.length > 0;
       default: return false;
@@ -793,6 +821,7 @@ export default function BulkScheduleModal({
               <label className={`block text-xs font-semibold ${t.textMuted} uppercase tracking-wider mb-3`}>Frequency</label>
               <div className="flex gap-2">
                 {([
+                  { value: "now" as const, label: "Now" },
                   { value: "daily" as const, label: "Every day" },
                   { value: "pick_days" as const, label: "Pick days" },
                 ]).map((opt) => (
@@ -837,7 +866,7 @@ export default function BulkScheduleModal({
           )}
 
           {/* Times */}
-          <div className="p-4">
+          {frequency !== "now" && <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <label className={`text-xs font-semibold ${t.textMuted} uppercase tracking-wider`}>
                 {showMultipleTimes ? "Times per day" : "Publish time"}
@@ -868,10 +897,10 @@ export default function BulkScheduleModal({
                 </div>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Calendar + Timezone */}
-          <div className="p-4">
+          {frequency !== "now" && <div className="p-4">
             <label className={`block text-xs font-semibold ${t.textMuted} uppercase tracking-wider mb-3`}>
               {isCarousel ? "Publish date" : "Start date"}
             </label>
@@ -982,7 +1011,7 @@ export default function BulkScheduleModal({
               <span className={`text-[10px] font-semibold ${t.textMuted} uppercase tracking-wider`}>Timezone</span>
               <span className={`text-xs font-medium ${t.textSub}`}>{timezone}</span>
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Quick summary */}
@@ -993,9 +1022,8 @@ export default function BulkScheduleModal({
               : `${selectedPostIds.length} post${selectedPostIds.length !== 1 ? 's' : ''}`
             }
             {" · "}
-            {frequency === "daily" ? "every day" : `${selectedDays.length} day${selectedDays.length !== 1 ? "s" : ""}/week`}
-            {" · "}
-            {displayTimes.length} time{displayTimes.length !== 1 ? "s" : ""}/day
+            {frequency === "now" ? "publish now" : frequency === "daily" ? "every day" : `${selectedDays.length} day${selectedDays.length !== 1 ? "s" : ""}/week`}
+            {frequency !== "now" && <>{" · "}{displayTimes.length} time{displayTimes.length !== 1 ? "s" : ""}/day</>}
           </p>
         )}
       </div>
