@@ -34,7 +34,7 @@ async function verifyWithUPayments(trackId: string) {
       amount: parseFloat(txn.total_price) || 0,
     };
   } catch (err) {
-    console.error("UPayments verification error:", err);
+    console.error("UPayments verification error:", err instanceof Error ? err.message : "Unknown error");
     return null;
   }
 }
@@ -147,7 +147,7 @@ export const handlePaymentWebhook = httpAction(async (ctx, request) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("Webhook error:", error instanceof Error ? error.message : "Unknown error");
     return new Response(JSON.stringify({ status: "ok" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

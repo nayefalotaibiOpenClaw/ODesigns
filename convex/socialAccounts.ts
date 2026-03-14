@@ -1,6 +1,7 @@
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import { encrypt, decrypt } from "./lib/encryption";
 
 // List connected accounts for a workspace
 export const listByWorkspace = query({
@@ -42,7 +43,16 @@ export const get = query({
 export const getWithTokens = internalQuery({
   args: { id: v.id("socialAccounts") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const account = await ctx.db.get(args.id);
+    if (!account) return null;
+
+    return {
+      ...account,
+      accessToken: await decrypt(account.accessToken),
+      refreshToken: account.refreshToken
+        ? await decrypt(account.refreshToken)
+        : account.refreshToken,
+    };
   },
 });
 
@@ -83,11 +93,16 @@ export const connect = internalMutation({
           .first()
       : null;
 
+    const encryptedAccessToken = await encrypt(args.accessToken);
+    const encryptedRefreshToken = args.refreshToken
+      ? await encrypt(args.refreshToken)
+      : undefined;
+
     if (existing && existing.workspaceId === args.workspaceId) {
       // Update existing account
       await ctx.db.patch(existing._id, {
-        accessToken: args.accessToken,
-        refreshToken: args.refreshToken,
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
         tokenExpiresAt: args.tokenExpiresAt,
         scopes: args.scopes,
         canPublishPosts: args.canPublishPosts,
@@ -103,6 +118,8 @@ export const connect = internalMutation({
 
     return await ctx.db.insert("socialAccounts", {
       ...args,
+      accessToken: encryptedAccessToken,
+      refreshToken: encryptedRefreshToken,
       status: "active",
       connectedAt: Date.now(),
     });
@@ -150,7 +167,7 @@ export const updateToken = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, {
-      accessToken: args.accessToken,
+      accessToken: await encrypt(args.accessToken),
       tokenExpiresAt: args.tokenExpiresAt,
     });
   },
@@ -166,8 +183,8 @@ export const updateTokenWithRefresh = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, {
-      accessToken: args.accessToken,
-      refreshToken: args.refreshToken,
+      accessToken: await encrypt(args.accessToken),
+      refreshToken: await encrypt(args.refreshToken),
       tokenExpiresAt: args.tokenExpiresAt,
     });
   },
@@ -209,7 +226,16 @@ export const findExpiringSoon = internalQuery({
       )
       .take(100);
 
-    return accounts;
+    // Decrypt tokens for use in token refresh actions
+    return Promise.all(
+      accounts.map(async (account) => ({
+        ...account,
+        accessToken: await decrypt(account.accessToken),
+        refreshToken: account.refreshToken
+          ? await decrypt(account.refreshToken)
+          : account.refreshToken,
+      }))
+    );
   },
 });
 

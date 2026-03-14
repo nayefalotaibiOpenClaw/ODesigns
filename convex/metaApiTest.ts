@@ -5,6 +5,7 @@ import { action, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { auth } from "./auth";
+import { decrypt } from "./lib/encryption";
 
 const META_GRAPH_URL = "https://graph.facebook.com/v21.0";
 const IG_GRAPH_URL = "https://graph.instagram.com/v21.0";
@@ -173,10 +174,20 @@ export const runAllTests = action({
 export const getAccountsWithTokens = internalQuery({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const accounts = await ctx.db
       .query("socialAccounts")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
       .collect();
+
+    return Promise.all(
+      accounts.map(async (account) => ({
+        ...account,
+        accessToken: await decrypt(account.accessToken),
+        refreshToken: account.refreshToken
+          ? await decrypt(account.refreshToken)
+          : account.refreshToken,
+      }))
+    );
   },
 });
 

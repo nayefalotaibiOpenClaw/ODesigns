@@ -618,7 +618,7 @@ export const listScheduledByMonth = query({
     const all = await ctx.db
       .query("scheduledPosts")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-      .collect();
+      .take(200);
     return all.filter(
       (p) => p.scheduledFor >= args.monthStart && p.scheduledFor < args.monthEnd
     );
@@ -655,7 +655,7 @@ export const listScheduled = query({
     return await ctx.db
       .query("scheduledPosts")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-      .collect();
+      .take(200);
   },
 });
 
@@ -672,7 +672,7 @@ export const listHistory = query({
     return await ctx.db
       .query("publishHistory")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-      .collect();
+      .take(500);
   },
 });
 

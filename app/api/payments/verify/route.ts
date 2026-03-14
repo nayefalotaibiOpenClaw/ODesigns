@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
       transactionDate: txn.transaction_date,
     });
   } catch (error) {
-    console.error("Payment verify error:", error);
+    console.error("Payment verify error:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json({ error: "Verification failed" }, { status: 500 });
   }
 }

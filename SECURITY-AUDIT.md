@@ -175,7 +175,7 @@
 - **Files:** `app/api/generate/`, `app/api/adapt-ratio/`, `app/api/crawl-website/`, `app/api/fetch-website/`
 - **Issue:** No rate limiting. Combined with no auth, attackers can exhaust Gemini API quota rapidly.
 - **Fix:** Add rate limiting per-user or per-IP using middleware or `@upstash/ratelimit`.
-- [ ] Fixed
+- [x] Fixed
 
 ### 28. No Input Size Validation on AI Prompts
 - **File:** `app/api/generate/route.ts`
@@ -205,7 +205,7 @@
 - **File:** `convex/schema.ts` (line 309)
 - **Issue:** Social media access/refresh tokens stored as plaintext strings.
 - **Fix:** Encrypt tokens at rest using a server-side encryption key.
-- [ ] Fixed
+- [x] Fixed
 
 ### 33. Access Tokens Passed in URL Query Params (Meta API)
 - **File:** `lib/social-providers/meta.ts`
@@ -223,7 +223,7 @@
 - **Files:** `convex/posts.ts`, `convex/collections.ts`, `convex/assets.ts`, `convex/publishing.ts`
 - **Issue:** Multiple queries use `.collect()` without limits — unbounded results.
 - **Fix:** Add `.take(N)` limits or implement pagination.
-- [ ] Fixed
+- [x] Fixed
 
 ### 36. URL Params Rendered as Toast Messages
 - **Files:** `features/design-editor/components/PublishChannelsPage.tsx`, `app/(dashboard)/channels/page.tsx`
@@ -253,13 +253,13 @@
 - **File:** `app/api/payments/create/route.ts` (lines 97, 110)
 - **Issue:** Full payment request body and response logged via `console.log` including customer data.
 - **Fix:** Remove or reduce logging. Log only non-sensitive identifiers.
-- [ ] Fixed
+- [x] Fixed
 
 ### 41. Error Messages Leak Internal Details
 - **Files:** `app/api/generate/_shared.ts`, `app/api/crawl-website/route.ts`, `app/api/fetch-website/route.ts`
 - **Issue:** Internal error messages passed to client. Could expose paths, library versions, infrastructure details.
 - **Fix:** Return generic error messages to clients. Log detailed errors server-side only.
-- [ ] Fixed
+- [x] Fixed
 
 ---
 

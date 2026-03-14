@@ -62,7 +62,7 @@ export const listByWorkspace = query({
     return await ctx.db
       .query("collections")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-      .collect();
+      .take(200);
   },
 });
 
@@ -90,7 +90,7 @@ export const getVariants = query({
       .withIndex("by_source", (q) =>
         q.eq("sourceCollectionId", args.sourceCollectionId)
       )
-      .collect();
+      .take(100);
   },
 });
 
