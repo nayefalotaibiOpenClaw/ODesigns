@@ -114,7 +114,7 @@ export const runAllTests = action({
       if (igUserId) {
         results.push(await testApi(
           "instagram_business_manage_insights",
-          `${IG_GRAPH_URL}/${igUserId}/insights?metric=impressions&period=day&access_token=${token}`
+          `${IG_GRAPH_URL}/${igUserId}/insights?metric=reach&period=day&access_token=${token}`
         ));
       }
 
@@ -122,7 +122,7 @@ export const runAllTests = action({
       if (igUserId) {
         results.push(await testApi(
           "instagram_business_manage_messages",
-          `${META_GRAPH_URL}/${igUserId}/conversations?access_token=${token}`
+          `${IG_GRAPH_URL}/${igUserId}/conversations?access_token=${token}`
         ));
       }
     } else {
