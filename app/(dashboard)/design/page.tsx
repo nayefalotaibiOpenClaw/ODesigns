@@ -1508,7 +1508,7 @@ export default function DesignPage() {
                         <div className="px-3 pb-3 max-h-52 overflow-y-auto">
                           {assets && assets.filter((a) => a.url).length > 0 ? (
                             <div className="grid grid-cols-4 gap-1.5">
-                              {assets.filter((a) => a.url).map((asset) => {
+                              {assets.filter((a): a is typeof a & { url: string } => !!a.url).map((asset) => {
                                 const isSelected = contextAssetIds.has(asset._id);
                                 return (
                                   <button
