@@ -65,22 +65,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  // Dynamic blog pages (language-specific — blogs have en/ar versions with different slugs)
+  // Dynamic blog pages — only generate for the blog's own language
+  // English blogs get the default locale URL, Arabic blogs get /ar/ prefix
   let blogPages: MetadataRoute.Sitemap = [];
   try {
     const blogs = await fetchQuery(api.blogs.list, {});
-    blogPages = blogs.flatMap((blog) => {
+    blogPages = blogs.map((blog) => {
       const blogLocale = blog.language || "en";
       const path = `/blogs/${blog.slug}`;
-      // Blog posts are language-specific content, so only generate for their language
-      // But also generate for all UI locales so the chrome is translated
-      return LOCALES.map((locale) => ({
-        url: localizedUrl(baseUrl, path, locale),
+      return {
+        url: localizedUrl(baseUrl, path, blogLocale === "en" ? DEFAULT_LOCALE : blogLocale),
         lastModified: new Date(blog.publishedAt),
         changeFrequency: "monthly" as const,
-        priority: locale === blogLocale ? 0.7 : 0.5,
-        alternates: withAlternates(baseUrl, path),
-      }));
+        priority: 0.7,
+      };
     });
   } catch {
     // If Convex is unavailable during build, return static pages only
