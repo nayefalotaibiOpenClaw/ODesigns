@@ -17,9 +17,20 @@ function getEncryptionKey(): string {
   return key;
 }
 
-async function importKey(rawKeyBase64: string): Promise<CryptoKey> {
-  const rawKey = Uint8Array.from(atob(rawKeyBase64), (c) => c.charCodeAt(0));
-  return crypto.subtle.importKey("raw", rawKey, { name: ALGORITHM }, false, [
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+async function importKey(rawKey: string): Promise<CryptoKey> {
+  // Support both hex (64 chars) and base64 formats
+  const keyBytes = /^[0-9a-f]{64}$/i.test(rawKey)
+    ? hexToBytes(rawKey)
+    : Uint8Array.from(atob(rawKey), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey("raw", keyBytes.buffer as ArrayBuffer, { name: ALGORITHM }, false, [
     "encrypt",
     "decrypt",
   ]);
