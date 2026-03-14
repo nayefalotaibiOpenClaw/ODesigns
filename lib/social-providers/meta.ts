@@ -9,6 +9,9 @@ export const FACEBOOK_SCOPES = [
   "pages_show_list",
   "pages_read_engagement",
   "pages_manage_posts",
+  "business_management",
+  "instagram_manage_comments",
+  "public_profile",
 ];
 
 // ─── Instagram Business Login Scopes ────────────────────────────────
