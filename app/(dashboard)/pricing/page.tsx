@@ -80,11 +80,7 @@ export default function PricingPage() {
   const dismissToast = useCallback(() => setToast(null), []);
   const { t, locale } = useLocale();
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated && process.env.NODE_ENV !== "development") {
-      window.location.href = "/login";
-    }
-  }, [authLoading, isAuthenticated]);
+  // Auth handled by dashboard layout
 
   if (authLoading || user === undefined) {
     return (
@@ -212,10 +208,10 @@ export default function PricingPage() {
     setLoadingPlan(planId);
     try {
       await downgradeMut({ newPlan: planId, newBillingPeriod: billingPeriod });
-      alert("Plan downgraded successfully!");
+      setToast("Plan downgraded successfully!");
     } catch (err) {
       console.error("Downgrade error:", err);
-      alert(err instanceof Error ? err.message : "Something went wrong.");
+      setToast(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoadingPlan(null);
     }
@@ -225,9 +221,9 @@ export default function PricingPage() {
     setStartingTrial(true);
     try {
       await startTrialMut();
-      alert("Free trial started! You can now generate up to 6 ads.");
+      setToast("Free trial started! You can now generate up to 6 ads.");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Something went wrong.");
+      setToast(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setStartingTrial(false);
     }

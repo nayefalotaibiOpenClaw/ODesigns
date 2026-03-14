@@ -976,12 +976,7 @@ export default function DesignPage() {
     }
   }, [selectedPosts, posts, aspectRatio]);
 
-  // Redirect unauthenticated users
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated && process.env.NODE_ENV !== "development") {
-      window.location.href = "/login";
-    }
-  }, [authLoading, isAuthenticated]);
+  // Auth handled by dashboard layout
 
   // Loading state
   if (authLoading || user === undefined) {

@@ -30,12 +30,17 @@ export default function BillingPage() {
 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+  // Auto-dismiss toast
   useEffect(() => {
-    if (!authLoading && !isAuthenticated && process.env.NODE_ENV !== "development") {
-      window.location.href = "/login";
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
     }
-  }, [authLoading, isAuthenticated]);
+  }, [toast]);
+
+  // Auth handled by dashboard layout
 
   if (authLoading || user === undefined || usage === undefined) {
     return (
@@ -67,9 +72,9 @@ export default function BillingPage() {
     try {
       await cancelSub();
       setShowCancelConfirm(false);
-      alert("Subscription cancelled successfully.");
+      setToast({ type: "success", message: "Subscription cancelled successfully." });
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to cancel subscription");
+      setToast({ type: "error", message: err instanceof Error ? err.message : "Failed to cancel subscription" });
     } finally {
       setCancelling(false);
     }
@@ -129,6 +134,23 @@ export default function BillingPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-6 end-6 z-50 animate-in slide-in-from-top-2 fade-in duration-300`}>
+          <div className={`flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl backdrop-blur-sm max-w-sm border ${
+            toast.type === "success"
+              ? "bg-emerald-950/90 border-emerald-800/50 text-emerald-200"
+              : "bg-red-950/90 border-red-800/50 text-red-200"
+          }`}>
+            {toast.type === "success" ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" /> : <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />}
+            <p className="text-sm font-medium flex-1">{toast.message}</p>
+            <button onClick={() => setToast(null)} className="opacity-60 hover:opacity-100 transition shrink-0">
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto px-6 py-16">
         {/* Header */}
         <div className="mb-10">

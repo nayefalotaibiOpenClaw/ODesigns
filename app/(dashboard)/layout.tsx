@@ -2,6 +2,7 @@
 
 import { useConvexAuth } from "convex/react";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -10,13 +11,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
+  const router = useRouter();
 
-  // Issue 31: Dashboard-level auth guard
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      window.location.href = "/login";
+      router.replace("/login");
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, router]);
 
   if (isLoading) {
     return (
