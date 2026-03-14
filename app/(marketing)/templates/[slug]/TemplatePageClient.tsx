@@ -3,9 +3,10 @@
 import React from "react";
 import Link from "@/lib/i18n/LocaleLink";
 import { motion } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import { useLocale } from "@/lib/i18n/context";
-import { getLocalizedTemplatePage } from "@/lib/seo/templates";
 import { ArrowRight, Sparkles, Lightbulb } from "lucide-react";
 
 // Post components for showcase
@@ -94,9 +95,26 @@ const showcasePosts = [
 
 export default function TemplatePageClient({ slug }: { slug: string }) {
   const { dir, t, locale } = useLocale();
-  const template = getLocalizedTemplatePage(slug, locale);
+  const dbLanguage = locale === "ar" ? "ar" as const : "en" as const;
+  const template = useQuery(api.blogs.getBySlugAndType, {
+    slug,
+    type: "template",
+    language: dbLanguage,
+  });
+
+  if (template === undefined) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!template) return null;
+
+  // Extract sections by type
+  const examples = (template.sections || []).filter(s => s.sectionType === "example");
+  const tips = (template.sections || []).filter(s => s.sectionType === "tip");
 
   return (
     <div
@@ -201,7 +219,7 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
             {t("templates.whatYouCanCreateDesc")}
           </motion.p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {template.examples.map((example, i) => (
+            {examples.map((example, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -262,7 +280,7 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
               <p className="text-slate-500 dark:text-neutral-400 text-lg mb-8">
                 {t("templates.designTipsDesc")}
               </p>
-              {template.tips.map((tip, i) => (
+              {tips.map((tip, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: 20 }}
@@ -311,10 +329,10 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
           >
             <Sparkles className="w-10 h-10 mx-auto mb-8" />
             <h2 className="text-4xl md:text-6xl font-black mb-6">
-              {template.cta.title}
+              {template.ctaTitle}
             </h2>
             <p className="text-xl text-slate-400 mb-12 max-w-xl mx-auto">
-              {template.cta.subtitle}
+              {template.ctaSubtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { templatePages, getTemplatePageBySlug } from "@/lib/seo/templates";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
 import { generateAlternates } from "@/lib/i18n/seo";
 import TemplatePageClient from "./TemplatePageClient";
 
 const BASE_URL = "https://odesigns.app";
-
-export async function generateStaticParams() {
-  return templatePages.map((tp) => ({ slug: tp.slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -16,39 +13,54 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const template = getTemplatePageBySlug(slug);
 
-  if (!template) {
-    return { title: "Not Found | oDesigns" };
+  try {
+    const template = await fetchQuery(api.blogs.getBySlugAndType, {
+      slug,
+      type: "template",
+      language: "en",
+    });
+
+    if (!template) {
+      return { title: "Not Found | oDesigns" };
+    }
+
+    const metaTitle = template.metaTitle || template.title;
+    const metaDescription = template.excerpt;
+
+    return {
+      title: metaTitle,
+      description: metaDescription,
+      keywords: template.keywords,
+      openGraph: {
+        title: metaTitle,
+        description: metaDescription,
+        url: `${BASE_URL}/templates/${template.slug}`,
+        siteName: "oDesigns",
+        type: "website",
+        images: [
+          {
+            url: `${BASE_URL}/og-image.png`,
+            width: 1200,
+            height: 1200,
+            alt: template.title,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: metaTitle,
+        description: metaDescription,
+        images: [`${BASE_URL}/og-image.png`],
+      },
+      alternates: generateAlternates(`/templates/${template.slug}`),
+    };
+  } catch {
+    return {
+      title: "Template | oDesigns",
+      description: "Explore AI-powered social media post templates.",
+    };
   }
-
-  return {
-    title: template.metaTitle,
-    description: template.metaDescription,
-    keywords: template.keywords,
-    openGraph: {
-      title: template.metaTitle,
-      description: template.metaDescription,
-      url: `${BASE_URL}/templates/${template.slug}`,
-      siteName: "oDesigns",
-      type: "website",
-      images: [
-        {
-          url: `${BASE_URL}/og-image.png`,
-          width: 1200,
-          height: 1200,
-          alt: template.title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: template.metaTitle,
-      description: template.metaDescription,
-      images: [`${BASE_URL}/og-image.png`],
-    },
-    alternates: generateAlternates(`/templates/${template.slug}`),
-  };
 }
 
 export default async function TemplateDetailPage({
@@ -57,7 +69,17 @@ export default async function TemplateDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const template = getTemplatePageBySlug(slug);
+
+  let template = null;
+  try {
+    template = await fetchQuery(api.blogs.getBySlugAndType, {
+      slug,
+      type: "template",
+      language: "en",
+    });
+  } catch {
+    // If Convex is unavailable during build, 404
+  }
 
   if (!template) {
     notFound();
@@ -67,7 +89,7 @@ export default async function TemplateDetailPage({
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: template.title,
-    description: template.metaDescription,
+    description: template.excerpt,
     url: `${BASE_URL}/templates/${template.slug}`,
     publisher: {
       "@type": "Organization",
@@ -76,15 +98,12 @@ export default async function TemplateDetailPage({
     },
   };
 
-  // Static JSON-LD from hardcoded source data, not user input
+  // Safe: structured data built from server-fetched Convex DB records, not user input
   const structuredData = JSON.stringify(jsonLd);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: structuredData }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
       <TemplatePageClient slug={slug} />
     </>
   );

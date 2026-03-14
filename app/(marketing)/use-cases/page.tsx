@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "@/lib/i18n/LocaleLink";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import { useLocale } from "@/lib/i18n/context";
-import { useCases, getLocalizedUseCase } from "@/lib/seo/use-cases";
 import { ArrowRight } from "lucide-react";
 
 export default function UseCasesIndexPage() {
   const { dir, t, locale } = useLocale();
+  const dbLanguage = locale === "ar" ? "ar" as const : "en" as const;
+  const useCases = useQuery(api.blogs.listByType, {
+    type: "use-case",
+    language: dbLanguage,
+  });
 
   return (
     <div
@@ -29,29 +35,32 @@ export default function UseCasesIndexPage() {
 
       <section className="pb-32 px-6">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-          {useCases.map((uc) => {
-            const localized = getLocalizedUseCase(uc.slug, locale) || uc;
-            return (
-            <Link
-              key={uc.slug}
-              href={`/use-cases/${uc.slug}`}
-              className="group block"
-            >
-              <article className="rounded-2xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] hover:border-slate-200 dark:hover:border-neutral-700 hover:shadow-lg transition-all duration-300 p-8 h-full flex flex-col">
-                <h2 className="text-xl font-bold mb-3 group-hover:text-slate-700 dark:group-hover:text-neutral-300 transition-colors">
-                  {localized.title}
-                </h2>
-                <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed flex-1">
-                  {localized.metaDescription}
-                </p>
-                <div className="mt-6 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white group-hover:gap-3 transition-all">
-                  {t("useCases.learnMore")}
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </article>
-            </Link>
-          );
-          })}
+          {useCases === undefined ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-slate-100 dark:border-neutral-800 p-8 h-48 animate-pulse bg-slate-50 dark:bg-neutral-900" />
+            ))
+          ) : (
+            useCases.map((uc) => (
+              <Link
+                key={uc._id}
+                href={`/use-cases/${uc.slug}`}
+                className="group block"
+              >
+                <article className="rounded-2xl border border-slate-100 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] hover:border-slate-200 dark:hover:border-neutral-700 hover:shadow-lg transition-all duration-300 p-8 h-full flex flex-col">
+                  <h2 className="text-xl font-bold mb-3 group-hover:text-slate-700 dark:group-hover:text-neutral-300 transition-colors">
+                    {uc.title}
+                  </h2>
+                  <p className="text-slate-500 dark:text-neutral-400 text-sm leading-relaxed flex-1">
+                    {uc.excerpt}
+                  </p>
+                  <div className="mt-6 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white group-hover:gap-3 transition-all">
+                    {t("useCases.learnMore")}
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </article>
+              </Link>
+            ))
+          )}
         </div>
       </section>
 
@@ -65,16 +74,10 @@ export default function UseCasesIndexPage() {
             <a href="#" className="hover:text-slate-900 dark:hover:text-white">
               {t("footer.linkedin")}
             </a>
-            <a
-              href="/terms"
-              className="hover:text-slate-900 dark:hover:text-white"
-            >
+            <a href="/terms" className="hover:text-slate-900 dark:hover:text-white">
               {t("footer.termsOfService")}
             </a>
-            <a
-              href="/privacy"
-              className="hover:text-slate-900 dark:hover:text-white"
-            >
+            <a href="/privacy" className="hover:text-slate-900 dark:hover:text-white">
               {t("footer.privacyPolicy")}
             </a>
           </div>

@@ -3,9 +3,10 @@
 import React from "react";
 import Link from "@/lib/i18n/LocaleLink";
 import { motion } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import { useLocale } from "@/lib/i18n/context";
-import { getLocalizedUseCase } from "@/lib/seo/use-cases";
 import {
   ArrowRight,
   Sparkles,
@@ -114,9 +115,27 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function UseCaseClient({ slug }: { slug: string }) {
   const { dir, t, locale } = useLocale();
-  const useCase = getLocalizedUseCase(slug, locale);
+  const dbLanguage = locale === "ar" ? "ar" as const : "en" as const;
+  const useCase = useQuery(api.blogs.getBySlugAndType, {
+    slug,
+    type: "use-case",
+    language: dbLanguage,
+  });
+
+  if (useCase === undefined) {
+    // Loading
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!useCase) return null;
+
+  // Extract sections by type
+  const painPoints = (useCase.sections || []).filter(s => s.sectionType === "painPoint");
+  const features = (useCase.sections || []).filter(s => s.sectionType === "feature");
 
   return (
     <div
@@ -245,7 +264,7 @@ export default function UseCaseClient({ slug }: { slug: string }) {
             {t("useCases.builtForWorkflow")}
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {useCase.painPoints.map((point, i) => (
+            {painPoints.map((point, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -286,8 +305,8 @@ export default function UseCaseClient({ slug }: { slug: string }) {
               <p className="text-slate-500 dark:text-neutral-400 text-lg max-w-lg">
                 {t("useCases.everythingYouNeedDesc")}
               </p>
-              {useCase.features.map((feature, i) => {
-                const Icon = iconMap[feature.icon] || Sparkles;
+              {features.map((feature, i) => {
+                const Icon = iconMap[feature.icon || ""] || Sparkles;
                 return (
                   <motion.div
                     key={i}
@@ -366,10 +385,10 @@ export default function UseCaseClient({ slug }: { slug: string }) {
           >
             <Sparkles className="w-10 h-10 mx-auto mb-8" />
             <h2 className="text-4xl md:text-6xl font-black mb-6">
-              {useCase.cta.title}
+              {useCase.ctaTitle}
             </h2>
             <p className="text-xl text-slate-400 mb-12 max-w-xl mx-auto">
-              {useCase.cta.subtitle}
+              {useCase.ctaSubtitle}
             </p>
             <Link
               href="/login"

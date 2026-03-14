@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
-import { useCases } from "@/lib/seo/use-cases";
-import { templatePages } from "@/lib/seo/templates";
 import { LOCALES, DEFAULT_LOCALE } from "@/lib/i18n/config";
 
 function localizedUrl(baseUrl: string, path: string, locale: string): string {
@@ -43,30 +41,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  // Use case pages (all locales)
-  const useCasePages: MetadataRoute.Sitemap = useCases.flatMap((uc) =>
-    LOCALES.map((locale) => ({
-      url: localizedUrl(baseUrl, `/use-cases/${uc.slug}`, locale),
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: locale === DEFAULT_LOCALE ? 0.7 : 0.6,
-      alternates: withAlternates(baseUrl, `/use-cases/${uc.slug}`),
-    }))
-  );
+  // Dynamic use-case and template pages from DB
+  let useCasePages: MetadataRoute.Sitemap = [];
+  let templateSitemapPages: MetadataRoute.Sitemap = [];
+  try {
+    const useCases = await fetchQuery(api.blogs.listByType, { type: "use-case", language: "en" });
+    const uniqueUseCaseSlugs = [...new Set(useCases.map((uc) => uc.slug))];
+    useCasePages = uniqueUseCaseSlugs.flatMap((slug) =>
+      LOCALES.map((locale) => ({
+        url: localizedUrl(baseUrl, `/use-cases/${slug}`, locale),
+        lastModified: new Date(),
+        changeFrequency: "monthly" as const,
+        priority: locale === DEFAULT_LOCALE ? 0.7 : 0.6,
+        alternates: withAlternates(baseUrl, `/use-cases/${slug}`),
+      }))
+    );
 
-  // Template pages (all locales)
-  const templateSitemapPages: MetadataRoute.Sitemap = templatePages.flatMap((tp) =>
-    LOCALES.map((locale) => ({
-      url: localizedUrl(baseUrl, `/templates/${tp.slug}`, locale),
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: locale === DEFAULT_LOCALE ? 0.7 : 0.6,
-      alternates: withAlternates(baseUrl, `/templates/${tp.slug}`),
-    }))
-  );
+    const templates = await fetchQuery(api.blogs.listByType, { type: "template", language: "en" });
+    const uniqueTemplateSlugs = [...new Set(templates.map((tp) => tp.slug))];
+    templateSitemapPages = uniqueTemplateSlugs.flatMap((slug) =>
+      LOCALES.map((locale) => ({
+        url: localizedUrl(baseUrl, `/templates/${slug}`, locale),
+        lastModified: new Date(),
+        changeFrequency: "monthly" as const,
+        priority: locale === DEFAULT_LOCALE ? 0.7 : 0.6,
+        alternates: withAlternates(baseUrl, `/templates/${slug}`),
+      }))
+    );
+  } catch {
+    // If Convex is unavailable during build, skip dynamic pages
+  }
 
   // Dynamic blog pages — only generate for the blog's own language
-  // English blogs get the default locale URL, Arabic blogs get /ar/ prefix
   let blogPages: MetadataRoute.Sitemap = [];
   try {
     const blogs = await fetchQuery(api.blogs.list, {});
