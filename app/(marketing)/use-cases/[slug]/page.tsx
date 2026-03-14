@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
@@ -7,18 +8,36 @@ import UseCaseClient from "./UseCaseClient";
 
 const BASE_URL = "https://odesigns.app";
 
+function getLocaleLanguage(headerLocale: string | null): "en" | "ar" {
+  return headerLocale === "ar" ? "ar" : "en";
+}
+
+export async function generateStaticParams() {
+  try {
+    const useCases = await fetchQuery(api.blogs.listByType, {
+      type: "use-case",
+      language: "en",
+    });
+    return useCases.map((uc) => ({ slug: uc.slug }));
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const headersList = await headers();
+  const language = getLocaleLanguage(headersList.get("x-locale"));
 
   try {
     const useCase = await fetchQuery(api.blogs.getBySlugAndType, {
       slug,
       type: "use-case",
-      language: "en",
+      language,
     });
 
     if (!useCase) {
@@ -59,6 +78,7 @@ export async function generateMetadata({
     return {
       title: "Use Case | oDesigns",
       description: "Discover how oDesigns helps your business with AI-powered social media design.",
+      alternates: generateAlternates(`/use-cases/${slug}`),
     };
   }
 }
@@ -69,13 +89,15 @@ export default async function UseCasePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const headersList = await headers();
+  const language = getLocaleLanguage(headersList.get("x-locale"));
 
   let useCase = null;
   try {
     useCase = await fetchQuery(api.blogs.getBySlugAndType, {
       slug,
       type: "use-case",
-      language: "en",
+      language,
     });
   } catch {
     // If Convex is unavailable during build, 404
@@ -91,6 +113,8 @@ export default async function UseCasePage({
     name: useCase.title,
     description: useCase.excerpt,
     url: `${BASE_URL}/use-cases/${useCase.slug}`,
+    inLanguage: useCase.language || "en",
+    datePublished: new Date(useCase.publishedAt).toISOString(),
     publisher: {
       "@type": "Organization",
       name: "oDesigns",
