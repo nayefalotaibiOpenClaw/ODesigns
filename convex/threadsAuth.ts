@@ -22,7 +22,7 @@ export const handleThreadsCallback = httpAction(async (ctx, request) => {
 
   const designUrl = (workspaceId: string | null, params: string) => {
     if (workspaceId) {
-      return `${appUrl}/design?workspaceId=${workspaceId}&${params}`;
+      return `${appUrl}/design?workspace=${workspaceId}&${params}`;
     }
     return `${appUrl}/channels?${params}`;
   };
