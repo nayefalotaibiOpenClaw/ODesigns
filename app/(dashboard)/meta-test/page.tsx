@@ -39,8 +39,8 @@ export default function MetaTestPage() {
     try {
       const res = await runTests({ workspaceId: selectedWorkspace });
       setResults(res);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }

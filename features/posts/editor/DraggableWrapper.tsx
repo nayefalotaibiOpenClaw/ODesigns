@@ -218,16 +218,20 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
     if (saved.x !== 0 || saved.y !== 0) {
       x.set(saved.x);
       y.set(saved.y);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasCustomPosition(true);
     }
     if (savedTransforms.rotateX !== 0 || savedTransforms.rotateY !== 0 || savedTransforms.rotateZ !== 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasCustomPosition(true);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTransforms(savedTransforms);
   }, [id, x, y]);
 
   useEffect(() => {
     if (!isSelected || !wrapperRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToolbarPos(null);
       return;
     }

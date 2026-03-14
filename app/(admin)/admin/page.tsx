@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import {
   Loader2, Users, CreditCard, TrendingUp, Cpu, DollarSign, UserPlus,
   LayoutGrid, FileText, ChevronDown, ChevronUp, RotateCcw, CalendarPlus,
@@ -145,7 +146,33 @@ const STATUS_BADGE: Record<string, string> = {
 
 // ── User Row ──
 
-function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onToggle: () => void }) {
+interface AdminUserData {
+  _id: Id<"users">;
+  name?: string;
+  email?: string;
+  image?: string;
+  plan?: string;
+  role?: string;
+  createdAt?: number;
+  workspaceCount: number;
+  aiCost: number;
+  subscription: {
+    _id: Id<"subscriptions">;
+    plan: string;
+    billingPeriod?: string;
+    status: string;
+    aiTokensUsed: number;
+    aiTokensLimit: number;
+    postsUsed: number;
+    postsLimit: number;
+    amountPaid: number;
+    expiresAt: number;
+    startsAt: number;
+    createdAt: number;
+  } | null;
+}
+
+function UserRow({ u, isExpanded, onToggle }: { u: AdminUserData; isExpanded: boolean; onToggle: () => void }) {
   const { t, locale } = useLocale();
   const [loading, setLoading] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -171,9 +198,10 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
   const updateRole = useMutation(api.admin.updateUserRole);
 
   const sub = u.subscription;
-  const isActive = sub?.status === "active" && sub?.expiresAt >= Date.now();
+  const [now] = useState(() => Date.now());
+  const isActive = sub?.status === "active" && sub?.expiresAt >= now;
 
-  const run = async (name: string, fn: () => Promise<any>) => {
+  const run = async (name: string, fn: () => Promise<unknown>) => {
     setLoading(name);
     try { await fn(); } catch (e) { console.error(e); }
     setLoading(null);
@@ -194,8 +222,8 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
     if (!sub) return;
     run("save", () => updateSub({
       subscriptionId: sub._id,
-      plan: editPlan as any,
-      billingPeriod: editPeriod as any,
+      plan: editPlan as "trial" | "starter" | "pro",
+      billingPeriod: editPeriod as "monthly" | "yearly",
       aiTokensLimit: editTokensLimit,
       postsLimit: editPostsLimit,
       expiresAt: parseDateInput(editExpiresAt),
@@ -213,7 +241,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
 
   const openCreate = () => {
     const plan = (u.plan === "pro" || u.plan === "starter") ? u.plan : "starter";
-    setNewPlan(plan as any);
+    setNewPlan(plan as "trial" | "starter" | "pro");
     setNewPeriod("monthly");
     applyDefaults(plan, "monthly");
     setShowCreate(true);
@@ -412,7 +440,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div>
                       <label className="text-[10px] text-slate-500 dark:text-neutral-500 block mb-1">{t("admin.planLabel")}</label>
-                      <select value={newPlan} onChange={e => { const p = e.target.value as any; setNewPlan(p); applyDefaults(p, newPeriod); }}
+                      <select value={newPlan} onChange={e => { const p = e.target.value as "trial" | "starter" | "pro"; setNewPlan(p); applyDefaults(p, newPeriod); }}
                         className={selectClass}>
                         <option value="trial">{t("admin.trial")}</option>
                         <option value="starter">{t("admin.starter")}</option>
@@ -421,7 +449,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 dark:text-neutral-500 block mb-1">{t("admin.period")}</label>
-                      <select value={newPeriod} onChange={e => { const p = e.target.value as any; setNewPeriod(p); applyDefaults(newPlan, p); }}
+                      <select value={newPeriod} onChange={e => { const p = e.target.value as "monthly" | "yearly"; setNewPeriod(p); applyDefaults(newPlan, p); }}
                         className={selectClass}>
                         <option value="monthly">{t("admin.monthly")}</option>
                         <option value="yearly">{t("admin.yearly")}</option>

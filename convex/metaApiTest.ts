@@ -191,6 +191,7 @@ export const getAccountsWithTokens = internalQuery({
   },
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchJson(url: string): Promise<any> {
   try {
     const res = await fetch(url);
@@ -208,7 +209,7 @@ async function testApi(permission: string, url: string): Promise<TestResult> {
       return { permission, status: "error", error: data.error.message };
     }
     return { permission, status: "success", data };
-  } catch (e: any) {
-    return { permission, status: "error", error: e.message };
+  } catch (e: unknown) {
+    return { permission, status: "error", error: e instanceof Error ? e.message : String(e) };
   }
 }

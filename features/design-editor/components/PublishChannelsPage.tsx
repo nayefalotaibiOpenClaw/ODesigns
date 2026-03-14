@@ -134,7 +134,7 @@ export default function PublishChannelsPage({
 
   const handleConnect = (provider: "instagram" | "facebook" | "twitter" | "threads") => {
     const params = new URLSearchParams({ workspaceId, userId });
-    window.location.href = `/api/social-auth/${provider}/authorize?${params.toString()}`;
+    window.location.assign(`/api/social-auth/${provider}/authorize?${params.toString()}`);
   };
 
   const handleDisconnect = async (accountId: Id<"socialAccounts">) => {

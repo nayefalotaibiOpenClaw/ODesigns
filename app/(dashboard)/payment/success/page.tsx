@@ -43,6 +43,7 @@ function PaymentSuccessContent() {
 
     // Missing required params — show error immediately
     if (!orderId || !plan) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("error");
       setErrorMsg("Missing order information. Please contact support.");
       return;

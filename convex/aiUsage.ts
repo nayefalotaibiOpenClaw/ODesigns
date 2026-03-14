@@ -1,4 +1,5 @@
-import { mutation, internalMutation } from "./_generated/server";
+import { mutation, internalMutation, type QueryCtx, type MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { auth } from "./auth";
 
@@ -25,10 +26,10 @@ const categoryValidator = v.union(
 );
 
 // Helper to find user's usable subscription
-async function findUsableSub(ctx: { db: any }, userId: any) {
+async function findUsableSub(ctx: { db: QueryCtx["db"] | MutationCtx["db"] }, userId: Id<"users">) {
   const activeSub = await ctx.db
     .query("subscriptions")
-    .withIndex("by_user_status", (q: any) =>
+    .withIndex("by_user_status", (q) =>
       q.eq("userId", userId).eq("status", "active")
     )
     .first();
@@ -37,7 +38,7 @@ async function findUsableSub(ctx: { db: any }, userId: any) {
 
   const cancelledSub = await ctx.db
     .query("subscriptions")
-    .withIndex("by_user_status", (q: any) =>
+    .withIndex("by_user_status", (q) =>
       q.eq("userId", userId).eq("status", "cancelled")
     )
     .first();

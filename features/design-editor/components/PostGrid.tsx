@@ -45,7 +45,7 @@ function injectMockup(code: string, src: string): string {
   }
 
   // Fallback: insert after the first opening child of root (after second >)
-  let firstChild = code.indexOf('>');
+  const firstChild = code.indexOf('>');
   if (firstChild !== -1) {
     const secondTag = code.indexOf('>', firstChild + 1);
     if (secondTag !== -1) {

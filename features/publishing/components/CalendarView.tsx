@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import { ChevronLeft, ChevronRight, X, Instagram, Facebook, Send, Clock, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { formatTime, getStatusColor, getCalendarColor, getDaysInMonth, getFirstDayOfMonth, type ScheduleStatus } from "./helpers";
@@ -60,7 +60,7 @@ export default function CalendarView({
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
-  const postsByDay = useMemo(() => {
+  const postsByDay = (() => {
     const map: Record<number, ScheduledPost[]> = {};
     for (const post of scheduledPosts) {
       const d = new Date(post.scheduledFor);
@@ -71,7 +71,7 @@ export default function CalendarView({
       }
     }
     return map;
-  }, [scheduledPosts, year, month]);
+  })();
 
   const selectedPosts = selectedDay ? postsByDay[selectedDay] || [] : [];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

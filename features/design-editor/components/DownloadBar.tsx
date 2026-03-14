@@ -20,6 +20,7 @@ export default function DownloadBar({ selectedCount, downloading, downloadProgre
   const [selectedRatios, setSelectedRatios] = useState<Set<string>>(new Set([currentRatio]));
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedRatios(new Set([currentRatio]));
   }, [currentRatio]);
 

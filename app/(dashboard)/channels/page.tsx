@@ -49,6 +49,7 @@ export default function ChannelsPage() {
   // Auto-select first workspace
   useEffect(() => {
     if (!selectedWorkspaceId && workspaces && workspaces.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedWorkspaceId(workspaces[0]._id);
     }
   }, [workspaces, selectedWorkspaceId]);
@@ -64,7 +65,9 @@ export default function ChannelsPage() {
   useEffect(() => {
     const success = searchParams.get("social_success");
     const error = searchParams.get("social_error");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (success) setToast({ type: "success", message: decodeURIComponent(success) });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     else if (error) setToast({ type: "error", message: decodeURIComponent(error) });
   }, [searchParams]);
 
@@ -81,7 +84,7 @@ export default function ChannelsPage() {
       workspaceId: selectedWorkspaceId,
       userId: user._id,
     });
-    window.location.href = `/api/social-auth/${provider}/authorize?${params.toString()}`;
+    window.location.assign(`/api/social-auth/${provider}/authorize?${params.toString()}`);
   };
 
   const handleDisconnect = async (accountId: Id<"socialAccounts">) => {

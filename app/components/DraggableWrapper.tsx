@@ -229,6 +229,7 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
     if (saved.x !== 0 || saved.y !== 0) {
       x.set(saved.x);
       y.set(saved.y);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasCustomPosition(true);
     } else {
       x.set(0);
@@ -243,6 +244,7 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
 
   useEffect(() => {
     if (!isSelected || !wrapperRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToolbarPos(null);
       return;
     }

@@ -18,6 +18,7 @@ import type * as collections from "../collections.js";
 import type * as crons from "../crons.js";
 import type * as generations from "../generations.js";
 import type * as http from "../http.js";
+import type * as lib_encryption from "../lib/encryption.js";
 import type * as metaApiTest from "../metaApiTest.js";
 import type * as payments from "../payments.js";
 import type * as posts from "../posts.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   generations: typeof generations;
   http: typeof http;
+  "lib/encryption": typeof lib_encryption;
   metaApiTest: typeof metaApiTest;
   payments: typeof payments;
   posts: typeof posts;

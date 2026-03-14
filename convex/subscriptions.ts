@@ -1,4 +1,5 @@
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, type QueryCtx, type MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { auth } from "./auth";
 
@@ -36,11 +37,11 @@ const BILLING_DURATION = {
 } as const;
 
 // Helper to find user's usable subscription (active or cancelled but not yet expired)
-async function findUsableSub(ctx: { db: any }, userId: any) {
+async function findUsableSub(ctx: { db: QueryCtx["db"] | MutationCtx["db"] }, userId: Id<"users">) {
   // Check active first
   const activeSub = await ctx.db
     .query("subscriptions")
-    .withIndex("by_user_status", (q: any) =>
+    .withIndex("by_user_status", (q) =>
       q.eq("userId", userId).eq("status", "active")
     )
     .first();
@@ -50,7 +51,7 @@ async function findUsableSub(ctx: { db: any }, userId: any) {
   // Check cancelled — still usable until expiresAt
   const cancelledSub = await ctx.db
     .query("subscriptions")
-    .withIndex("by_user_status", (q: any) =>
+    .withIndex("by_user_status", (q) =>
       q.eq("userId", userId).eq("status", "cancelled")
     )
     .first();

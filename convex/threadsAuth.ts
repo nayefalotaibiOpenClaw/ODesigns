@@ -1,4 +1,5 @@
 import { httpAction } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
 const THREADS_API_URL = "https://graph.threads.net/v1.0";
@@ -121,9 +122,9 @@ export const handleThreadsCallback = httpAction(async (ctx, request) => {
 
     // Step 4: Store in DB
     await ctx.runMutation(internal.socialAccounts.connect, {
-      userId: state.userId as any,
-      workspaceId: state.workspaceId as any,
-      provider: "threads" as any,
+      userId: state.userId as Id<"users">,
+      workspaceId: state.workspaceId as Id<"workspaces">,
+      provider: "threads" as const,
       providerUserId: threadsUserId,
       providerAccountId: userData.id || threadsUserId,
       providerAccountName: userData.username || "Threads User",
@@ -144,8 +145,8 @@ export const handleThreadsCallback = httpAction(async (ctx, request) => {
 
     const msg = encodeURIComponent(`Connected: Threads: @${userData.username || "user"}`);
     return redirect(designUrl(state.workspaceId, `social_success=${msg}`));
-  } catch (e: any) {
-    const msg = encodeURIComponent(e.message || "Threads connection failed");
+  } catch (e: unknown) {
+    const msg = encodeURIComponent(e instanceof Error ? e.message : "Threads connection failed");
     return redirect(designUrl(state.workspaceId, `social_error=${msg}`));
   }
 });

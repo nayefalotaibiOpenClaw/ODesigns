@@ -92,7 +92,7 @@ export default function SeasonsParentsBundlePost({ variant = 1 }: { variant: Par
                   <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-white font-black">2</div>
                   <div className="text-right flex-1" dir="rtl">
                      <h3 className="text-xl font-black text-slate-900 underline decoration-amber-400 decoration-4">ولا تنسى هدية الأب</h3>
-                     <p className="text-xs font-bold opacity-50 tracking-widest uppercase">Don't Forget Him</p>
+                     <p className="text-xs font-bold opacity-50 tracking-widest uppercase">Don&apos;t Forget Him</p>
                   </div>
                </DraggableWrapper>
             </div>
@@ -198,7 +198,7 @@ export default function SeasonsParentsBundlePost({ variant = 1 }: { variant: Par
                 <h2 className="text-5xl font-black text-white mb-2 leading-tight">
                    <EditableText>للملك والملكة</EditableText>
                 </h2>
-                <p className="text-lg text-amber-100/50 mb-10 font-bold italic">Because one gift isn't enough for those who gave you everything.</p>
+                <p className="text-lg text-amber-100/50 mb-10 font-bold italic">Because one gift isn&apos;t enough for those who gave you everything.</p>
                 <div className="flex gap-4">
                    <div className="px-6 py-2 border border-amber-400/50 text-amber-400 text-xs font-black rounded-lg">SHOP HER</div>
                    <div className="px-6 py-2 border border-amber-400/50 text-amber-400 text-xs font-black rounded-lg">SHOP HIM</div>

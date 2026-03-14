@@ -105,7 +105,7 @@ export default function SeasonsMothersDayPost({ variant = 1 }: { variant: Mother
             <div className="h-full border-2 border-dashed flex flex-col items-center justify-center text-center p-8" style={{ borderColor: t.accent }}>
                <Heart size={48} className="mb-6" style={{ color: t.accent }} />
                <h2 className="text-2xl font-bold italic leading-relaxed" style={{ color: t.primary }}>
-                 "ليس في العالم وسادة أنعم من حضن الأم"
+                 &quot;ليس في العالم وسادة أنعم من حضن الأم&quot;
                </h2>
                <div className="w-10 h-1 mt-6" style={{ backgroundColor: t.accent }} />
             </div>

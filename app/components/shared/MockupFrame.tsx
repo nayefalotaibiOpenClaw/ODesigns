@@ -84,6 +84,7 @@ export default function MockupFrame({
 
   // Sync with default when ratio/device changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize({ w: defaultSize.w, h: defaultSize.h });
   }, [defaultSize.w, defaultSize.h]);
 

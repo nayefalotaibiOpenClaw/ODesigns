@@ -79,8 +79,8 @@ export default function SeasonsValentinesPost({ variant = 1 }: { variant: Valent
             <Sparkles className="text-red-500 mb-8" size={32} />
             <div className="space-y-6 max-w-sm">
                <p className="text-2xl font-medium italic leading-relaxed" dir="rtl">
-                 "وما الوردُ إلا جسرٌ بين قلبينِ،<br/>
-                 يقولُ ما لا تستطيعُ اللغاتُ قولَهُ."
+                 &quot;وما الوردُ إلا جسرٌ بين قلبينِ،<br/>
+                 يقولُ ما لا تستطيعُ اللغاتُ قولَهُ.&quot;
                </p>
                <div className="w-8 h-0.5 bg-red-500 mx-auto" />
                <p className="text-sm uppercase tracking-widest opacity-50">فالنتين 2024</p>
@@ -118,7 +118,7 @@ export default function SeasonsValentinesPost({ variant = 1 }: { variant: Valent
              <div className="relative z-10 text-center text-white">
                 <h2 className="text-6xl font-black mb-4 tracking-tighter">RED HOT</h2>
                 <div className="h-1 w-full bg-red-600 mb-4" />
-                <p className="text-xl font-bold italic text-red-200">The Ultimate Valentine's Gift</p>
+                <p className="text-xl font-bold italic text-red-200">The Ultimate Valentine&apos;s Gift</p>
              </div>
           </div>
         );

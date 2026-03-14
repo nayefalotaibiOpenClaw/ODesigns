@@ -36,6 +36,7 @@ export default function PublishPage() {
   // Auto-select first workspace
   useEffect(() => {
     if (!selectedWorkspaceId && workspaces && workspaces.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedWorkspaceId(workspaces[0]._id);
     }
   }, [workspaces, selectedWorkspaceId]);

@@ -29,7 +29,7 @@ export default function SeasonsQuotePost() {
         <div className="flex-1 flex flex-col justify-center items-center text-center px-4">
           <DraggableWrapper id="quote-text-seasons" className="space-y-6">
             <h2 className="text-3xl font-light italic leading-relaxed" style={{ color: t.primary }}>
-              "<EditableText>الأزهار هي لغة الطبيعة الصامتة التي تفهمها جميع القلوب</EditableText>"
+              &quot;<EditableText>الأزهار هي لغة الطبيعة الصامتة التي تفهمها جميع القلوب</EditableText>&quot;
             </h2>
             <div className="w-12 h-0.5 mx-auto" style={{ backgroundColor: t.accent }} />
             <p className="text-lg font-bold tracking-widest uppercase opacity-70" style={{ color: t.primary }}>

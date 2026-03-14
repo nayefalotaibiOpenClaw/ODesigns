@@ -19,7 +19,7 @@ export const run = internalMutation({
     const userId = args.userId;
 
     // Check if workspace already exists for this user
-    let workspace = await ctx.db
+    const workspace = await ctx.db
       .query("workspaces")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
@@ -64,7 +64,7 @@ export const run = internalMutation({
     }
 
     // Create collection if not exists
-    let collection = await ctx.db
+    const collection = await ctx.db
       .query("collections")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
       .first();

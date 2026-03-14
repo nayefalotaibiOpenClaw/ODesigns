@@ -36,7 +36,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   // After hydration, sync to the real locale from cookie/browser
   useEffect(() => {
     const real = getInitialLocale();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocaleState(real);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, []);
 

@@ -121,11 +121,11 @@ export default function BlogDetailPage() {
             <div className="h-12 w-full bg-slate-100 dark:bg-neutral-800 rounded-lg animate-pulse mb-4" />
             <div className="h-6 w-2/3 bg-slate-100 dark:bg-neutral-800 rounded-lg animate-pulse mb-12" />
             <div className="space-y-4">
-              {[0, 1, 2, 3].map((i) => (
+              {[90, 100, 88, 95].map((w, i) => (
                 <div
                   key={i}
                   className="h-4 bg-slate-50 dark:bg-neutral-900 rounded animate-pulse"
-                  style={{ width: `${85 + Math.random() * 15}%` }}
+                  style={{ width: `${w}%` }}
                 />
               ))}
             </div>

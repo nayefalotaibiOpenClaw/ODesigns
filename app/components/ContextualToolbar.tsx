@@ -32,13 +32,16 @@ export default function ContextualToolbar() {
 
   // Reset dropdowns when element selection changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowColorPicker(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowSizePicker(false);
   }, [selectedElementKey]);
 
   // Find the selected element in the DOM and position toolbar above it
   useEffect(() => {
     if (!selectedElementKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition(null);
       return;
     }

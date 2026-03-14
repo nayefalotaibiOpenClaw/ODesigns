@@ -28,7 +28,7 @@ export default function SeasonsTestimonialPost() {
 
            <DraggableWrapper id="testi-content" className="max-w-md">
               <p className="text-2xl font-bold italic leading-relaxed">
-                 <EditableText>"دائماً ما تكون زهور سيزونز هي الخيار الأول لي في جميع المناسبات. الجودة والتوصيل في الموعد هما ما يميزهم."</EditableText>
+                 <EditableText>&quot;دائماً ما تكون زهور سيزونز هي الخيار الأول لي في جميع المناسبات. الجودة والتوصيل في الموعد هما ما يميزهم.&quot;</EditableText>
               </p>
               <div className="mt-8">
                  <h4 className="text-xl font-black" style={{ color: t.accentLime }}><EditableText>سارة العتيبي</EditableText></h4>

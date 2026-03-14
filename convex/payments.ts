@@ -32,7 +32,7 @@ export const createPending = mutation({
     // Check for an existing active subscription to compute proration credit
     const activeSub = await ctx.db
       .query("subscriptions")
-      .withIndex("by_user_status", (q: any) =>
+      .withIndex("by_user_status", (q) =>
         q.eq("userId", userId).eq("status", "active")
       )
       .first();

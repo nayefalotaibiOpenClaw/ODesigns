@@ -276,7 +276,7 @@ Return ONLY the JSON, no markdown fences.`,
 
       const urlsToFetch = productUrls.slice(0, limit);
       const products: Awaited<ReturnType<typeof extractProductDetails>>["product"][] = [];
-      let productUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+      const productUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 
       // Fetch product pages in parallel (with concurrency limit of 3)
       const batchSize = 3;

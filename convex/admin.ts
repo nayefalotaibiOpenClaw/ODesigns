@@ -1,10 +1,11 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, type QueryCtx, type MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { auth } from "./auth";
 
 const ADMIN_EMAILS = ["nayefralotaibi@gmail.com"];
 
-async function assertAdmin(ctx: { db: any; auth: any }) {
+async function assertAdmin(ctx: QueryCtx | MutationCtx) {
   const userId = await auth.getUserId(ctx);
   if (!userId) throw new Error("Not authenticated");
   const user = await ctx.db.get(userId);
@@ -41,12 +42,12 @@ export const getOverview = query({
     const totalUsers = allUsers.length;
 
     const newUsersLast7d = allUsers.filter(
-      (u: any) => u.createdAt && u.createdAt >= sevenDaysAgo
+      (u) => u.createdAt && u.createdAt >= sevenDaysAgo
     ).length;
 
     const allSubs = await ctx.db.query("subscriptions").collect();
     const activeSubs = allSubs.filter(
-      (s: any) => s.status === "active" && s.expiresAt >= now
+      (s) => s.status === "active" && s.expiresAt >= now
     );
     const activeSubCount = activeSubs.length;
 
@@ -121,11 +122,11 @@ export const listAllUsers = query({
     }
 
     return await Promise.all(
-      users.map(async (u: any) => {
+      users.map(async (u) => {
         // Get active or most recent subscription
         const activeSub = await ctx.db
           .query("subscriptions")
-          .withIndex("by_user_status", (q: any) =>
+          .withIndex("by_user_status", (q) =>
             q.eq("userId", u._id).eq("status", "active")
           )
           .first();
@@ -133,14 +134,14 @@ export const listAllUsers = query({
         // If no active, get the most recent one
         const sub = activeSub || await ctx.db
           .query("subscriptions")
-          .withIndex("by_user", (q: any) => q.eq("userId", u._id))
+          .withIndex("by_user", (q) => q.eq("userId", u._id))
           .order("desc")
           .first();
 
         // Count workspaces
         const workspaces = await ctx.db
           .query("workspaces")
-          .withIndex("by_user", (q: any) => q.eq("userId", u._id))
+          .withIndex("by_user", (q) => q.eq("userId", u._id))
           .collect();
 
         return {
@@ -190,11 +191,11 @@ export const listRecentUsage = query({
     for (const l of logs) userIdSet.add(l.userId as string);
     const usersMap = new Map<string, { name?: string; email?: string }>();
     for (const uid of userIdSet) {
-      const u: any = await ctx.db.get(uid as any);
+      const u = await ctx.db.get(uid as Id<"users">);
       if (u) usersMap.set(uid, { name: u.name, email: u.email });
     }
 
-    return logs.map((log: any) => ({
+    return logs.map((log) => ({
       ...log,
       user: usersMap.get(log.userId) || { name: "Unknown", email: "" },
     }));
@@ -237,7 +238,7 @@ export const updateSubscription = mutation({
     const sub = await ctx.db.get(args.subscriptionId);
     if (!sub) throw new Error("Subscription not found");
 
-    const patch: Record<string, any> = {};
+    const patch: Record<string, string | number | undefined> = {};
     if (args.plan !== undefined) patch.plan = args.plan;
     if (args.billingPeriod !== undefined) patch.billingPeriod = args.billingPeriod;
     if (args.status !== undefined) patch.status = args.status;
