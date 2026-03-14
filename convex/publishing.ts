@@ -444,19 +444,8 @@ async function publishToTikTok(params: {
 }): Promise<{ postId: string; postUrl?: string }> {
   const { accessToken, mediaUrl, caption } = params;
 
-  // Step 1: Download image from Convex storage
-  const mediaRes = await fetch(mediaUrl);
-  if (!mediaRes.ok) throw new Error("Failed to download media for TikTok upload");
-  const mediaBuffer = await mediaRes.arrayBuffer();
-  const mediaBytes = new Uint8Array(mediaBuffer);
-  const fileSize = mediaBytes.length;
-
-  if (fileSize > 20 * 1024 * 1024) {
-    throw new Error("Image exceeds 20MB limit for TikTok");
-  }
-
-  // Step 2: Initialize photo upload via FILE_UPLOAD
-  const initRes = await fetch(TIKTOK_PUBLISH_URL, {
+  // TikTok photo posts only support PULL_FROM_URL
+  const res = await fetch(TIKTOK_PUBLISH_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -464,54 +453,30 @@ async function publishToTikTok(params: {
     },
     body: JSON.stringify({
       post_info: {
-        title: caption.slice(0, 150),
+        title: caption.slice(0, 90),
         privacy_level: "SELF_ONLY",
       },
       source_info: {
-        source: "FILE_UPLOAD",
-        photo_upload_params: {
-          photo_count: 1,
-        },
+        source: "PULL_FROM_URL",
+        photo_cover_index: 0,
+        photo_images: [mediaUrl],
       },
       post_mode: "DIRECT_POST",
       media_type: "PHOTO",
     }),
   });
 
-  const initData = await initRes.json();
-  console.log("TikTok publish init response:", JSON.stringify(initData));
+  const data = await res.json();
+  console.log("TikTok publish response:", JSON.stringify(data));
 
-  if (!initRes.ok || initData.error?.code) {
+  if (!res.ok || (data.error?.code && data.error.code !== "ok")) {
     throw new Error(
-      `TikTok publish init error: ${initData.error?.message || initData.error?.code || initRes.statusText}`
+      `TikTok publish error: ${data.error?.message || data.error?.code || res.statusText}`
     );
   }
 
-  const publishId = initData.data?.publish_id;
-  const uploadUrl = initData.data?.photo_upload_urls?.[0];
-
-  if (!uploadUrl) {
-    throw new Error("TikTok did not return an upload URL");
-  }
-
-  // Step 3: Upload the image file
-  const contentType = mediaRes.headers.get("content-type") || "image/jpeg";
-  const uploadRes = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": contentType,
-      "Content-Length": String(fileSize),
-    },
-    body: mediaBytes,
-  });
-
-  if (!uploadRes.ok) {
-    const err = await uploadRes.text();
-    throw new Error(`TikTok image upload failed: ${err}`);
-  }
-
   return {
-    postId: publishId || "unknown",
+    postId: data.data?.publish_id || data.data?.post_id || "unknown",
   };
 }
 
@@ -761,6 +726,10 @@ export const updateScheduled = mutation({
     const post = await ctx.db.get(args.id);
     if (!post || post.userId !== userId) throw new Error("Not found");
     if (post.status !== "scheduled") throw new Error("Can only edit scheduled posts");
+
+    if (args.caption !== undefined && args.caption.length > 63206) {
+      throw new Error("Caption exceeds character limit");
+    }
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.caption !== undefined) updates.caption = args.caption;

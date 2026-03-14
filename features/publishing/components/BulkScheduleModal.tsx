@@ -266,11 +266,12 @@ export default function BulkScheduleModal({
     const totalItems = isCarousel ? validCarouselGroups.length : selectedPostIds.length;
     if (totalItems === 0) return items;
 
-    // "Now" mode: schedule all posts for 1 minute from now
+    // "Now" mode: schedule posts starting 1 minute from now, staggered 5s apart
     if (frequency === "now") {
       const now = new Date();
       now.setMinutes(now.getMinutes() + 1, 0, 0);
       for (let i = 0; i < totalItems; i++) {
+        const staggered = new Date(now.getTime() + i * 5000);
         if (isCarousel) {
           const group = validCarouselGroups[i];
           const originalIndex = carouselGroups.indexOf(group);
@@ -278,7 +279,7 @@ export default function BulkScheduleModal({
             postIndex: i + 1,
             postId: group[0],
             postTitle: `Carousel ${i + 1} (${group.length} slides)`,
-            dateTime: now,
+            dateTime: staggered,
             carouselGroupIndex: originalIndex,
           });
         } else {
@@ -287,7 +288,7 @@ export default function BulkScheduleModal({
             postIndex: i + 1,
             postId: selectedPostIds[i],
             postTitle: post?.title || `Post ${i + 1}`,
-            dateTime: now,
+            dateTime: staggered,
           });
         }
       }
