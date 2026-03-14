@@ -48,6 +48,9 @@ export const metadata: Metadata = {
       "AI-powered content for social media, app stores, and advertising",
     images: ["https://odesigns.app/og-image.png"],
   },
+  other: {
+    "fb:app_id": "810967764709045",
+  },
 };
 
 export default async function RootLayout({
