@@ -86,9 +86,13 @@ export default function DynamicPost({ code }: DynamicPostProps) {
         jsxFragmentPragma: "React.Fragment",
       });
 
-      // Create a function that returns the component with all dependencies injected
-      // This is safe because the code originates from our server-side AI API route
-      const fn = new Function(
+      // Create a function that returns the component with all dependencies injected.
+      // Dangerous globals are shadowed (set to undefined) so evaluated code cannot
+      // access them even if validation is bypassed.
+      // NOTE: new Function is intentionally used here for runtime component rendering
+      // (similar to CodeSandbox, MDX). Code is validated above and globals are sandboxed.
+      // eslint-disable-next-line no-new-func -- intentional: runtime component rendering with sandboxed globals
+      const createComponent = new Function(
         "React",
         "EditableText",
         "DraggableWrapper",
@@ -114,7 +118,7 @@ export default function DynamicPost({ code }: DynamicPostProps) {
         `
       );
 
-      return fn(
+      return createComponent(
         React,
         EditableText,
         DraggableWrapper,
