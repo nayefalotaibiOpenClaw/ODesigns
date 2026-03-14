@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, Columns3, ArrowUpDown, Pencil, MousePointer2, Download, Paperclip, ArrowUp, Sparkles, EyeOff, Eye, X, Zap, Clock, ChevronRight } from "lucide-react";
+import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, Columns3, ArrowUpDown, Pencil, MousePointer2, Download, Paperclip, ArrowUp, Sparkles, EyeOff, Eye, X, Zap, Clock, ChevronRight, Check } from "lucide-react";
 import MobileNavMenu from "@/features/design-editor/components/MobileNavMenu";
 import { downloadPostsAsZip, downloadPostsMultiRatio } from "@/lib/export/download";
 import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext, HiddenComponentsContext, SetHiddenComponentsContext } from "@/contexts/EditContext";
@@ -159,6 +159,8 @@ export default function DesignPage() {
   const [targetRatios, setTargetRatios] = useState<AspectRatioType[]>(['1:1']);
   const [adaptingRatios, setAdaptingRatios] = useState(false);
   const [contextPosts, setContextPosts] = useState<{ id: string; code: string }[]>([]);
+  const [contextAssets, setContextAssets] = useState<{ id: string; url: string; type: string; label?: string; description?: string; aiAnalysis?: string }[]>([]);
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
 
   // Local order state for drag-and-drop (syncs with Convex)
   const [localOrder, setLocalOrder] = useState<string[]>([]);
@@ -179,6 +181,19 @@ export default function DesignPage() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [toolbarDropdown]);
+
+  // Close asset picker on click outside
+  const assetPickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showAssetPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (assetPickerRef.current && !assetPickerRef.current.contains(e.target as Node)) {
+        setShowAssetPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showAssetPicker]);
 
   const toggleCodeView = (id: string) => {
     setCodeViewPosts(prev => {
@@ -333,6 +348,7 @@ export default function DesignPage() {
           model: generateModel,
           referenceImages: chatImages.length > 0 ? chatImages.map(img => ({ base64: img.base64, mimeType: img.mimeType })) : undefined,
           contextPosts: contextPosts.length > 0 ? contextPosts.map(p => p.code) : undefined,
+          contextAssets: contextAssets.length > 0 ? contextAssets.map(a => ({ url: a.url, type: a.type, label: a.label, description: a.description, aiAnalysis: a.aiAnalysis })) : undefined,
         }),
       });
 
@@ -910,6 +926,24 @@ export default function DesignPage() {
     setActiveMode('default');
   }, [selectedPosts, posts, generatedPosts]);
 
+  const handleToggleAssetContext = useCallback((asset: { _id: string; url: string; type: string; label?: string; fileName?: string; description?: string; aiAnalysis?: string }) => {
+    setContextAssets(prev => {
+      const exists = prev.find(a => a.id === asset._id);
+      if (exists) return prev.filter(a => a.id !== asset._id);
+      if (prev.length >= 4) return prev; // cap at 4
+      return [...prev, { id: asset._id, url: asset.url, type: asset.type, label: asset.label || asset.fileName, description: asset.description, aiAnalysis: asset.aiAnalysis }];
+    });
+  }, []);
+
+  // Clean up stale context assets when assets list changes
+  React.useEffect(() => {
+    if (!assets) return;
+    const assetIds = new Set(assets.map((a: { _id: string }) => a._id));
+    setContextAssets(prev => prev.filter(a => assetIds.has(a.id)));
+  }, [assets]);
+
+  const contextAssetIds = React.useMemo(() => new Set(contextAssets.map(a => a.id)), [contextAssets]);
+
   const handleDownloadSelected = useCallback(async (ratios: string[]) => {
     if (selectedPosts.length === 0) return;
     setDownloading(true);
@@ -1371,7 +1405,7 @@ export default function DesignPage() {
 
         {/* Floating chat input — always visible */}
           <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] md:w-full max-w-3xl px-0 md:px-4 z-[60]">
-            <div className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-neutral-700/80 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-hidden">
+            <div className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-neutral-700/80 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
               <textarea
                 value={generatePrompt}
                 onChange={(e) => setGeneratePrompt(e.target.value)}
@@ -1385,8 +1419,8 @@ export default function DesignPage() {
                 rows={2}
                 className="w-full px-5 pt-4 pb-2 text-sm text-slate-900 dark:text-white resize-none focus:outline-none placeholder:text-slate-400 bg-transparent"
               />
-              {/* Context posts chips */}
-              {contextPosts.length > 0 && (
+              {/* Context chips (posts + assets) */}
+              {(contextPosts.length > 0 || contextAssets.length > 0) && (
                 <div className="flex items-center gap-1.5 px-4 pb-1 pt-1 overflow-x-auto">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Context:</span>
                   {contextPosts.map((cp) => (
@@ -1401,8 +1435,20 @@ export default function DesignPage() {
                       </button>
                     </span>
                   ))}
+                  {contextAssets.map((ca) => (
+                    <span key={ca.id} className="inline-flex items-center gap-1 px-1 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-[10px] font-semibold text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
+                      <img src={ca.url} alt={ca.label || ca.type} className="w-5 h-5 rounded-full object-cover" />
+                      <span className="pr-1">{ca.type}</span>
+                      <button
+                        onClick={() => setContextAssets(prev => prev.filter(a => a.id !== ca.id))}
+                        className="mr-0.5 hover:text-red-500 transition-colors"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ))}
                   <button
-                    onClick={() => setContextPosts([])}
+                    onClick={() => { setContextPosts([]); setContextAssets([]); }}
                     className="text-[10px] font-semibold text-slate-400 hover:text-red-500 transition-colors shrink-0"
                   >
                     Clear all
@@ -1428,10 +1474,76 @@ export default function DesignPage() {
               <div className="flex items-center justify-between px-4 pb-3">
                 {/* Left: attachment + model */}
                 <div className="flex items-center gap-1.5">
-                  <label className="w-9 h-9 rounded-full border border-slate-200 dark:border-neutral-700 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300 hover:border-slate-300 dark:hover:border-neutral-600 cursor-pointer transition-colors">
-                    <Paperclip size={16} />
-                    <input ref={chatImageInputRef} type="file" accept="image/*" multiple onChange={handleChatImageUpload} className="hidden" />
-                  </label>
+                  <div className="relative" ref={assetPickerRef}>
+                    <button
+                      onClick={() => setShowAssetPicker(prev => !prev)}
+                      className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
+                        showAssetPicker
+                          ? 'border-emerald-400 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
+                          : 'border-slate-200 dark:border-neutral-700 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300 hover:border-slate-300 dark:hover:border-neutral-600'
+                      }`}
+                    >
+                      <Paperclip size={16} />
+                    </button>
+                    <input ref={chatImageInputRef} type="file" accept="image/*" multiple onChange={(e) => { handleChatImageUpload(e); setShowAssetPicker(false); }} className="hidden" />
+
+                    {/* Asset picker popup */}
+                    {showAssetPicker && (
+                      <div className="absolute bottom-12 left-0 w-72 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-2xl shadow-2xl z-[100] overflow-hidden">
+                        {/* Upload option */}
+                        <button
+                          onClick={() => { chatImageInputRef.current?.click(); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-neutral-300 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors border-b border-slate-100 dark:border-neutral-800"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-neutral-800 flex items-center justify-center">
+                            <ArrowUp size={14} className="text-slate-500" />
+                          </div>
+                          Upload image
+                        </button>
+
+                        {/* Assets grid */}
+                        <div className="px-3 pt-2 pb-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Workspace Assets</span>
+                        </div>
+                        <div className="px-3 pb-3 max-h-52 overflow-y-auto">
+                          {assets && assets.filter((a) => a.url).length > 0 ? (
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {assets.filter((a) => a.url).map((asset) => {
+                                const isSelected = contextAssetIds.has(asset._id);
+                                return (
+                                  <button
+                                    key={asset._id}
+                                    onClick={() => handleToggleAssetContext(asset)}
+                                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                                      isSelected
+                                        ? 'border-emerald-500 ring-1 ring-emerald-500/30'
+                                        : 'border-transparent hover:border-slate-300 dark:hover:border-neutral-600'
+                                    }`}
+                                  >
+                                    <img src={asset.url} alt={asset.description || asset.fileName || ''} className="w-full h-full object-cover" />
+                                    {isSelected && (
+                                      <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                                        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                          <Check size={10} className="text-white" />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400 dark:text-neutral-500 py-4 text-center">No assets uploaded yet</p>
+                          )}
+                        </div>
+                        {contextAssets.length > 0 && (
+                          <div className="px-3 pb-2 border-t border-slate-100 dark:border-neutral-800 pt-2">
+                            <span className="text-[10px] text-slate-400">{contextAssets.length}/4 assets selected</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <select
                     value={generateModel}
                     onChange={(e) => setGenerateModel(e.target.value)}
