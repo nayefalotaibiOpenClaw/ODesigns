@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://generativelanguage.googleapis.com",
+              "connect-src 'self' data: blob: https://*.convex.cloud wss://*.convex.cloud https://generativelanguage.googleapis.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
