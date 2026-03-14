@@ -20,7 +20,7 @@ export default function DashboardLayout({
     if (!isLoading && !isAuthenticated) {
       router.replace(localizeHref("/login", locale));
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, locale]);
 
   if (isLoading) {
     return (

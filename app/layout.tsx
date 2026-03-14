@@ -79,7 +79,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: BASE_URL,
     languages: Object.fromEntries(
-      LOCALES.filter((l) => l !== DEFAULT_LOCALE).map((l) => [l, `${BASE_URL}/${l}`])
+      LOCALES.map((l) => [l, l === DEFAULT_LOCALE ? BASE_URL : `${BASE_URL}/${l}`])
     ),
   },
   other: {
