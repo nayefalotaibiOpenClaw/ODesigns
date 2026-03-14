@@ -444,6 +444,13 @@ async function publishToTikTok(params: {
 }): Promise<{ postId: string; postUrl?: string }> {
   const { accessToken, mediaUrl, caption } = params;
 
+  // Proxy the Convex storage URL through our verified domain
+  // TikTok requires PULL_FROM_URL with a verified domain
+  const appUrl = process.env.APP_URL;
+  const proxyUrl = appUrl
+    ? `${appUrl}/api/tiktok-media?url=${encodeURIComponent(mediaUrl)}`
+    : mediaUrl;
+
   // TikTok photo posts only support PULL_FROM_URL
   const res = await fetch(TIKTOK_PUBLISH_URL, {
     method: "POST",
@@ -459,7 +466,7 @@ async function publishToTikTok(params: {
       source_info: {
         source: "PULL_FROM_URL",
         photo_cover_index: 0,
-        photo_images: [mediaUrl],
+        photo_images: [proxyUrl],
       },
       post_mode: "DIRECT_POST",
       media_type: "PHOTO",
