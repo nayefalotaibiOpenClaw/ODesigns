@@ -752,6 +752,56 @@ export default function DesignPage() {
     else setLogoDarkUrl(url ?? null);
   };
 
+  const handleSaveLogoFromUrl = async (imageUrl: string, variant: "logo" | "logoDark") => {
+    if (!workspaceId) return;
+    try {
+      // Download via proxy for SSRF safety
+      const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(imageUrl)}`);
+      if (!proxyRes.ok) return;
+      const blob = await proxyRes.blob();
+
+      // Upload to Convex storage
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": blob.type || "image/png" },
+        body: blob,
+      });
+      if (!uploadRes.ok) return;
+      const { storageId } = await uploadRes.json();
+
+      // Save to branding
+      if (branding) {
+        await updateBrandingField({ workspaceId, field: variant, value: storageId });
+      } else {
+        await upsertBranding({
+          workspaceId,
+          brandName: workspace?.name || "Brand",
+          [variant]: storageId,
+          colors: {
+            primary: currentTheme.primary,
+            primaryLight: currentTheme.primaryLight,
+            primaryDark: currentTheme.primaryDark,
+            accent: currentTheme.accent,
+            accentLight: currentTheme.accentLight,
+            accentLime: currentTheme.accentLime,
+            accentGold: currentTheme.accentGold,
+            accentOrange: currentTheme.accentOrange,
+            border: currentTheme.border,
+          },
+          fonts: { heading: currentTheme.font, body: currentTheme.font },
+        });
+      }
+
+      // Update local URL
+      const url = await logoStorageUrl({ storageId });
+      if (variant === "logo") setLogoUrl(url ?? null);
+      else setLogoDarkUrl(url ?? null);
+    } catch (err) {
+      console.error("Save logo from URL failed:", err);
+    }
+  };
+
   const handleDeleteLogo = async (variant: "logo" | "logoDark") => {
     if (!workspaceId || !branding) return;
     await updateBrandingField({ workspaceId, field: variant, value: null, unset: true });

@@ -130,6 +130,7 @@ interface BrandPanelProps {
   currentWorkspaceName?: string;
   onUploadLogo: (file: File, variant: "logo" | "logoDark") => Promise<void>;
   onDeleteLogo: (variant: "logo" | "logoDark") => Promise<void>;
+  onSaveLogoFromUrl: (url: string, variant: "logo" | "logoDark") => Promise<void>;
   onUpdateBranding: (field: string, value: string) => Promise<void>;
   onUpdateWebsiteInfo: (updates: Partial<WebsiteInfo>) => Promise<void>;
   onUpdateWorkspace: (updates: { website?: string; industry?: string }) => Promise<void>;
@@ -158,6 +159,7 @@ export default function BrandPanel({
   currentWorkspaceName: wsName,
   onUploadLogo,
   onDeleteLogo,
+  onSaveLogoFromUrl,
   onUpdateBranding,
   onUpdateWebsiteInfo,
   onUpdateWorkspace,
@@ -373,6 +375,20 @@ export default function BrandPanel({
                 )}
               </button>
             </div>
+
+            {/* Discovered logo from website */}
+            {discoveredLogoUrl && !logoUrl && (
+              <button
+                onClick={() => onSaveLogoFromUrl(discoveredLogoUrl, "logo")}
+                className="w-20 h-20 rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 flex flex-col items-center justify-center overflow-hidden hover:border-blue-400 dark:hover:border-blue-600 transition-all group relative shrink-0"
+                title="Use discovered logo"
+              >
+                <img src={discoveredLogoUrl} alt="Discovered logo" className="w-full h-full object-contain p-1.5" />
+                <div className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">Use Logo</span>
+                </div>
+              </button>
+            )}
 
             <div className="flex-1 min-w-0 pt-1">
               {/* Editable brand name */}

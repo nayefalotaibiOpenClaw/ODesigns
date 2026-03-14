@@ -30,9 +30,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen bg-white dark:bg-[#0a0a0a] flex flex-col md:flex-row font-sans selection:bg-indigo-100 overflow-hidden">
-      {/* Left Side: Form Container */}
-      <div className="w-full md:w-[45%] lg:w-[40%] bg-[#0B0E14] flex flex-col relative z-10 overflow-y-auto">
+    <div className="h-screen bg-white dark:bg-[#0a0a0a] flex flex-col font-sans selection:bg-indigo-100 overflow-hidden">
+      {/* Form Container - Full Width */}
+      <div className="w-full bg-[#0B0E14] flex flex-col relative z-10 overflow-y-auto">
         {/* Navigation - Top Fixed/Absolute */}
         <div className="p-6 md:p-10 flex items-center justify-between">
           <Link
@@ -95,11 +95,11 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side: Visual Collage - Fixed Height */}
+      {/* Right Side: Visual Collage - Commented out for now, will revisit later */}
+      {/*
       <div className="flex-1 bg-[#F8FAFC] dark:bg-neutral-900 relative overflow-hidden hidden md:flex items-center justify-center">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
 
-        {/* Animated Grid of Screens */}
         <motion.div
           initial={{ rotate: 15, scale: 1.2, x: 60 }}
           animate={{
@@ -144,10 +144,10 @@ export default function LoginPage() {
           ))}
         </motion.div>
 
-        {/* Floating Accents */}
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-purple-500/10 blur-[120px] rounded-full pointer-events-none" />
       </div>
+      */}
     </div>
   );
 }
