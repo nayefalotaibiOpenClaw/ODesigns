@@ -30,6 +30,7 @@ import type * as socialAccounts from "../socialAccounts.js";
 import type * as socialAuth from "../socialAuth.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as threadsAuth from "../threadsAuth.js";
+import type * as tikTokAuth from "../tikTokAuth.js";
 import type * as tokenRefresh from "../tokenRefresh.js";
 import type * as twitterAuth from "../twitterAuth.js";
 import type * as users from "../users.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   socialAuth: typeof socialAuth;
   subscriptions: typeof subscriptions;
   threadsAuth: typeof threadsAuth;
+  tikTokAuth: typeof tikTokAuth;
   tokenRefresh: typeof tokenRefresh;
   twitterAuth: typeof twitterAuth;
   users: typeof users;

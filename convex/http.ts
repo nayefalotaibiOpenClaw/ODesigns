@@ -4,6 +4,7 @@ import { handlePaymentWebhook } from "./webhooks";
 import { handleMetaCallback, handleDeauthorize, handleDataDeletion } from "./socialAuth";
 import { handleTwitterCallback } from "./twitterAuth";
 import { handleThreadsCallback } from "./threadsAuth";
+import { handleTikTokCallback } from "./tikTokAuth";
 
 const http = httpRouter();
 
@@ -49,6 +50,13 @@ http.route({
   path: "/social-auth/threads/callback",
   method: "GET",
   handler: handleThreadsCallback,
+});
+
+// TikTok OAuth callback
+http.route({
+  path: "/social-auth/tiktok/callback",
+  method: "GET",
+  handler: handleTikTokCallback,
 });
 
 export default http;

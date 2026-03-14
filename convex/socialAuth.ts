@@ -135,8 +135,11 @@ export const handleMetaCallback = httpAction(async (ctx, request) => {
           code,
         }),
       });
-      if (!tokenRes.ok) throw new Error(`Instagram API returned HTTP ${tokenRes.status}`);
       const tokenData = await tokenRes.json();
+      if (!tokenRes.ok) {
+        const errDetail = tokenData?.error_message || tokenData?.error?.message || JSON.stringify(tokenData);
+        throw new Error(`Instagram token exchange failed (${tokenRes.status}): ${errDetail}`);
+      }
       if (tokenData.error_type || tokenData.error_message) {
         throw new Error(tokenData.error_message || "Instagram OAuth error");
       }

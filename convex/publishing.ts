@@ -57,7 +57,7 @@ export const publishToSocial = action({
     }
 
     // Validate caption length (per-platform)
-    const captionLimit = account.provider === "instagram" ? 2200 : account.provider === "twitter" ? 280 : 63206;
+    const captionLimit = account.provider === "instagram" ? 2200 : account.provider === "twitter" ? 280 : account.provider === "tiktok" ? 150 : 63206;
     if (args.caption.length > captionLimit) {
       throw new Error(`Caption exceeds ${captionLimit} character limit`);
     }
@@ -95,6 +95,12 @@ export const publishToSocial = action({
       });
     } else if (account.provider === "twitter") {
       result = await publishToTwitter({
+        accessToken: account.accessToken,
+        mediaUrl,
+        caption: args.caption,
+      });
+    } else if (account.provider === "tiktok") {
+      result = await publishToTikTok({
         accessToken: account.accessToken,
         mediaUrl,
         caption: args.caption,
@@ -427,6 +433,51 @@ async function publishToTwitter(params: {
   };
 }
 
+// ─── TikTok Publishing ───────────────────────────────────────────────
+
+const TIKTOK_PUBLISH_URL = "https://open.tiktokapis.com/v2/post/publish/content/init/";
+
+async function publishToTikTok(params: {
+  accessToken: string;
+  mediaUrl: string;
+  caption: string;
+}): Promise<{ postId: string; postUrl?: string }> {
+  const { accessToken, mediaUrl, caption } = params;
+
+  // TikTok photo posts via Content Posting API
+  const res = await fetch(TIKTOK_PUBLISH_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+    body: JSON.stringify({
+      post_info: {
+        title: caption.slice(0, 150),
+        privacy_level: "SELF_ONLY",
+      },
+      source_info: {
+        source: "PULL_FROM_URL",
+        photo_images: [mediaUrl],
+      },
+      post_mode: "DIRECT_POST",
+      media_type: "PHOTO",
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || data.error?.code) {
+    throw new Error(
+      `TikTok publish error: ${data.error?.message || data.error?.code || res.statusText}`
+    );
+  }
+
+  return {
+    postId: data.data?.publish_id || "unknown",
+  };
+}
+
 // ─── Internal helpers ────────────────────────────────────────────────
 
 export const recordPublish = internalMutation({
@@ -441,6 +492,7 @@ export const recordPublish = internalMutation({
       v.literal("instagram"),
       v.literal("tiktok"),
       v.literal("twitter"),
+      v.literal("threads"),
     ),
     contentType: v.string(),
     providerPostId: v.string(),
@@ -785,6 +837,12 @@ export const processScheduledPosts = internalAction({
           });
         } else if (account.provider === "twitter") {
           result = await publishToTwitter({
+            accessToken: account.accessToken,
+            mediaUrl: mediaUrls[0],
+            caption: post.caption,
+          });
+        } else if (account.provider === "tiktok") {
+          result = await publishToTikTok({
             accessToken: account.accessToken,
             mediaUrl: mediaUrls[0],
             caption: post.caption,

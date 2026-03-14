@@ -16,10 +16,7 @@ import {
   Facebook,
   Twitter,
   Video,
-  Briefcase,
   MessageCircle,
-  Cloud,
-  Youtube,
   Trash2,
   CheckCircle,
   AlertCircle,
@@ -39,11 +36,8 @@ const PROVIDERS = [
   { id: "instagram" as const, name: "Instagram", icon: Instagram, color: "from-pink-500 to-rose-600", available: true },
   { id: "facebook" as const, name: "Facebook", icon: Facebook, color: "from-blue-600 to-blue-700", available: true },
   { id: "twitter" as const, name: "X (Twitter)", icon: Twitter, color: "from-neutral-800 to-neutral-900", available: true },
-  { id: "tiktok" as const, name: "TikTok", icon: Video, color: "from-neutral-800 to-neutral-900", available: false },
-  { id: "linkedin" as const, name: "LinkedIn", icon: Briefcase, color: "from-blue-700 to-blue-800", available: false },
+  { id: "tiktok" as const, name: "TikTok", icon: Video, color: "from-neutral-800 to-neutral-900", available: true },
   { id: "threads" as const, name: "Threads", icon: MessageCircle, color: "from-neutral-700 to-neutral-800", available: true },
-  { id: "bluesky" as const, name: "Bluesky", icon: Cloud, color: "from-sky-500 to-sky-600", available: false },
-  { id: "youtube" as const, name: "YouTube", icon: Youtube, color: "from-red-600 to-red-700", available: false },
 ];
 
 interface PublishChannelsPageProps {
@@ -74,6 +68,7 @@ export default function PublishChannelsPage({
   const [channelFilter, setChannelFilter] = useState<string>("all");
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   // Sync initialTab when sidebar tab changes
   useEffect(() => { setSubTab(initialTab); }, [initialTab]);
@@ -128,28 +123,38 @@ export default function PublishChannelsPage({
     }
   }, [toast]);
 
-  const handleCancel = async (id: Id<"scheduledPosts">) => {
-    if (!confirm("Cancel this scheduled post?")) return;
-    await cancelPost({ id });
+  const handleCancel = (id: Id<"scheduledPosts">) => {
+    setConfirmAction({
+      message: "Cancel this scheduled post?",
+      onConfirm: async () => {
+        await cancelPost({ id });
+        setConfirmAction(null);
+      },
+    });
   };
 
   const handleUpdate = async (id: Id<"scheduledPosts">, caption: string) => {
     await updatePost({ id, caption });
   };
 
-  const handleConnect = (provider: "instagram" | "facebook" | "twitter" | "threads") => {
+  const handleConnect = (provider: "instagram" | "facebook" | "twitter" | "threads" | "tiktok") => {
     const params = new URLSearchParams({ workspaceId, userId });
     window.location.assign(`/api/social-auth/${provider}/authorize?${params.toString()}`);
   };
 
-  const handleDisconnect = async (accountId: Id<"socialAccounts">) => {
-    if (!confirm("Disconnect this account?")) return;
-    try {
-      await disconnectAccount({ id: accountId });
-      setToast({ type: "success", message: "Account disconnected" });
-    } catch {
-      setToast({ type: "error", message: "Failed to disconnect account" });
-    }
+  const handleDisconnect = (accountId: Id<"socialAccounts">) => {
+    setConfirmAction({
+      message: "Disconnect this account?",
+      onConfirm: async () => {
+        setConfirmAction(null);
+        try {
+          await disconnectAccount({ id: accountId });
+          setToast({ type: "success", message: "Account disconnected" });
+        } catch {
+          setToast({ type: "error", message: "Failed to disconnect account" });
+        }
+      },
+    });
   };
 
   // When scheduling, render the schedule page as the full content
@@ -166,6 +171,29 @@ export default function PublishChannelsPage({
 
   return (
     <div className="flex-1 bg-white dark:bg-[#0a0a0a] flex flex-col overflow-hidden">
+      {/* Confirm Dialog */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-sm w-full">
+            <p className="text-white font-medium mb-4">{confirmAction.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-neutral-800 text-white text-sm font-medium hover:bg-neutral-700 transition"
+              >
+                No
+              </button>
+              <button
+                onClick={confirmAction.onConfirm}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-500 transition"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast */}
       {toast && (
         <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl border flex items-center gap-3 shadow-2xl max-w-lg ${
@@ -341,7 +369,7 @@ export default function PublishChannelsPage({
                       <button
                         key={provider.id}
                         onClick={() => {
-                          if (provider.available) handleConnect(provider.id as "instagram" | "facebook" | "twitter" | "threads");
+                          if (provider.available) handleConnect(provider.id as "instagram" | "facebook" | "twitter" | "threads" | "tiktok");
                         }}
                         disabled={!provider.available}
                         className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${

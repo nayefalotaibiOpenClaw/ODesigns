@@ -91,6 +91,32 @@ export const refreshSingle = internalAction({
         accessToken: data.access_token,
         tokenExpiresAt: Date.now() + (data.expires_in || 5184000) * 1000,
       });
+    } else if (account.provider === "tiktok") {
+      const clientKey = process.env.TIKTOK_CLIENT_KEY;
+      const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+      if (!clientKey || !clientSecret) throw new Error("TikTok credentials not configured");
+      if (!account.refreshToken) throw new Error("No refresh token for TikTok account");
+
+      const res = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_key: clientKey,
+          client_secret: clientSecret,
+          grant_type: "refresh_token",
+          refresh_token: account.refreshToken,
+        }),
+      });
+      if (!res.ok) throw new Error(`TikTok token refresh failed: HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error_description || data.error);
+
+      await ctx.runMutation(internal.socialAccounts.updateTokenWithRefresh, {
+        id: args.accountId,
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        tokenExpiresAt: Date.now() + (data.expires_in || 86400) * 1000,
+      });
     }
   },
 });
@@ -247,6 +273,51 @@ export const refreshExpiring = internalAction({
           });
 
           console.log(`Refreshed Threads token for account ${account._id}`);
+        } else if (account.provider === "tiktok") {
+          const clientKey = process.env.TIKTOK_CLIENT_KEY;
+          const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+
+          if (!clientKey || !clientSecret) {
+            console.error("TikTok credentials not configured for token refresh");
+            continue;
+          }
+
+          if (!account.refreshToken) {
+            console.error(`No refresh token for TikTok account ${account._id}`);
+            await ctx.runMutation(internal.socialAccounts.markExpired, {
+              id: account._id,
+            });
+            continue;
+          }
+
+          const res = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_key: clientKey,
+              client_secret: clientSecret,
+              grant_type: "refresh_token",
+              refresh_token: account.refreshToken,
+            }),
+          });
+          const data = await res.json();
+
+          if (data.error) {
+            console.error(`TikTok token refresh failed for ${account._id}:`, data.error_description || data.error);
+            await ctx.runMutation(internal.socialAccounts.markExpired, {
+              id: account._id,
+            });
+            continue;
+          }
+
+          await ctx.runMutation(internal.socialAccounts.updateTokenWithRefresh, {
+            id: account._id,
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+            tokenExpiresAt: Date.now() + (data.expires_in || 86400) * 1000,
+          });
+
+          console.log(`Refreshed TikTok token for account ${account._id}`);
         }
       } catch (error) {
         console.error(`Token refresh error for ${account._id}:`, error);
