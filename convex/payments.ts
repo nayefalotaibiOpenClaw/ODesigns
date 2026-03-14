@@ -121,7 +121,7 @@ export const verifyAndMarkPaid = action({
     orderId: v.string(),
     trackId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     const userId = await auth.getUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
@@ -131,7 +131,7 @@ export const verifyAndMarkPaid = action({
     });
     if (!payment) throw new Error("Payment not found");
     if (payment.userId !== userId) throw new Error("Not authorized");
-    if (payment.status === "paid") return payment._id;
+    if (payment.status === "paid") return payment._id as string;
 
     // Independently verify with UPayments
     const apiKey = process.env.UPAYMENTS_API_KEY;
@@ -160,7 +160,7 @@ export const verifyAndMarkPaid = action({
       upaymentTrackId: txn.track_id,
     });
 
-    return payment._id;
+    return payment._id as string;
   },
 });
 
