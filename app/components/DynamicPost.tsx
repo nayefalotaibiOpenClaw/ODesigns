@@ -11,7 +11,6 @@ import * as LucideIcons from "lucide-react";
 import { useDeviceType } from "@/contexts/DeviceContext";
 import { OverrideProvider, PostConfigOverrides } from "./OverrideContext";
 import { SelectedElementProvider } from "./SelectedElementContext";
-import ContextualToolbar from "./ContextualToolbar";
 
 /* ── Error Boundary — catches runtime render errors from AI-generated code ── */
 class PostErrorBoundary extends ReactComponent<
@@ -150,7 +149,6 @@ export default function DynamicPost({ code, overrides, onOverridesChange }: Dyna
         <OverrideProvider overrides={overrides} onChange={onOverridesChange}>
           <SelectedElementProvider>
             <Component />
-            <ContextualToolbar />
           </SelectedElementProvider>
         </OverrideProvider>
       </PostErrorBoundary>

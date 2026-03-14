@@ -258,6 +258,7 @@ function UserRow({ u, isExpanded, onToggle }: { u: any; isExpanded: boolean; onT
             <span className="text-[10px] text-slate-400 dark:text-neutral-600">{sub ? sub.status : t("admin.noSub")}</span>
           )}
         </div>
+        <div className="hidden md:block text-xs text-slate-400 dark:text-neutral-500 tabular-nums w-16 text-center shrink-0">{u.aiCost > 0 ? `$${u.aiCost.toFixed(2)}` : "—"}</div>
         <div className="hidden md:block text-xs text-slate-400 dark:text-neutral-500 tabular-nums w-12 text-center shrink-0">{u.workspaceCount}</div>
         <div className="hidden md:block text-xs text-slate-400 dark:text-neutral-500 tabular-nums w-20 text-right shrink-0">{fmtDateShort(u.createdAt, locale)}</div>
         {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400 dark:text-neutral-600 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 dark:text-neutral-600 shrink-0" />}
@@ -557,7 +558,8 @@ export default function AdminOverviewPage() {
             <div className="flex-1">{t("admin.user")}</div>
             <div className="w-16 text-center">{t("admin.plan")}</div>
             <div className="hidden md:block w-28 text-center">{t("admin.usage")}</div>
-            <div className="hidden md:block w-12 text-center">{t("admin.ws")}</div>
+            <div className="hidden md:block w-16 text-center">AI Cost</div>
+            <div className="hidden md:block w-12 text-center">Workspaces</div>
             <div className="hidden md:block w-20 text-end">{t("admin.joined")}</div>
             <div className="w-5" />
           </div>

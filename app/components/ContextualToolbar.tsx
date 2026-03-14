@@ -50,8 +50,10 @@ export default function ContextualToolbar() {
         return;
       }
       const rect = el.getBoundingClientRect();
+      const above = rect.top - 48;
+      const showBelow = above < 8;
       setPosition({
-        top: rect.top + window.scrollY - 48,
+        top: showBelow ? rect.bottom + 8 : above,
         left: rect.left + rect.width / 2,
       });
     };
@@ -79,12 +81,15 @@ export default function ContextualToolbar() {
 
   if (selectedElementType !== "text") return null;
 
+  // Clamp left so toolbar doesn't overflow viewport edges
+  const clampedLeft = Math.max(108, Math.min(position.left, window.innerWidth - 108));
+
   return createPortal(
     <div
       ref={toolbarRef}
       data-contextual-toolbar
       className="fixed z-[9999]"
-      style={{ top: position.top, left: position.left, transform: "translateX(-50%)" }}
+      style={{ top: position.top, left: clampedLeft, transform: "translateX(-50%)" }}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}

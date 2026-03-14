@@ -16,7 +16,7 @@ export type ToolbarVariant = "mockup" | "text" | "card";
 /* ── Toolbar Portal ── */
 
 interface ToolbarPortalProps {
-  toolbarPos: { top: number; left: number };
+  toolbarPos: { top: number; left: number; height: number };
   variant: ToolbarVariant;
   position: { x: MotionValue<number>; y: MotionValue<number> };
   transforms: Transforms;
@@ -41,11 +41,19 @@ function ToolbarPortal({ toolbarPos, variant, position, transforms, onSetPositio
     ? [{ key: 'rotateZ' as const, label: 'rZ', color: '#10B981' }]
     : [];
 
+  // Clamp toolbar so it stays within viewport
+  const toolbarTop = toolbarPos.top - 44;
+  const showBelow = toolbarTop < 8;
+  const clampedTop = showBelow ? toolbarPos.top + toolbarPos.height + 8 : toolbarTop;
+  // Clamp left so toolbar doesn't overflow viewport edges (toolbar is ~400px wide)
+  const toolbarHalfWidth = 200;
+  const clampedLeft = Math.max(toolbarHalfWidth + 8, Math.min(toolbarPos.left, window.innerWidth - toolbarHalfWidth - 8));
+
   return createPortal(
     <div
       data-toolbar-portal
       className="fixed z-[9999]"
-      style={{ top: toolbarPos.top - 44, left: toolbarPos.left, transform: 'translateX(-50%)' }}
+      style={{ top: clampedTop, left: clampedLeft, transform: 'translateX(-50%)' }}
       onClick={stop}
       onMouseDown={stop}
       onPointerDown={stop}
@@ -213,7 +221,7 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
   const [hasCustomPosition, setHasCustomPosition] = useState(false);
   const [posVersion, setPosVersion] = useState(0);
   const [uploadSignal, setUploadSignal] = useState(0);
-  const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     const saved = loadPosition(id, ratio);
@@ -241,7 +249,7 @@ export default function DraggableWrapper({ children, className = "", id, dir, st
     const update = () => {
       if (!wrapperRef.current) return;
       const rect = wrapperRef.current.getBoundingClientRect();
-      setToolbarPos({ top: rect.top + window.scrollY, left: rect.left + rect.width / 2, width: rect.width });
+      setToolbarPos({ top: rect.top, left: rect.left + rect.width / 2, width: rect.width, height: rect.height });
     };
     update();
     const interval = setInterval(update, 100);

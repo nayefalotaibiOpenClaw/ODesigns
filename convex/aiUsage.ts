@@ -2,8 +2,10 @@ import { mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
 
-// ── Model pricing (per 1M tokens) ──
+// ── Model pricing (per 1M tokens, paid tier, prompts <= 200k) ──
 const MODEL_COSTS: Record<string, { inputPer1M: number; outputPer1M: number }> = {
+  "gemini-3.1-pro-preview":        { inputPer1M: 2.00, outputPer1M: 12.00 },
+  "gemini-3.1-flash-preview":      { inputPer1M: 0.50, outputPer1M: 3.00 },
   "gemini-3.1-flash-lite-preview": { inputPer1M: 0.25, outputPer1M: 1.50 },
 };
 
@@ -109,6 +111,28 @@ export const logAndIncrement = mutation({
           ? `AI token limit reached (${newTokens}/${sub.aiTokensLimit})`
           : null,
     };
+  },
+});
+
+// One-time migration: recalculate estimatedCostUsd for all logs using correct model pricing
+export const recalculateCosts = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const logs = await ctx.db.query("aiUsageLogs").collect();
+    let updated = 0;
+    for (const log of logs) {
+      const correctCost = estimateCost(log.model, log.promptTokens, log.completionTokens);
+      if (Math.abs(correctCost - log.estimatedCostUsd) > 0.000001) {
+        await ctx.db.patch(log._id, { estimatedCostUsd: correctCost });
+        updated++;
+      }
+    }
+    // Count by model
+    const byModel: Record<string, number> = {};
+    for (const log of logs) {
+      byModel[log.model] = (byModel[log.model] || 0) + 1;
+    }
+    return { total: logs.length, updated, byModel };
   },
 });
 

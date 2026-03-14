@@ -112,6 +112,14 @@ export const listAllUsers = query({
 
     const users = await ctx.db.query("users").order("desc").collect();
 
+    // Pre-fetch all AI usage logs and sum cost per user
+    const allLogs = await ctx.db.query("aiUsageLogs").collect();
+    const costByUser = new Map<string, number>();
+    for (const log of allLogs) {
+      const uid = log.userId as string;
+      costByUser.set(uid, (costByUser.get(uid) || 0) + log.estimatedCostUsd);
+    }
+
     return await Promise.all(
       users.map(async (u: any) => {
         // Get active or most recent subscription
@@ -142,8 +150,9 @@ export const listAllUsers = query({
           image: u.image,
           plan: u.plan,
           role: u.role,
-          createdAt: u.createdAt,
+          createdAt: u.createdAt || u._creationTime,
           workspaceCount: workspaces.length,
+          aiCost: Math.round((costByUser.get(u._id as string) || 0) * 10000) / 10000,
           subscription: sub
             ? {
                 _id: sub._id,

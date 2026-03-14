@@ -55,7 +55,7 @@ export default function Sidebar({ activeTab, onTabClick, children, workspaces, c
   return (
     <>
       {/* Desktop Icon Rail - hidden on mobile */}
-      <div className="hidden md:flex w-[68px] bg-white dark:bg-neutral-900 flex-col items-center justify-center shrink-0 relative h-full pl-2 z-[70]">
+      <div className="hidden md:flex w-[68px] bg-white dark:bg-neutral-900 flex-col items-center justify-center shrink-0 relative h-full pl-2 z-[95]">
         {/* Top: Workspace switcher */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2" ref={dropdownRef}>
           <button
@@ -72,7 +72,7 @@ export default function Sidebar({ activeTab, onTabClick, children, workspaces, c
 
           {/* Workspace dropdown */}
           {showWorkspaces && workspaces && workspaces.length > 0 && (
-            <div className="absolute left-full ml-3 top-0 w-56 bg-white dark:bg-neutral-900 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-700 py-2 z-50">
+            <div className="absolute left-full ml-3 top-0 w-56 bg-white dark:bg-neutral-900 rounded-2xl shadow-xl border border-slate-200 dark:border-neutral-700 py-2 z-[200]">
               <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-neutral-500 uppercase tracking-wider">Workspaces</p>
               {workspaces.map((ws) => (
                 <button

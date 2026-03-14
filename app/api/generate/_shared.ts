@@ -39,7 +39,7 @@ const ALLOWED_MODELS = [
   "gemini-3.1-flash-preview",
   "gemini-3.1-pro-preview",
 ];
-const DEFAULT_MODEL = "gemini-3.1-pro-preview";
+const DEFAULT_MODEL = "gemini-3.1-flash-lite-preview";
 
 export function getModel(modelId?: string) {
   const apiKey = process.env.GOOGLE_AI_API_KEY;

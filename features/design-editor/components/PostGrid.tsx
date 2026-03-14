@@ -4,6 +4,7 @@ import React, { memo, useCallback, useRef, useState } from "react";
 import { Code, Eye, Trash2, Scaling, Loader2, Check, Paintbrush, ImagePlus, Search, Copy, MessageSquare, Tag, Smartphone } from "lucide-react";
 import { AspectRatioType, PostScopeContext } from "@/contexts/EditContext";
 import DynamicPost from "@/app/components/DynamicPost";
+import { PostConfigOverrides } from "@/app/components/OverrideContext";
 import PostWrapper from "@/app/components/PostWrapper";
 import { Id } from "@/convex/_generated/dataModel";
 
@@ -99,13 +100,17 @@ function trackUnsplashDownload(downloadLocation: string) {
   }).catch(() => {});
 }
 
-const MemoizedPostContent = memo(function MemoizedPostContent({ code, aspectRatio, filename }: { code: string; aspectRatio: AspectRatioType; filename: string }) {
+const MemoizedPostContent = memo(function MemoizedPostContent({ code, aspectRatio, filename, overrides, onOverridesChange }: {
+  code: string; aspectRatio: AspectRatioType; filename: string;
+  overrides?: PostConfigOverrides; onOverridesChange?: (o: PostConfigOverrides) => void;
+}) {
   return (
     <PostWrapper aspectRatio={aspectRatio} filename={filename}>
-      <DynamicPost code={code} />
+      <DynamicPost code={code} overrides={overrides} onOverridesChange={onOverridesChange} />
     </PostWrapper>
   );
 });
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PostRecord = any;
@@ -175,6 +180,8 @@ export default function PostGrid({
   const [unsplashResults, setUnsplashResults] = useState<UnsplashPhoto[]>([]);
   const [unsplashLoading, setUnsplashLoading] = useState(false);
   const [imageTab, setImageTab] = useState<'assets' | 'unsplash'>('assets');
+  // Override state for the selected post (enables text toolbar: color/size)
+  const [postOverrides, setPostOverrides] = useState<Record<string, PostConfigOverrides>>({});
 
   const updateCode = useCallback((id: string, newCode: string) => {
     const post = posts?.find((p: PostRecord) => p._id === id);
@@ -295,7 +302,7 @@ export default function PostGrid({
     <div
       data-mode={dataMode}
       className={`
-        w-full mx-auto
+        w-full mx-auto pt-14
         ${viewMode === 'list' ? 'flex flex-col items-center space-y-12' : 'gap-3 md:gap-6 post-grid-responsive'}
         ${editMode ? 'edit-mode' : ''}
       `}
@@ -344,8 +351,8 @@ export default function PostGrid({
             className={`relative group post-card ${isPostSelected ? 'ring-2 ring-blue-500 rounded-xl' : ''}`}
             style={draggingId === id ? { opacity: 0.4, transition: 'opacity 0.2s' } : undefined}
           >
-            {/* Post toolbar — floating pill, matches DraggableWrapper toolbar style */}
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Post toolbar — floating pill above card */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-[100] opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="flex items-center gap-0.5 bg-white rounded-2xl shadow-xl border border-gray-200 px-1.5 py-1"
                    onClick={(e) => e.stopPropagation()}>
                 <button
@@ -613,9 +620,7 @@ export default function PostGrid({
                         // Find first screenshot asset URL, or use placeholder
                         const screenshotAsset = assets?.find(a => a.url && ['iphone', 'ipad', 'desktop', 'screenshot'].includes(a.type));
                         const mockupSrc = screenshotAsset?.url || '/1.jpg';
-                        console.log('[AddMockup] code length:', code.length, 'src:', mockupSrc);
                         const newCode = injectMockup(code, mockupSrc);
-                        console.log('[AddMockup] changed:', newCode !== code, 'new length:', newCode.length);
                         updateCode(id, newCode);
                       }}
                       className="p-2 rounded-xl hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
@@ -793,7 +798,13 @@ export default function PostGrid({
               </div>
             ) : (
               <PostScopeContext.Provider value={id}>
-                <MemoizedPostContent code={code} aspectRatio={aspectRatio} filename={post?.title || id} />
+                <MemoizedPostContent
+                  code={code}
+                  aspectRatio={aspectRatio}
+                  filename={post?.title || id}
+                  overrides={isPostSelected ? (postOverrides[id] || {}) : undefined}
+                  onOverridesChange={isPostSelected ? (o) => setPostOverrides(prev => ({ ...prev, [id]: o })) : undefined}
+                />
               </PostScopeContext.Provider>
             )}
             {reorderMode && <div className="absolute inset-0 z-10 border-2 border-dashed border-transparent hover:border-[#1B4332]/30 transition-colors" />}
