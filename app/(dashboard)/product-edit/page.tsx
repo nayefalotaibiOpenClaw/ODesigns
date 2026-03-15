@@ -72,6 +72,13 @@ const ANGLE_PRESETS = [
   { id: "velvet-backdrop", label: "Velvet Backdrop", icon: Star, description: "Open palm, dark velvet curtain", group: "lifestyle" },
   { id: "floating-product", label: "Floating", icon: ArrowUp, description: "Levitating on cream background", group: "lifestyle" },
   { id: "nails-grip", label: "Nails Grip", icon: Hand, description: "Painted nails gripping, editorial", group: "lifestyle" },
+  { id: "stacked-cross", label: "Stacked Cross", icon: Layers, description: "Vertical stack, cut cross-sections", group: "creative" },
+  { id: "hands-compete", label: "Hands Compete", icon: Zap, description: "Multiple hands reaching, bold bg", group: "creative" },
+  { id: "color-block", label: "Color Block", icon: Palette, description: "Two-tone split background, pop art", group: "creative" },
+  { id: "wall-punch", label: "Wall Punch", icon: Sparkles, description: "Hands through torn paper wall", group: "creative" },
+  { id: "duo-compare", label: "Duo Compare", icon: LayoutGrid, description: "Two hands holding, side by side", group: "creative" },
+  { id: "extreme-macro", label: "Extreme Macro", icon: Search, description: "Ultra close-up textures and drips", group: "creative" },
+  { id: "outfit-match", label: "Outfit Match", icon: User, description: "Monochrome outfit color story", group: "creative" },
 ];
 
 interface GeneratedImage {
@@ -737,6 +744,43 @@ export default function ProductEditPage() {
               <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2 mt-4 font-medium">Lifestyle Scenes</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {ANGLE_PRESETS.filter((p) => p.group === "lifestyle").map((preset) => {
+                  const Icon = preset.icon;
+                  const count = getCount(preset.id);
+                  return (
+                    <div
+                      key={preset.id}
+                      className={`rounded-lg border text-left transition-all ${
+                        count > 0
+                          ? "border-neutral-500 bg-neutral-800"
+                          : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                      }`}
+                    >
+                      <button
+                        onClick={() => toggleAngle(preset.id)}
+                        className="flex items-start gap-2 p-2 w-full text-left"
+                      >
+                        <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${count > 0 ? "text-white" : "text-white/60"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium ${count > 0 ? "text-white" : "text-white/60"}`}>{preset.label}</p>
+                          <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
+                        </div>
+                      </button>
+                      {count > 0 && (
+                        <div className="flex items-center justify-end gap-1 px-2 pb-2 -mt-1">
+                          <button onClick={() => decrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">−</button>
+                          <span className="text-xs text-white/80 w-4 text-center tabular-nums">{count}</span>
+                          <button onClick={() => incrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">+</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Creative / Editorial */}
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2 mt-4 font-medium">Creative / Editorial</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {ANGLE_PRESETS.filter((p) => p.group === "creative").map((preset) => {
                   const Icon = preset.icon;
                   const count = getCount(preset.id);
                   return (

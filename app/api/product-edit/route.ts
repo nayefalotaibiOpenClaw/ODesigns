@@ -67,6 +67,20 @@ const PRODUCT_PRESETS: Record<string, string> = {
     "This exact product floating/levitating in mid-air against a clean cream or light beige background. Multiple pieces or angles of the product scattered at different heights and rotations, creating a dynamic floating composition. Soft even studio lighting, no harsh shadows. The products appear weightless and artfully arranged. Keep the product EXACTLY as shown in the reference image. Clean editorial menu/catalog style.",
   "nails-grip":
     "A dramatic close-up of a single hand with stylish painted nails (bold color like green, red, or dark) gripping this exact product tightly. Shot against a clean muted background (sage green, soft gray, or cream). The hand is the compositional focus alongside the product — every nail, ring, and texture visible. Soft directional studio lighting. Keep the product EXACTLY as shown in the reference image. High-fashion editorial food photography.",
+  "stacked-cross":
+    "Multiple copies of this exact product stacked vertically, each one cut in half to reveal the cross-section interior. Arranged in a vertical tower against a clean concrete or marble background. Hands hold the top and bottom products. The cross-sections are the hero — showing textures, layers, and fillings in beautiful detail. Soft directional lighting. Keep the product EXACTLY as shown in the reference image. Editorial menu photography, vertical composition.",
+  "hands-compete":
+    "Multiple hands desperately reaching and grabbing for this exact product from all directions against a bold solid-color background (vibrant orange, yellow, or pink). One hand in the center holds the product triumphantly above the rest. The reaching hands create dramatic tension and desire. Bold, fun, energetic composition. Keep the product EXACTLY as shown in the reference image. Viral social media ad campaign style.",
+  "color-block":
+    "This exact product shown twice — two hands each holding one, arranged diagonally against a bold two-tone color-block background (red and yellow, or orange and pink split vertically). The products mirror each other on opposite sides. Pop art, graphic design feel with strong color contrast. Keep the product EXACTLY as shown in the reference image. Bold, eye-catching social media campaign.",
+  "wall-punch":
+    "Two hands punching through a solid-colored paper wall (vibrant purple, pink, or yellow), each holding this exact product. The torn paper edges create a dynamic 3D effect around the fists. Shot straight-on. Playful, bold, and surprising composition. Keep the product EXACTLY as shown in the reference image. Creative brand campaign, punchy and memorable.",
+  "duo-compare":
+    "Two different hands each holding this exact product, presented side by side against a clean warm beige or cream studio background. One hand comes from lower-left, the other from upper-right, creating a balanced diagonal composition. Both products are in sharp focus. Clean studio lighting with soft shadows. Keep the product EXACTLY as shown in the reference image. Menu comparison style, editorial quality.",
+  "extreme-macro":
+    "An extreme close-up macro shot filling the entire frame with this exact product's most appetizing or interesting detail — textures, layers, drips, melting, crumbs. So close you can see every grain, fiber, and glistening surface. Shallow depth of field with parts going beautifully out of focus. Warm, appetizing lighting. Keep the product EXACTLY as shown in the reference image. Mouth-watering food photography.",
+  "outfit-match":
+    "A person wearing a solid monochrome outfit (blue, sage, or earth tone) holding this exact product close to their torso. The outfit color and product create a cohesive color story. Shot from chest to waist, the person's face is cropped out. The product is the clear focal point against the matching fabric background. Soft natural lighting. Keep the product EXACTLY as shown in the reference image. Fashion-meets-food editorial style.",
 };
 
 // ─── Image edit mode: preserves scene/background, changes camera angle ───
@@ -131,6 +145,20 @@ const IMAGE_EDIT_PRESETS: Record<string, string> = {
     "Re-render with subject floating/levitating at multiple angles against clean cream background. Weightless, dynamic composition. Keep subject exactly as-is. Editorial catalog style.",
   "nails-grip":
     "Re-render as close-up of hand with painted nails gripping subject against clean muted background. Keep subject exactly as-is. High-fashion editorial style.",
+  "stacked-cross":
+    "Re-render as vertical stack of subject copies cut in half showing cross-sections. Keep subject exactly as-is. Clean background, editorial menu style.",
+  "hands-compete":
+    "Re-render with multiple hands reaching for subject against bold solid-color background. One hand holds it up triumphantly. Keep subject exactly as-is. Energetic ad campaign.",
+  "color-block":
+    "Re-render with subject shown twice on a bold two-tone color-block background. Pop art, graphic design feel. Keep subject exactly as-is.",
+  "wall-punch":
+    "Re-render with hands punching through colored paper wall holding subject. Torn paper edges create 3D effect. Keep subject exactly as-is. Playful creative campaign.",
+  "duo-compare":
+    "Re-render with two hands each holding subject, arranged diagonally against cream studio background. Keep subject exactly as-is. Menu comparison editorial.",
+  "extreme-macro":
+    "Re-render as extreme close-up macro filling entire frame with subject's most detailed textures. Keep subject exactly as-is. Mouth-watering, shallow depth of field.",
+  "outfit-match":
+    "Re-render with person in monochrome outfit holding subject at torso level. Color-coordinated. Keep subject exactly as-is. Fashion editorial style.",
 };
 
 export async function POST(req: NextRequest) {
