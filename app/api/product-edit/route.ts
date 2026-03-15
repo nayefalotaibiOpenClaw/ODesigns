@@ -40,6 +40,17 @@ const PRODUCT_PRESETS: Record<string, string> = {
     "Place this exact product in a warm autumn setting — think warm golden/orange tones, fallen leaves, cozy textures like knit fabrics, warm wood surfaces, or cinnamon sticks. Soft, warm golden-hour lighting. The product stays exactly the same. The scene should feel seasonal and cozy, perfect for fall marketing campaigns on social media.",
   "texture-surface":
     "Place this exact product on a beautiful textured surface that creates visual contrast — marble, dark slate, raw wood, concrete, terrazzo, linen, or brushed metal. The surface texture adds depth and sophistication. Simple composition with just the product and surface. Soft directional lighting. Keep all product details exactly. Premium, editorial feel for social media.",
+  // Car / on-the-go presets
+  "car-interior":
+    "A premium commercial lifestyle photograph shot from inside a luxury modern car. A hand model with natural, healthy skin is holding this exact product inside the car, bringing it toward the camera. The lighting is warm golden hour sunlight streaming through the windshield, creating a glowing aura around the product. Background is a soft-focus leather car interior with dashboard visible. The product must be the hero — sharp, detailed, with every label and branding element from the reference image perfectly visible. Cinematic bokeh, 8K quality, aspirational and appetizing. Keep the product EXACTLY as shown in the reference image.",
+  "car-hood":
+    "A stylish editorial product shot placing this exact product on the hood of a beautiful classic or luxury car. The car paint creates a glossy, reflective surface. The product sits naturally on the hood, perhaps with its packaging open or arranged attractively. Warm cinematic lighting — golden hour or dramatic studio light. The car color should complement the product packaging. Shallow depth of field with the product in sharp focus. Keep the product EXACTLY as shown in the reference image. High-end food/product photography style.",
+  "car-window":
+    "A hand reaching out of a car window holding this exact product up against a blue sky with soft clouds. Shot from outside the car looking up. The arm extends from the car window casually. Bright, cheerful daylight with the sun creating a warm glow around the product. The product is the clear focal point against the sky. Aspirational, social media-worthy composition. Keep the product EXACTLY as shown in the reference image.",
+  "held-close-up":
+    "A tight close-up shot of two hands cradling and presenting this exact product. The person is wearing a stylish solid-colored outfit (blue, earth tone, or neutral). Shot is cropped to show mainly the hands and the product against the clothing as background. Soft natural lighting, editorial fashion photography style. The product is the absolute hero — every detail sharp and visible. Keep the product EXACTLY as shown in the reference image. Think high-end brand campaign.",
+  "person-holding":
+    "A lifestyle photograph of a person holding this exact product close to the camera. The person is slightly out of focus in the background wearing casual stylish clothing. The product is in sharp focus in the foreground, held at about chest height. Warm natural lighting, candid and authentic feel. The composition feels like a real Instagram post — not overly staged. Keep the product EXACTLY as shown in the reference image.",
 };
 
 // ─── Image edit mode: preserves scene/background, changes camera angle ───
@@ -78,6 +89,16 @@ const IMAGE_EDIT_PRESETS: Record<string, string> = {
     "Re-render this scene in a warm autumn setting — golden/orange tones, fallen leaves, cozy textures, warm wood. Keep the subject exactly as-is. Warm golden-hour lighting. Seasonal and cozy feel perfect for fall campaigns.",
   "texture-surface":
     "Re-render this scene placing the subject on a beautiful textured surface — marble, dark slate, raw wood, concrete, terrazzo, or brushed metal. Keep the subject exactly as-is. Simple composition, soft directional lighting. Premium editorial feel.",
+  "car-interior":
+    "Re-render this scene inside a luxury car interior. A hand holds the subject inside the car with warm golden hour light streaming through the windshield. Keep the subject exactly as-is. Soft-focus leather interior background, cinematic bokeh.",
+  "car-hood":
+    "Re-render this scene with the subject placed on the hood of a classic or luxury car. Glossy reflective car paint surface. Keep the subject exactly as-is. Warm cinematic lighting, shallow depth of field. Editorial product photography style.",
+  "car-window":
+    "Re-render this scene with a hand holding the subject out of a car window against a blue sky. Keep the subject exactly as-is. Bright cheerful daylight, aspirational composition. Shot from outside looking up.",
+  "held-close-up":
+    "Re-render this scene as a tight close-up of hands cradling the subject against a solid-colored outfit. Keep the subject exactly as-is. Soft natural lighting, editorial fashion photography style. Product is the hero.",
+  "person-holding":
+    "Re-render this scene with a person holding the subject close to camera. Person slightly out of focus wearing casual stylish clothing. Keep the subject exactly as-is. Warm natural lighting, candid Instagram feel.",
 };
 
 export async function POST(req: NextRequest) {

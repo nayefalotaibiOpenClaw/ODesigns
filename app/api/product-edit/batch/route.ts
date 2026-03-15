@@ -59,6 +59,11 @@ const PRODUCT_PRESETS: Record<string, string> = {
   "minimal-shadow": "Product on clean white surface with only a long dramatic directional shadow. Ultra-minimal editorial style. Keep all details exactly.",
   "seasonal-autumn": "Product in warm autumn setting — golden/orange tones, fallen leaves, cozy textures, warm wood. Golden-hour lighting. Keep product exactly as-is.",
   "texture-surface": "Product on beautiful textured surface (marble, slate, wood, concrete, terrazzo). Simple composition, soft directional lighting. Premium editorial feel. Keep all details exactly.",
+  "car-interior": "Hand holding product inside luxury car. Golden hour light through windshield, leather interior background. Cinematic bokeh. Keep product exactly as-is.",
+  "car-hood": "Product placed on hood of classic/luxury car. Glossy reflective surface, warm cinematic lighting. Shallow depth of field. Keep product exactly as-is.",
+  "car-window": "Hand holding product out car window against blue sky. Bright cheerful daylight, aspirational. Keep product exactly as-is.",
+  "held-close-up": "Tight close-up of hands cradling product against solid-colored outfit. Editorial fashion photography. Keep product exactly as-is.",
+  "person-holding": "Person holding product close to camera, slightly out of focus. Warm natural lighting, candid Instagram feel. Keep product exactly as-is.",
 };
 
 const IMAGE_EDIT_PRESETS: Record<string, string> = {
@@ -78,6 +83,11 @@ const IMAGE_EDIT_PRESETS: Record<string, string> = {
   "minimal-shadow": "Re-render ultra-minimal — subject on clean white surface with dramatic directional shadow only. Keep subject exactly as-is. Editorial feel.",
   "seasonal-autumn": "Re-render in warm autumn setting — golden tones, fallen leaves, cozy textures. Keep subject exactly as-is. Golden-hour lighting.",
   "texture-surface": "Re-render placing subject on textured surface (marble, slate, wood, terrazzo). Keep subject exactly as-is. Simple composition, soft directional lighting.",
+  "car-interior": "Re-render scene inside luxury car interior. Hand holds subject with golden hour light through windshield. Keep subject exactly as-is. Cinematic bokeh.",
+  "car-hood": "Re-render scene with subject on hood of classic/luxury car. Glossy reflective surface, warm cinematic lighting. Keep subject exactly as-is.",
+  "car-window": "Re-render scene with hand holding subject out car window against blue sky. Keep subject exactly as-is. Bright cheerful daylight.",
+  "held-close-up": "Re-render as tight close-up of hands cradling subject against solid-colored outfit. Keep subject exactly as-is. Editorial fashion photography.",
+  "person-holding": "Re-render with person holding subject close to camera. Keep subject exactly as-is. Warm natural lighting, candid feel.",
 };
 
 // ─── Types ───────────────────────────────────────────────────────

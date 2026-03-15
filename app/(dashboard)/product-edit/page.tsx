@@ -36,6 +36,9 @@ import {
   CheckCircle,
   AlertCircle,
   Timer,
+  Car,
+  CircleDot,
+  User,
 } from "lucide-react";
 
 // ─── Angle presets ────────────────────────────────────────────────
@@ -56,6 +59,11 @@ const ANGLE_PRESETS = [
   { id: "minimal-shadow", label: "Minimal Shadow", icon: Square, description: "Ultra-clean with dramatic shadow", group: "social" },
   { id: "seasonal-autumn", label: "Autumn Vibes", icon: Leaf, description: "Warm fall/cozy seasonal feel", group: "social" },
   { id: "texture-surface", label: "Texture Surface", icon: Layers, description: "Marble, wood, slate backdrop", group: "social" },
+  { id: "car-interior", label: "Car Interior", icon: Car, description: "Held inside luxury car, golden hour", group: "lifestyle" },
+  { id: "car-hood", label: "Car Hood", icon: Car, description: "Product on classic car hood", group: "lifestyle" },
+  { id: "car-window", label: "Car Window", icon: CircleDot, description: "Held out car window, blue sky", group: "lifestyle" },
+  { id: "held-close-up", label: "Held Close-Up", icon: Hand, description: "Hands cradling product, editorial", group: "lifestyle" },
+  { id: "person-holding", label: "Person Holding", icon: User, description: "Candid person holding product", group: "lifestyle" },
 ];
 
 interface GeneratedImage {
@@ -684,6 +692,43 @@ export default function ProductEditPage() {
               <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2 font-medium">Social Media Styles</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {ANGLE_PRESETS.filter((p) => p.group === "social").map((preset) => {
+                  const Icon = preset.icon;
+                  const count = getCount(preset.id);
+                  return (
+                    <div
+                      key={preset.id}
+                      className={`rounded-lg border text-left transition-all ${
+                        count > 0
+                          ? "border-neutral-500 bg-neutral-800"
+                          : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                      }`}
+                    >
+                      <button
+                        onClick={() => toggleAngle(preset.id)}
+                        className="flex items-start gap-2 p-2 w-full text-left"
+                      >
+                        <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${count > 0 ? "text-white" : "text-white/60"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium ${count > 0 ? "text-white" : "text-white/60"}`}>{preset.label}</p>
+                          <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
+                        </div>
+                      </button>
+                      {count > 0 && (
+                        <div className="flex items-center justify-end gap-1 px-2 pb-2 -mt-1">
+                          <button onClick={() => decrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">−</button>
+                          <span className="text-xs text-white/80 w-4 text-center tabular-nums">{count}</span>
+                          <button onClick={() => incrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">+</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Lifestyle Scenes */}
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2 mt-4 font-medium">Lifestyle Scenes</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {ANGLE_PRESETS.filter((p) => p.group === "lifestyle").map((preset) => {
                   const Icon = preset.icon;
                   const count = getCount(preset.id);
                   return (
