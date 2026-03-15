@@ -99,8 +99,8 @@ interface AgentChatPanelProps {
   setGenerateModel: (m: string) => void;
   generateCount: number;
   setGenerateCount: (n: number) => void;
-  generateVersion: 4 | 5 | 7;
-  setGenerateVersion: (v: 4 | 5 | 7) => void;
+  generateVersion: 4 | 5 | 7 | 8;
+  setGenerateVersion: (v: 4 | 5 | 7 | 8) => void;
 
   // Adapting state
   adaptingRatios: boolean;
@@ -299,6 +299,17 @@ export default function AgentChatPanel({
             assets: (assets || [])
               .filter((a) => a.url)
               .map((a) => ({ id: a._id, url: a.url!, type: a.type, label: a.label || a.fileName, description: a.description, aiAnalysis: a.aiAnalysis })),
+            themeColors: branding?.colors ? {
+              primary: branding.colors.primary,
+              primaryLight: branding.colors.primaryLight,
+              primaryDark: branding.colors.primaryDark,
+              accent: branding.colors.accent,
+              accentLight: branding.colors.accentLight,
+              accentLime: branding.colors.accentLime,
+              accentGold: branding.colors.accentGold,
+              accentOrange: branding.colors.accentOrange,
+              border: branding.colors.border,
+            } : undefined,
           },
           posts: postSummaries,
           postCodes,
@@ -758,7 +769,8 @@ export default function AgentChatPanel({
             <div className="hidden sm:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
               {([
                 { v: 4 as const, label: "Social Media", title: "Social Media" },
-                { v: 7 as const, label: "App Store Preview", title: "App Store Preview" },
+                { v: 8 as const, label: "SaaS", title: "SaaS — typography-driven, CSS-only" },
+                { v: 7 as const, label: "App Store", title: "App Store Preview" },
               ]).map(({ v, label, title }) => (
                 <button
                   key={v}

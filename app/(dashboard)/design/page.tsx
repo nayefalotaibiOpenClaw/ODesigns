@@ -171,7 +171,7 @@ export default function DesignPage() {
   const [usageWarning, setUsageWarning] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [generateCount, setGenerateCount] = useState(2);
-  const [generateVersion, setGenerateVersion] = useState<4 | 5 | 7>(4);
+  const [generateVersion, setGenerateVersion] = useState<4 | 5 | 7 | 8>(4);
   const [generateModel, setGenerateModel] = useState('gemini-3.1-flash-lite-preview');
   const [codeViewPosts, setCodeViewPosts] = useState<Set<string>>(new Set());
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
@@ -392,6 +392,17 @@ export default function DesignPage() {
             aiAnalysis: a.aiAnalysis,
           })),
         hasSelectedAssets: contextAssets.length > 0,
+        themeColors: {
+          primary: currentTheme.primary,
+          primaryLight: currentTheme.primaryLight,
+          primaryDark: currentTheme.primaryDark,
+          accent: currentTheme.accent,
+          accentLight: currentTheme.accentLight,
+          accentLime: currentTheme.accentLime,
+          accentGold: currentTheme.accentGold,
+          accentOrange: currentTheme.accentOrange,
+          border: currentTheme.border,
+        },
       };
 
       const res = await fetch('/api/generate', {
@@ -510,7 +521,7 @@ export default function DesignPage() {
     }
   };
 
-  const ENGINE_LABELS: Record<number, string> = { 4: 'W (Wild)', 5: 'C (Classic)', 7: 'AG (App Store Guided)' };
+  const ENGINE_LABELS: Record<number, string> = { 4: 'W (Wild)', 5: 'C (Classic)', 7: 'AG (App Store Guided)', 8: 'S (SaaS)' };
 
   // After generating posts, adapt each to the additional selected ratios
   const adaptPostToRatios = async (postId: Id<"posts">, baseCode: string, ratios: AspectRatioType[]) => {
@@ -2154,7 +2165,8 @@ export default function DesignPage() {
                   <div className="hidden sm:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
                     {([
                       { v: 4 as const, label: 'Social Media', title: 'Social Media' },
-                      { v: 7 as const, label: 'App Store Preview', title: 'App Store Preview' },
+                      { v: 8 as const, label: 'SaaS', title: 'SaaS — typography-driven, CSS-only' },
+                      { v: 7 as const, label: 'App Store', title: 'App Store Preview' },
                     ]).map(({ v, label, title }) => (
                       <button
                         key={v}

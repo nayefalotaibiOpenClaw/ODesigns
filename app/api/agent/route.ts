@@ -53,13 +53,13 @@ interface AgentRequest {
   contextAssets?: { url: string; type: string; label?: string; description?: string; aiAnalysis?: string }[];
   // Current generation settings
   model?: string;
-  generateVersion?: 4 | 5 | 7;
+  generateVersion?: 4 | 5 | 7 | 8;
   targetRatio?: string;
 }
 
 // ─── System Prompt ────────────────────────────────────────────────
 
-function buildAgentSystemPrompt(ctx: AgentRequest["context"], posts: PostSummary[], generateVersion: 4 | 5 | 7): string {
+function buildAgentSystemPrompt(ctx: AgentRequest["context"], posts: PostSummary[], generateVersion: 4 | 5 | 7 | 8): string {
   // Build compact post digest (all posts, lightweight)
   let postDigest = "";
   if (posts.length > 0) {
@@ -103,7 +103,7 @@ Your available tools (use ONLY these exact names):
 - Website: ${ctx.website || "Not set"}
 - Total posts: ${posts.length}
 - Assets available: ${ctx.assets?.length || 0}
-- Generation mode: ${generateVersion === 7 ? "App Store Preview (guided templates with device mockups)" : generateVersion === 5 ? "Classic (social media posts)" : "Wild (social media posts, full creative freedom)"}
+- Generation mode: ${generateVersion === 8 ? "SaaS (typography-driven, CSS-only creative posts — NO images or mockups)" : generateVersion === 7 ? "App Store Preview (guided templates with device mockups)" : generateVersion === 5 ? "Classic (social media posts)" : "Wild (social media posts, full creative freedom)"}
 ${postDigest}
 
 ## Guidelines
@@ -361,7 +361,7 @@ interface ToolContext {
   totalPosts: number;
   context: AgentRequest["context"];
   modelId: string;
-  generateVersion: 4 | 5 | 7;
+  generateVersion: 4 | 5 | 7 | 8;
   targetRatio?: string;
   referenceImages?: { base64: string; mimeType: string }[];
   contextPosts?: string[];
@@ -420,6 +420,7 @@ async function handleGeneratePosts(
   const { generate: generateWild } = await import("@/app/api/generate/engines/wild");
   const { generate: generateClassic } = await import("@/app/api/generate/engines/classic");
   const { generate: generateAppstoreGuided } = await import("@/app/api/generate/engines/appstore-guided");
+  const { generate: generateSaas } = await import("@/app/api/generate/engines/saas");
 
   const engineReq = {
     prompt,
@@ -441,8 +442,13 @@ async function handleGeneratePosts(
       engineResponse = await generateClassic(engineReq);
       break;
     case 7:
-    default:
       engineResponse = await generateAppstoreGuided(engineReq);
+      break;
+    case 8:
+      engineResponse = await generateSaas(engineReq);
+      break;
+    default:
+      engineResponse = await generateWild(engineReq);
       break;
   }
 
