@@ -118,6 +118,8 @@ const t = useTheme();
 You CAN use Tailwind for layout/sizing: \`className="text-3xl font-bold p-6 rounded-xl flex"\`
 You MUST NOT use Tailwind for colors: no \`text-*\`, \`bg-*\`, \`border-*\` color classes.
 
+⚠ EVERY element that displays text — headings, labels, prices, card text, badge text, subtitles, footer — MUST have \`style={{ color: t.* }}\`. No exceptions. Text without an explicit color will render as browser-default black and break the design.
+
 ## RESPONSIVE
 \`\`\`tsx
 const ratio = useAspectRatio();
