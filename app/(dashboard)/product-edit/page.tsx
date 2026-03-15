@@ -412,43 +412,36 @@ export default function ProductEditPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pt-20">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">AI Angle Generator</h1>
-              <p className="text-sm text-white/50">
-                Generate different angles of any image using AI — powered by Gemini
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold">AI Angle Generator</h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              Generate different angles of any image using AI
+            </p>
           </div>
 
           {/* Mode toggle */}
           <div className="flex gap-2 mt-4">
             <button
               onClick={() => setEditMode("product")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                 editMode === "product"
-                  ? "border-violet-500 bg-violet-500/15 text-violet-300"
-                  : "border-white/10 bg-white/[0.02] text-white/50 hover:border-white/20 hover:text-white/70"
+                  ? "bg-white text-black border-white"
+                  : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700 hover:text-neutral-300"
               }`}
             >
               <Package className="w-4 h-4" />
               Product Mode
-              <span className="text-[10px] text-white/30 ml-1">Clean white BG</span>
             </button>
             <button
               onClick={() => setEditMode("image-edit")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                 editMode === "image-edit"
-                  ? "border-fuchsia-500 bg-fuchsia-500/15 text-fuchsia-300"
-                  : "border-white/10 bg-white/[0.02] text-white/50 hover:border-white/20 hover:text-white/70"
+                  ? "bg-white text-black border-white"
+                  : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700 hover:text-neutral-300"
               }`}
             >
               <Pencil className="w-4 h-4" />
-              Image Edit Mode
-              <span className="text-[10px] text-white/30 ml-1">Keep scene</span>
+              Image Edit
             </button>
           </div>
 
@@ -474,7 +467,7 @@ export default function ProductEditPage() {
                         setSourceImage(null);
                       }}
                       className={`w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition-colors ${
-                        w._id === selectedWorkspaceId ? "text-violet-400" : "text-white/70"
+                        w._id === selectedWorkspaceId ? "text-white" : "text-white/70"
                       }`}
                     >
                       {w.name}
@@ -493,11 +486,11 @@ export default function ProductEditPage() {
               <h2 className="text-sm font-semibold text-white/80 mb-3">Source Image</h2>
 
               {/* Mode toggle */}
-              <div className="flex gap-1 p-1 bg-white/5 rounded-lg mb-4">
+              <div className="flex gap-1 p-1 bg-neutral-900 border border-neutral-800 rounded-lg mb-4">
                 <button
                   onClick={() => setSourceMode("upload")}
                   className={`flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-colors ${
-                    sourceMode === "upload" ? "bg-violet-600 text-white" : "text-white/50 hover:text-white/70"
+                    sourceMode === "upload" ? "bg-white text-black" : "text-neutral-500 hover:text-neutral-300"
                   }`}
                 >
                   Upload
@@ -505,7 +498,7 @@ export default function ProductEditPage() {
                 <button
                   onClick={() => setSourceMode("asset")}
                   className={`flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition-colors ${
-                    sourceMode === "asset" ? "bg-violet-600 text-white" : "text-white/50 hover:text-white/70"
+                    sourceMode === "asset" ? "bg-white text-black" : "text-neutral-500 hover:text-neutral-300"
                   }`}
                 >
                   From Assets
@@ -514,7 +507,7 @@ export default function ProductEditPage() {
 
               {sourceMode === "upload" ? (
                 <label className="block cursor-pointer">
-                  <div className="border-2 border-dashed border-white/10 rounded-xl p-6 text-center hover:border-violet-500/50 transition-colors">
+                  <div className="border-2 border-dashed border-neutral-800 rounded-xl p-6 text-center hover:border-neutral-600 transition-colors">
                     {sourceImage && !selectedAssetId ? (
                       <div className="relative">
                         <img
@@ -554,7 +547,7 @@ export default function ProductEditPage() {
                           onClick={() => handleAssetSelect(asset)}
                           className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                             selectedAssetId === asset._id
-                              ? "border-violet-500 ring-2 ring-violet-500/30"
+                              ? "border-white ring-2 ring-white/20"
                               : "border-white/10 hover:border-white/20"
                           }`}
                         >
@@ -566,8 +559,8 @@ export default function ProductEditPage() {
                             />
                           )}
                           {selectedAssetId === asset._id && (
-                            <div className="absolute inset-0 bg-violet-500/20 flex items-center justify-center">
-                              <Check className="w-5 h-5 text-violet-300" />
+                            <div className="absolute inset-0 bg-white/20 flex items-center justify-center">
+                              <Check className="w-5 h-5 text-white" />
                             </div>
                           )}
                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-1">
@@ -606,7 +599,7 @@ export default function ProductEditPage() {
                   )}
                   <button
                     onClick={selectAllAngles}
-                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                    className="text-xs text-neutral-400 hover:text-white transition-colors"
                   >
                     {selectedAngles.length === ANGLE_PRESETS.length ? "Deselect all" : "Select all"}
                   </button>
@@ -625,11 +618,11 @@ export default function ProductEditPage() {
                       onClick={() => toggleAngle(preset.id)}
                       className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all ${
                         selected
-                          ? "border-violet-500 bg-violet-500/10 text-white"
+                          ? "border-neutral-500 bg-neutral-800 text-white"
                           : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:text-white/80"
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-violet-400" : ""}`} />
+                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-white" : ""}`} />
                       <div>
                         <p className="text-xs font-medium">{preset.label}</p>
                         <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
@@ -651,11 +644,11 @@ export default function ProductEditPage() {
                       onClick={() => toggleAngle(preset.id)}
                       className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all ${
                         selected
-                          ? "border-fuchsia-500 bg-fuchsia-500/10 text-white"
+                          ? "border-neutral-500 bg-neutral-800 text-white"
                           : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:text-white/80"
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-fuchsia-400" : ""}`} />
+                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-white" : ""}`} />
                       <div>
                         <p className="text-xs font-medium">{preset.label}</p>
                         <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
@@ -672,7 +665,7 @@ export default function ProductEditPage() {
                     type="checkbox"
                     checked={useCustom}
                     onChange={(e) => setUseCustom(e.target.checked)}
-                    className="accent-violet-500"
+                    className="accent-neutral-400"
                   />
                   <span className="text-xs text-white/60">Add custom prompt</span>
                 </label>
@@ -683,7 +676,7 @@ export default function ProductEditPage() {
                     placeholder="e.g. Show product floating with dramatic lighting and smoke effects..."
                     rows={3}
                     maxLength={1000}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 resize-none"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-neutral-600 resize-none"
                   />
                 )}
               </div>
@@ -697,7 +690,7 @@ export default function ProductEditPage() {
                   className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
                     !sourceImage || selectedAngles.length === 0 || generating
                       ? "bg-white/5 text-white/20 cursor-not-allowed"
-                      : "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500 shadow-lg shadow-violet-500/20"
+                      : "bg-white text-black hover:bg-neutral-200"
                   }`}
                 >
                   {generating ? (
@@ -912,7 +905,7 @@ export default function ProductEditPage() {
                 </div>
               ) : generating ? (
                 <div className="flex flex-col items-center justify-center py-24">
-                  <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
+                  <Loader2 className="w-10 h-10 animate-spin text-white mb-3" />
                   <p className="text-sm text-white/40">
                     {editMode === "image-edit"
                       ? "Re-rendering image from new angles with Gemini..."
