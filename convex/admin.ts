@@ -305,3 +305,17 @@ export const createSubscription = mutation({
     return { subscriptionId: subId };
   },
 });
+
+export const setBetaFeatures = mutation({
+  args: {
+    targetUserId: v.id("users"),
+    features: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await assertAdmin(ctx);
+    const user = await ctx.db.get(args.targetUserId);
+    if (!user) throw new Error("User not found");
+    await ctx.db.patch(args.targetUserId, { betaFeatures: args.features });
+    return { success: true };
+  },
+});

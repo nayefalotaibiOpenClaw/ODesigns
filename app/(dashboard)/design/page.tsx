@@ -9,7 +9,8 @@ import { DeviceContext } from "@/contexts/DeviceContext";
 import { useTheme, useSetTheme, type Theme } from "@/contexts/ThemeContext";
 import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
-import { useSearchParams } from "next/navigation";
+import { localizeHref } from "@/lib/i18n/utils";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useConvexAuth, useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -25,15 +26,18 @@ import DownloadBar from "@/features/design-editor/components/DownloadBar";
 import PublishChannelsPage from "@/features/design-editor/components/PublishChannelsPage";
 import BrandPanel from "@/features/design-editor/components/BrandPanel";
 import AgentChatPanel from "@/features/design-editor/components/AgentChatPanel";
+import { FONTS } from "@/features/design-editor/constants/fonts";
 
 export default function DesignPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const workspaceId = searchParams.get("workspace") as Id<"workspaces"> | null;
   const collectionIdParam = searchParams.get("collection") as Id<"collections"> | null;
 
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const user = useQuery(api.users.currentUser);
+  const hasBlogBeta = useQuery(api.users.hasBetaFeature, { feature: "blog_engine" });
   const workspaces = useQuery(
     api.workspaces.listByUser,
     user ? {} : "skip"
@@ -513,6 +517,8 @@ export default function DesignPage() {
   const handleCrawlDiscover = async (url: string) => {
     if (!workspaceId || !user) return;
 
+    // Always apply brand identity — user explicitly triggered fetch/refetch
+
     // Save the website URL to the workspace so fetch-section can use it
     await updateWorkspace({ id: workspaceId, website: url });
 
@@ -595,6 +601,158 @@ export default function DesignPage() {
             fetchedAt: Date.now(),
           },
         });
+      }
+
+      // ── Auto-apply brand identity from crawl results ──
+      const brandName = wi.companyName || workspace?.name || "Brand";
+      const tagline = wi.tagline || undefined;
+
+      // Validate hex color: must be #RRGGBB or #RGB format
+      const isValidHex = (c: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c);
+      const normalizeHex = (c: string) => {
+        if (!isValidHex(c)) return null;
+        const h = c.replace("#", "");
+        if (h.length === 3) return "#" + h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        return "#" + h;
+      };
+
+      // Build theme from discovered brand colors
+      let newTheme: Theme | null = null;
+      if (wi.brandColors && wi.brandColors.primary) {
+        // Color utilities
+        const hexToRgb = (hex: string) => {
+          const h = hex.replace("#", "");
+          return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)] as [number, number, number];
+        };
+        const rgbToHex = (r: number, g: number, b: number) =>
+          "#" + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+        const mix = (hex1: string, hex2: string, ratio: number) => {
+          const [r1, g1, b1] = hexToRgb(hex1);
+          const [r2, g2, b2] = hexToRgb(hex2);
+          return rgbToHex(r1 + (r2 - r1) * ratio, g1 + (g2 - g1) * ratio, b1 + (b2 - b1) * ratio);
+        };
+        const lighten = (hex: string, amount: number) => mix(hex, "#FFFFFF", amount);
+        const darken = (hex: string, amount: number) => mix(hex, "#000000", amount);
+        const brightness = (hex: string) => {
+          const [r, g, b] = hexToRgb(hex);
+          return (r * 299 + g * 587 + b * 114) / 1000;
+        };
+
+        let primary = normalizeHex(wi.brandColors.primary);
+        let accent = normalizeHex(wi.brandColors.accent) || primary;
+        let light = normalizeHex(wi.brandColors.light) || "#F8FAFC";
+
+        // Guard: if AI returned a too-light color as primary, swap with accent
+        if (primary && accent && brightness(primary) > 200 && brightness(accent) < 200) {
+          const tmp = primary;
+          primary = accent;
+          accent = tmp;
+        }
+        // Guard: if primary is still too light (near-white), derive from accent
+        if (primary && brightness(primary) > 200 && accent) {
+          primary = darken(accent, 0.3);
+        }
+
+        if (primary) {
+          const primaryDark = normalizeHex(wi.brandColors.primaryDark) || darken(primary, 0.5);
+          const accentLight = normalizeHex(wi.brandColors.accentLight) || lighten(accent!, 0.3);
+
+          newTheme = {
+            primary,
+            primaryLight: light,
+            primaryDark,
+            accent: accent!,
+            accentLight,
+            accentLime: lighten(accent!, 0.55),
+            accentGold: "#FCD34D",
+            accentOrange: "#F4A261",
+            border: mix(primary, accent!, 0.3),
+            font: currentTheme.font,
+          };
+        }
+      }
+
+      // Match suggested font to available fonts
+      let matchedFont: string | null = null;
+      if (wi.suggestedFont) {
+        const suggested = wi.suggestedFont.toLowerCase().trim();
+        const fontMatch = FONTS.find(
+          (f) => f.name.toLowerCase() === suggested || f.value.toLowerCase().includes(suggested)
+        );
+        if (fontMatch) {
+          matchedFont = fontMatch.value;
+        }
+      }
+
+      // Apply font to theme (on first crawl only)
+      if (matchedFont) {
+        if (newTheme) {
+          newTheme = { ...newTheme, font: matchedFont };
+        } else {
+          newTheme = { ...currentTheme, font: matchedFont };
+        }
+      }
+
+      // Apply theme
+      if (newTheme) {
+        setTheme(newTheme);
+      }
+
+      // Save branding
+      const themeToSave = newTheme || currentTheme;
+      const brandingColors = {
+        primary: themeToSave.primary,
+        primaryLight: themeToSave.primaryLight,
+        primaryDark: themeToSave.primaryDark,
+        accent: themeToSave.accent,
+        accentLight: themeToSave.accentLight,
+        accentLime: themeToSave.accentLime,
+        accentGold: themeToSave.accentGold,
+        accentOrange: themeToSave.accentOrange,
+        border: themeToSave.border,
+      };
+      const brandingFonts = { heading: themeToSave.font, body: themeToSave.font };
+
+      if (branding) {
+        await updateBrandingField({ workspaceId, field: "brandName", value: brandName });
+        if (tagline) await updateBrandingField({ workspaceId, field: "tagline", value: tagline });
+        await updateBrandingField({ workspaceId, field: "colors", value: brandingColors });
+        await updateBrandingField({ workspaceId, field: "fonts", value: brandingFonts });
+      } else {
+        await upsertBranding({
+          workspaceId,
+          brandName,
+          tagline,
+          colors: brandingColors,
+          fonts: brandingFonts,
+        });
+      }
+
+      // Auto-save discovered logo
+      if (wi.logoUrl) {
+        try {
+          const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(wi.logoUrl)}`);
+          if (proxyRes.ok) {
+            const blob = await proxyRes.blob();
+            const uploadUrl = await generateUploadUrl();
+            const uploadRes = await fetch(uploadUrl, {
+              method: "POST",
+              headers: { "Content-Type": blob.type || "image/png" },
+              body: blob,
+            });
+            if (uploadRes.ok) {
+              const { storageId } = await uploadRes.json();
+              await updateBrandingField({ workspaceId, field: "logo", value: storageId });
+            }
+          }
+        } catch (logoErr) {
+          console.error("Auto-save logo failed:", logoErr);
+        }
+      }
+
+      // Update industry on workspace
+      if (wi.industry) {
+        await updateWorkspace({ id: workspaceId, industry: wi.industry });
       }
 
       // Log crawl usage
@@ -862,6 +1020,10 @@ export default function DesignPage() {
   }, [localOrder, posts, reorderPosts]);
 
   const handleTabClick = (tab: SidebarTab) => {
+    if (tab === 'blogs' && workspaceId) {
+      router.push(localizeHref(`/blog-editor?workspace=${workspaceId}`, locale));
+      return;
+    }
     if (tab === 'design') {
       setActiveTab(null);
       return;
@@ -1082,6 +1244,7 @@ export default function DesignPage() {
         workspaces={workspaces?.map(w => ({ _id: w._id, name: w.name }))}
         currentWorkspaceId={workspaceId ?? undefined}
         currentWorkspaceName={workspace?.name}
+        hasBlogBeta={hasBlogBeta === true}
       >
         {activeTab === 'theme' && (
           <ThemePanel currentTheme={currentTheme} setTheme={setTheme} />

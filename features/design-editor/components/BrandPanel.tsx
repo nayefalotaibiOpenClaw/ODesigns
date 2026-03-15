@@ -626,14 +626,14 @@ export default function BrandPanel({
                     </h2>
                   </div>
                   <div className="space-y-1.5">
-                    {crawlData.sections.map((section) => {
+                    {crawlData.sections.map((section, sectionIdx) => {
                       const isExpanded = expandedSections.has(section.url);
                       const sectionProducts = crawlData.discoveredProducts.filter(
                         (p) => p.section === section.name || p.sourceUrl.startsWith(section.url)
                       );
 
                       return (
-                        <div key={section.url} className="bg-white dark:bg-neutral-800 rounded-xl overflow-hidden">
+                        <div key={`${section.url}-${sectionIdx}`} className="bg-white dark:bg-neutral-800 rounded-xl overflow-hidden">
                           <button
                             onClick={() => toggleSection(section.url)}
                             className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors"

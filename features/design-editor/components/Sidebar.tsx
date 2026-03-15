@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Send, X, Building2, LayoutGrid, LinkIcon, Check } from "lucide-react";
+import { Upload, Send, X, Building2, LayoutGrid, LinkIcon, Check, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/i18n/context";
 import { localizeHref } from "@/lib/i18n/utils";
 import type { TranslationKey } from "@/lib/i18n/types";
 
-export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | null;
+export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | 'blogs' | null;
 
-export const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number }>; labelKey: TranslationKey; fullPage?: boolean }[] = [
+export const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number }>; labelKey: TranslationKey; fullPage?: boolean; beta?: boolean }[] = [
   { id: 'brand', icon: Building2, labelKey: 'sidebar.brand', fullPage: true },
   { id: 'design', icon: LayoutGrid, labelKey: 'sidebar.design', fullPage: true },
   // theme tab removed — included in Brand page
@@ -17,6 +17,7 @@ export const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?:
   // generate is now a sub-tab inside Design page
   { id: 'publish', icon: Send, labelKey: 'sidebar.publish', fullPage: true },
   { id: 'channels', icon: LinkIcon, labelKey: 'sidebar.channels', fullPage: true },
+  { id: 'blogs', icon: FileText, labelKey: 'sidebar.blogs', fullPage: true, beta: true },
 ];
 
 interface WorkspaceItem {
@@ -31,9 +32,10 @@ interface SidebarProps {
   workspaces?: WorkspaceItem[];
   currentWorkspaceId?: string;
   currentWorkspaceName?: string;
+  hasBlogBeta?: boolean;
 }
 
-export default function Sidebar({ activeTab, onTabClick, children, workspaces, currentWorkspaceId, currentWorkspaceName }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabClick, children, workspaces, currentWorkspaceId, currentWorkspaceName, hasBlogBeta }: SidebarProps) {
   const { t, locale } = useLocale();
   const activeItem = SIDEBAR_ITEMS.find(i => i.id === activeTab);
   const panelOpen = activeTab !== null && activeTab !== 'generate' && !activeItem?.fullPage;
@@ -106,7 +108,9 @@ export default function Sidebar({ activeTab, onTabClick, children, workspaces, c
 
         {/* Center: Pill nav container */}
         <div className="border border-gray-200 dark:border-neutral-700 rounded-full flex flex-col items-center py-1.5 px-1.5 gap-0">
-          {SIDEBAR_ITEMS.map(({ id, icon: Icon, labelKey }) => (
+          {SIDEBAR_ITEMS
+            .filter(item => !item.beta || hasBlogBeta)
+            .map(({ id, icon: Icon, labelKey }) => (
             <div key={id} className="relative">
               <button
                 onClick={() => onTabClick(id)}

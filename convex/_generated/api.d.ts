@@ -38,6 +38,7 @@ import type * as twitterAuth from "../twitterAuth.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
 import type * as websiteCrawls from "../websiteCrawls.js";
+import type * as workspaceBlogPosts from "../workspaceBlogPosts.js";
 import type * as workspaces from "../workspaces.js";
 
 import type {
@@ -77,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   webhooks: typeof webhooks;
   websiteCrawls: typeof websiteCrawls;
+  workspaceBlogPosts: typeof workspaceBlogPosts;
   workspaces: typeof workspaces;
 }>;
 

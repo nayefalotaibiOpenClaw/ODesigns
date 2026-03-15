@@ -1,5 +1,8 @@
-import { query, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { auth } from "./auth";
+
+const ADMIN_EMAILS = ["nayefralotaibi@gmail.com"];
 
 // List all published blogs, optionally filtered by language
 export const list = query({
@@ -35,6 +38,65 @@ export const getBySlug = query({
       .first();
     if (!blog || !blog.published) return null;
     return blog;
+  },
+});
+
+// ─── Admin: Publish workspace blog to public site ─────────
+export const publishToSite = mutation({
+  args: {
+    workspaceBlogId: v.id("workspaceBlogPosts"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+    if (!ADMIN_EMAILS.includes(user.email ?? "") && user.role !== "admin") {
+      throw new Error("Admin access required");
+    }
+
+    const workspaceBlog = await ctx.db.get(args.workspaceBlogId);
+    if (!workspaceBlog) throw new Error("Blog post not found");
+
+    // Check if already published to site (by slug)
+    const existing = await ctx.db
+      .query("blogs")
+      .withIndex("by_slug", (q) => q.eq("slug", workspaceBlog.slug))
+      .first();
+
+    if (existing) {
+      // Update existing
+      await ctx.db.patch(existing._id, {
+        title: workspaceBlog.title,
+        content: workspaceBlog.content,
+        excerpt: workspaceBlog.excerpt || workspaceBlog.title,
+        tags: workspaceBlog.tags,
+        language: workspaceBlog.language,
+        published: true,
+        publishedAt: Date.now(),
+        metaTitle: workspaceBlog.seoTitle,
+        keywords: workspaceBlog.tags,
+      });
+      return { action: "updated", blogId: existing._id, slug: existing.slug };
+    }
+
+    // Create new
+    const blogId = await ctx.db.insert("blogs", {
+      title: workspaceBlog.title,
+      slug: workspaceBlog.slug,
+      excerpt: workspaceBlog.excerpt || workspaceBlog.title,
+      content: workspaceBlog.content,
+      author: user.name || "oDesigns Team",
+      language: workspaceBlog.language,
+      publishedAt: Date.now(),
+      tags: workspaceBlog.tags,
+      published: true,
+      type: "blog",
+      metaTitle: workspaceBlog.seoTitle,
+      keywords: workspaceBlog.tags,
+    });
+
+    return { action: "created", blogId, slug: workspaceBlog.slug };
   },
 });
 

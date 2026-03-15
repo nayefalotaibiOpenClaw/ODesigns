@@ -1,4 +1,4 @@
-# Sylo Social Posts
+# oDesign Social Posts
 
 AI-powered social media post generator and design editor. Built with Next.js 16, Convex, Tailwind CSS v4, and Google Gemini.
 

@@ -22,7 +22,8 @@ const categoryValidator = v.union(
   v.literal("image_analysis"),
   v.literal("crawl"),
   v.literal("classification"),
-  v.literal("product_extraction")
+  v.literal("product_extraction"),
+  v.literal("blog_generation")
 );
 
 // Helper to find user's usable subscription

@@ -156,9 +156,11 @@ Return a JSON object with this exact structure (no markdown fences, just raw JSO
   "language": "primary language of the website (en, ar, etc.)",
   "logoUrl": "absolute URL to the company/brand logo image found in the markdown (look for images with 'logo' in alt text or URL path), or null if not found",
   "brandColors": {
-    "primary": "the main/dominant brand color as hex (e.g. '#1B4332') — look at the website's header, buttons, or logo area",
-    "accent": "a secondary/accent color as hex (e.g. '#E94560') — often used for CTAs, highlights",
-    "light": "a lighter tint of primary as hex, or a light background color used on the site"
+    "primary": "the brand's main dark/rich color as hex (e.g. '#1B4332') — used for backgrounds and headers. Extract from logo, buttons, or hero sections. Must be a deep, saturated color (not black #000, not grey, not white)",
+    "primaryDark": "a darker shade of primary as hex (e.g. '#0D241C') — for deep backgrounds",
+    "accent": "the brand's secondary/action color as hex (e.g. '#40916C') — used for CTAs, links, interactive elements. Should be distinct from primary and medium saturation",
+    "accentLight": "a lighter/brighter tint of accent as hex (e.g. '#52B788') — for hover states, highlights",
+    "light": "a very light pastel background color as hex (e.g. '#EAF4EE') — derived from primary, almost white with a hint of the brand hue"
   },
   "suggestedFont": "the font family name used on the website if detectable (e.g. 'Inter', 'Playfair Display', 'Cairo'), or a font that matches the brand's style. For Arabic sites suggest an Arabic-compatible font.",
   "contact": {

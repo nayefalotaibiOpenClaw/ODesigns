@@ -18,6 +18,7 @@ export default defineSchema({
     plan: v.optional(v.union(v.literal("trial"), v.literal("starter"), v.literal("pro"))),
     role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
     createdAt: v.optional(v.number()),
+    betaFeatures: v.optional(v.array(v.string())),
   })
     .index("email", ["email"]),
 
@@ -494,7 +495,8 @@ export default defineSchema({
       v.literal("image_analysis"),
       v.literal("crawl"),
       v.literal("classification"),
-      v.literal("product_extraction")
+      v.literal("product_extraction"),
+      v.literal("blog_generation")
     ),
     model: v.string(),
     promptTokens: v.number(),
@@ -600,4 +602,31 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_user", ["userId"])
     .index("by_status", ["status"]),
+
+  // ─── Workspace Blog Posts (beta) ──────────────────────
+  workspaceBlogPosts: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    title: v.string(),
+    slug: v.string(),
+    excerpt: v.optional(v.string()),
+    content: v.string(),
+    coverImage: v.optional(v.id("_storage")),
+    language: v.union(v.literal("en"), v.literal("ar")),
+    tags: v.array(v.string()),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("published"),
+      v.literal("archived")
+    ),
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_status", ["workspaceId", "status"])
+    .index("by_slug", ["slug"])
+    .index("by_user", ["userId"]),
 });
