@@ -805,16 +805,6 @@ export default function V0Original() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-px bg-gradient-to-r from-transparent via-indigo-400 to-transparent" />
 
             <div className="relative z-10">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="inline-flex items-center gap-2 bg-white/10 dark:bg-slate-900/10 rounded-full px-4 py-1.5 mb-8"
-              >
-                <Sparkles className="w-4 h-4 text-indigo-400 dark:text-indigo-500" />
-                <span className="text-sm font-semibold text-indigo-300 dark:text-indigo-600">AI-Powered</span>
-              </motion.div>
-
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}

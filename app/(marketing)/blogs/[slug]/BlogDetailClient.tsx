@@ -5,7 +5,7 @@ import Link from "@/lib/i18n/LocaleLink";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
-import { Calendar, ArrowLeft, User, Tag, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, ArrowLeft, User, Tag, ArrowRight } from "lucide-react";
 import { useLocale } from "@/lib/i18n/context";
 
 function formatDate(timestamp: number, locale: string) {
@@ -252,12 +252,6 @@ export default function BlogDetailClient({ slug }: { slug: string }) {
             <div className="max-w-5xl mx-auto">
               {/* Header */}
               <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-neutral-800 rounded-full px-4 py-1.5 mb-5">
-                  <Sparkles className="w-4 h-4 text-indigo-500" />
-                  <span className="text-sm font-bold text-slate-500 dark:text-neutral-400">
-                    {locale === "ar" ? "جرّب oDesigns" : "Try oDesigns"}
-                  </span>
-                </div>
                 <h3 className="text-3xl md:text-4xl font-black mb-3">
                   {locale === "ar"
                     ? "أنشئ منشورات سوشيال ميديا احترافية بالذكاء الاصطناعي"
