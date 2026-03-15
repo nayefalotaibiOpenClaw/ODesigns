@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import DynamicPost from "@/features/posts/editor/DynamicPost";
+import DynamicPost from "@/app/components/DynamicPost";
 import { type Theme, ThemeCtx } from "@/contexts/ThemeContext";
 import { EditContext, AspectRatioContext, type AspectRatioType } from "@/contexts/EditContext";
 

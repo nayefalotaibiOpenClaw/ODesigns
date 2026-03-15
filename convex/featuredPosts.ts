@@ -104,16 +104,42 @@ export const remove = mutation({
   },
 });
 
-/** Admin: list all user posts across all workspaces for picking featured ones */
-export const listAllPosts = query({
+/** Admin: list all workspaces for the workspace picker */
+export const listWorkspaces = query({
   args: {},
   handler: async (ctx) => {
     await assertAdmin(ctx);
-    const posts = await ctx.db.query("posts").order("desc").take(200);
+    const workspaces = await ctx.db.query("workspaces").order("desc").collect();
+    return workspaces.map((w) => ({
+      _id: w._id,
+      name: w.name,
+      industry: w.industry,
+    }));
+  },
+});
+
+/** Admin: list posts for a specific workspace */
+export const listAllPosts = query({
+  args: {
+    workspaceId: v.optional(v.id("workspaces")),
+  },
+  handler: async (ctx, args) => {
+    await assertAdmin(ctx);
+    let posts;
+    if (args.workspaceId) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId!))
+        .order("desc")
+        .take(200);
+    } else {
+      posts = await ctx.db.query("posts").order("desc").take(200);
+    }
     return posts.map((p) => ({
       _id: p._id,
       title: p.title,
       componentCode: p.componentCode,
+      workspaceId: p.workspaceId,
       language: p.language,
       device: p.device,
       status: p.status,

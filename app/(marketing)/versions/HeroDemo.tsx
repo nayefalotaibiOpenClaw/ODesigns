@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import Link from "@/lib/i18n/LocaleLink";
 import { useTheme as useNextTheme } from "next-themes";
-import { PostPreview, socialPosts } from "./shared";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
 import { useLocale } from "@/lib/i18n/context";
 
 /* ─── Theme types ─── */
@@ -139,23 +141,24 @@ function ExtractingVisual({ theme }: { theme: DemoTheme }) {
 }
 
 /* ─── Generating Visual ─── */
-function GeneratingVisual({ theme }: { theme: DemoTheme }) {
+function GeneratingVisual({ theme, featuredPosts }: { theme: DemoTheme; featuredPosts: FeaturedPost[] }) {
   const s = themeStyles(theme);
-  const items = [
-    { post: socialPosts[0], aspect: "1:1" as const, size: 130 },
-    { post: socialPosts[2], aspect: "9:16" as const, size: 130 },
-    { post: socialPosts[1], aspect: "1:1" as const, size: 130 },
-    { post: socialPosts[4], aspect: "9:16" as const, size: 130 },
-  ];
+  const items = featuredPosts.slice(0, 4);
 
   return (
-    <div className={`relative w-full h-52 rounded-xl border overflow-hidden ${s.vizBg}`}>
-      <div className="flex gap-3 p-4 items-end overflow-hidden">
-        {items.map((item, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 30, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5, delay: i * 0.25 }} className="shrink-0">
-            <PostPreview theme={item.post.theme} size={item.size} aspect={item.aspect}>{item.post.component}</PostPreview>
-          </motion.div>
-        ))}
+    <div className={`relative w-full rounded-xl border overflow-hidden p-4 ${s.vizBg}`}>
+      <div className="flex gap-3 items-end justify-center">
+        {items.map((item, i) => {
+          const isStory = i % 2 !== 0;
+          return (
+            <motion.div key={item._id} initial={{ opacity: 0, y: 30, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5, delay: i * 0.25 }} className="shrink-0">
+              <div className="overflow-hidden rounded-lg">
+                <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={isStory ? 100 : 120} aspect={isStory ? "9:16" : "1:1"} />
+              </div>
+              <p className="text-slate-400 text-[10px] text-center mt-1.5 truncate max-w-[120px]">{item.label} · {isStory ? "Story" : "Post"}</p>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -195,15 +198,8 @@ function PublishingVisual({ theme }: { theme: DemoTheme }) {
 }
 
 /* ─── Done Visual ─── */
-function DoneVisual({ t }: { t: (key: import("@/lib/i18n/types").TranslationKey, params?: Record<string, string>) => string }) {
-  const items = [
-    { post: socialPosts[0], aspect: "1:1" as const, label: "Post" },
-    { post: socialPosts[3], aspect: "9:16" as const, label: "Story" },
-    { post: socialPosts[1], aspect: "1:1" as const, label: "Post" },
-    { post: socialPosts[5], aspect: "9:16" as const, label: "Story" },
-    { post: socialPosts[2], aspect: "1:1" as const, label: "Post" },
-    { post: socialPosts[6], aspect: "9:16" as const, label: "Story" },
-  ];
+function DoneVisual({ t, featuredPosts }: { t: (key: import("@/lib/i18n/types").TranslationKey, params?: Record<string, string>) => string; featuredPosts: FeaturedPost[] }) {
+  const items = featuredPosts.slice(0, 4);
 
   return (
     <div className="w-full">
@@ -211,25 +207,34 @@ function DoneVisual({ t }: { t: (key: import("@/lib/i18n/types").TranslationKey,
         <motion.div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}>
           <Check className="w-3 h-3 text-white" />
         </motion.div>
-        <span className="text-sm font-semibold text-emerald-500">{t("landing.publishedAll", { count: "6" })}</span>
+        <span className="text-sm font-semibold text-emerald-500">{t("landing.publishedAll", { count: String(items.length) })}</span>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-3 items-end" style={{ scrollbarWidth: "none" }}>
-        {items.map((item, i) => (
-          <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: i * 0.08 }} className="shrink-0">
-            <PostPreview theme={item.post.theme} size={140} aspect={item.aspect}>{item.post.component}</PostPreview>
-            <p className="text-slate-400 text-[10px] text-center mt-1.5">{item.post.label} · {item.label}</p>
-          </motion.div>
-        ))}
+      <div className="flex gap-3 items-end justify-center">
+        {items.map((item, i) => {
+          const isStory = i % 2 !== 0;
+          return (
+            <motion.div key={item._id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: i * 0.08 }} className="shrink-0">
+              <div className="overflow-hidden rounded-lg">
+                <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={isStory ? 100 : 120} aspect={isStory ? "9:16" : "1:1"} />
+              </div>
+              <p className="text-slate-400 text-[10px] text-center mt-1.5 truncate max-w-[120px]">{item.label} · {isStory ? "Story" : "Post"}</p>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
+type FeaturedPost = { _id: string; label: string; componentCode: string; theme: { primary: string; primaryLight: string; primaryDark: string; accent: string; accentLight: string; accentLime: string; accentGold: string; accentOrange: string; border: string; font: string }; category: string };
 
 /* ─── Main HeroDemo Component ─── */
 export default function HeroDemo({ theme }: { theme?: DemoTheme }) {
   const { resolvedTheme } = useNextTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const allFeatured = useQuery(api.featuredPosts.list, { category: "social" });
+  const featuredPosts: FeaturedPost[] = (allFeatured ?? []) as FeaturedPost[];
   // Use "light" as SSR default; once mounted, read resolvedTheme correctly
   const effectiveTheme: DemoTheme = theme ?? (mounted && resolvedTheme === "dark" ? "dark" : "light");
   const s = themeStyles(effectiveTheme);
@@ -344,7 +349,7 @@ export default function HeroDemo({ theme }: { theme?: DemoTheme }) {
             <AnimatePresence mode="wait">
               {demoStep === "scanning" && <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ScanningVisual theme={effectiveTheme} /></motion.div>}
               {demoStep === "extracting" && <motion.div key="e" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ExtractingVisual theme={effectiveTheme} /></motion.div>}
-              {demoStep === "generating" && <motion.div key="g" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><GeneratingVisual theme={effectiveTheme} /></motion.div>}
+              {demoStep === "generating" && <motion.div key="g" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><GeneratingVisual theme={effectiveTheme} featuredPosts={featuredPosts} /></motion.div>}
             </AnimatePresence>
           </motion.div>
         )}
@@ -361,7 +366,7 @@ export default function HeroDemo({ theme }: { theme?: DemoTheme }) {
         {/* Done */}
         {demoStep === "done" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <DoneVisual t={t} />
+            <DoneVisual t={t} featuredPosts={featuredPosts} />
             <div className="flex items-center justify-center mt-4 pt-4 border-t border-slate-200 dark:border-neutral-800">
               <Link
                 href="/login"

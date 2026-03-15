@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
       },
       // AI crawler-friendly headers for llms.txt files
       {
-        source: "/llms:path*.txt",
+        source: "/:file(llms|llms-full).txt",
         headers: [
           {
             key: "Content-Type",

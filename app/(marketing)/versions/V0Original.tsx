@@ -17,7 +17,7 @@ import { useLocale } from "@/lib/i18n/context";
 
 import type { AspectRatioType } from "@/contexts/EditContext";
 
-type TabKey = "social" | "appstore" | "ads";
+type TabKey = "social" | "appstore";
 
 // Shuffle an array using Fisher-Yates
 function shuffle<T>(arr: T[]): T[] {
@@ -30,9 +30,8 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 const aspectMap: Record<TabKey, { aspect: AspectRatioType; size: number; minW: string }> = {
-  social:   { aspect: "1:1",  size: 280, minW: "280px" },
-  appstore: { aspect: "9:16", size: 280, minW: "168px" },
-  ads:      { aspect: "16:9", size: 280, minW: "336px" },
+  social:   { aspect: "1:1",  size: 280, minW: "300px" },
+  appstore: { aspect: "9:16", size: 320, minW: "200px" },
 };
 
 const FloatingLogo = ({ delay, children, top, left, right }: { delay: number; children: React.ReactNode; top?: string; left?: string; right?: string }) => (
@@ -66,21 +65,19 @@ export default function V0Original() {
   const allFeatured = useQuery(api.featuredPosts.list, {});
 
   // Split by category and shuffle for random display
-  const { socialPosts, appStorePosts, adsPosts } = useMemo(() => {
+  const { socialPosts, appStorePosts } = useMemo(() => {
     if (!allFeatured || allFeatured.length === 0) {
-      return { socialPosts: [], appStorePosts: [], adsPosts: [] };
+      return { socialPosts: [], appStorePosts: [] };
     }
     return {
       socialPosts: shuffle(allFeatured.filter((p) => p.category === "social")),
       appStorePosts: shuffle(allFeatured.filter((p) => p.category === "appstore")),
-      adsPosts: shuffle(allFeatured.filter((p) => p.category === "ads")),
     };
   }, [allFeatured]);
 
   const tabPostsMap: Record<TabKey, { posts: typeof socialPosts; aspect: AspectRatioType; size: number; minW: string }> = {
     social:   { posts: socialPosts,   ...aspectMap.social },
     appstore: { posts: appStorePosts, ...aspectMap.appstore },
-    ads:      { posts: adsPosts,      ...aspectMap.ads },
   };
 
   const currentTab = tabPostsMap[activeTab];
@@ -89,7 +86,6 @@ export default function V0Original() {
   const tabs: { key: TabKey; label: string }[] = [
     { key: "social", label: t("landing.tabSocial") },
     { key: "appstore", label: t("landing.tabAppStore") },
-    { key: "ads", label: t("landing.tabAds") },
   ];
 
   return (
@@ -184,7 +180,7 @@ export default function V0Original() {
                 initial={{ x: 0 }}
                 animate={{ x: "-15%" }}
                 transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                className="flex gap-6 px-6"
+                className="flex gap-8 px-8"
               >
                 {currentTab.posts.map((item, i) => (
                   <motion.div
@@ -193,7 +189,7 @@ export default function V0Original() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                     viewport={{ once: true }}
-                    style={{ minWidth: currentTab.minW }}
+                    style={{ minWidth: currentTab.minW, flexShrink: 0 }}
                   >
                     <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={currentTab.size} aspect={currentTab.aspect} />
                     <div className="mt-4 flex items-center justify-between px-2">
@@ -351,10 +347,10 @@ export default function V0Original() {
 
            <div className="flex-1 bg-slate-50 dark:bg-neutral-900 relative overflow-hidden hidden md:block min-h-[500px]">
               {/* Featured post collage */}
-              <div className="absolute inset-0 grid grid-cols-2 gap-3 p-6 rotate-12 scale-125 origin-center">
+              <div className="absolute inset-0 grid grid-cols-2 gap-4 p-8 rotate-12 scale-110 origin-center">
                 {collageItems.map((item, i) => (
-                  <div key={item._id + "-collage-" + i} className="aspect-square">
-                    <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={220} />
+                  <div key={item._id + "-collage-" + i} className="aspect-square rounded-xl overflow-hidden">
+                    <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={200} />
                   </div>
                 ))}
               </div>

@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import {
-  Loader2, Plus, Trash2, ArrowLeft, Check, Star,
+  Loader2, Plus, Trash2, ArrowLeft, Check, Star, ChevronDown,
 } from "lucide-react";
 import Link from "@/lib/i18n/LocaleLink";
 import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
@@ -70,7 +70,7 @@ const CAT_STYLE: Record<Category, string> = {
 
 export default function FeaturedPostsPage() {
   const featuredPosts = useQuery(api.featuredPosts.list, {});
-  const allPosts = useQuery(api.featuredPosts.listAllPosts);
+  const workspaces = useQuery(api.featuredPosts.listWorkspaces);
   const createFeatured = useMutation(api.featuredPosts.create);
   const removeFeatured = useMutation(api.featuredPosts.remove);
 
@@ -78,6 +78,12 @@ export default function FeaturedPostsPage() {
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [loading, setLoading] = useState<string | null>(null);
   const [tab, setTab] = useState<"current" | "add">("current");
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Id<"workspaces"> | "all">("all");
+
+  const allPosts = useQuery(
+    api.featuredPosts.listAllPosts,
+    selectedWorkspace === "all" ? {} : { workspaceId: selectedWorkspace }
+  );
 
   const handleAdd = async (post: { _id: Id<"posts">; title: string; componentCode: string }) => {
     setLoading(post._id);
@@ -250,6 +256,25 @@ export default function FeaturedPostsPage() {
               <span className="text-[10px] text-slate-400 dark:text-neutral-600 ml-1">
                 {THEME_PRESETS[selectedTheme].name}
               </span>
+            </div>
+            <div className="w-px h-6 bg-slate-200 dark:bg-neutral-700" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 dark:text-neutral-400">Workspace:</span>
+              <div className="relative">
+                <select
+                  value={selectedWorkspace}
+                  onChange={(e) => setSelectedWorkspace(e.target.value === "all" ? "all" : e.target.value as Id<"workspaces">)}
+                  className="appearance-none bg-white dark:bg-neutral-700 border border-slate-200 dark:border-neutral-600 rounded-lg px-3 py-1.5 pr-7 text-[11px] font-bold text-slate-700 dark:text-neutral-200 focus:outline-none focus:border-slate-400 dark:focus:border-neutral-500 cursor-pointer"
+                >
+                  <option value="all">All Workspaces</option>
+                  {workspaces?.map((ws) => (
+                    <option key={ws._id} value={ws._id}>
+                      {ws.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </div>
           </div>
 
