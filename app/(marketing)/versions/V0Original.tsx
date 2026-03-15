@@ -9,16 +9,17 @@ import {
   Palette,
   Globe,
   Wand2,
-  Play,
 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import HeroDemo from "./HeroDemo";
+import HeroVisual from "./HeroVisual";
 import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
 import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
 import type { AspectRatioType } from "@/contexts/EditContext";
+import LandingVideo from "./LandingVideo";
 
 type TabKey = "social" | "appstore";
 
@@ -98,6 +99,7 @@ export default function V0Original() {
   const { t } = useLocale();
 
   const allFeatured = useQuery(api.featuredPosts.list, {});
+  const siteSettings = useQuery(api.admin.getSiteSettings, {});
 
   const { socialPosts, appStorePosts } = useMemo(() => {
     if (!allFeatured || allFeatured.length === 0) {
@@ -197,9 +199,9 @@ export default function V0Original() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="max-w-2xl mx-auto"
+            className="max-w-3xl mx-auto"
           >
-            <HeroDemo />
+            <HeroVisual />
           </motion.div>
         </div>
       </section>
@@ -396,15 +398,11 @@ export default function V0Original() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="aspect-video bg-slate-100 dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 flex items-center justify-center overflow-hidden"
           >
-            {/* Replace this placeholder with your actual video embed */}
-            <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
-                <Play className="w-8 h-8 text-slate-400 dark:text-neutral-500 ms-1" />
-              </div>
-              <p className="text-slate-400 dark:text-neutral-500 font-medium">{t("landing.demoVideoPlaceholder")}</p>
-            </div>
+            <LandingVideo
+              src={siteSettings?.landingVideo1 || "https://sx9xlieiiotawvld.public.blob.vercel-storage.com/videos/newmainvideoe30.mp4"}
+              placeholderText={t("landing.demoVideoPlaceholder")}
+            />
           </motion.div>
         </div>
       </section>
@@ -639,15 +637,11 @@ export default function V0Original() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="aspect-video bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 flex items-center justify-center overflow-hidden"
           >
-            {/* Replace this placeholder with your actual video embed */}
-            <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
-                <Play className="w-8 h-8 text-slate-400 dark:text-neutral-500 ms-1" />
-              </div>
-              <p className="text-slate-400 dark:text-neutral-500 font-medium">{t("landing.demoVideoPlaceholder")}</p>
-            </div>
+            <LandingVideo
+              src={siteSettings?.landingVideo2 || "https://sx9xlieiiotawvld.public.blob.vercel-storage.com/videos/newsocielmedia30.mp4"}
+              placeholderText={t("landing.demoVideoPlaceholder")}
+            />
           </motion.div>
         </div>
       </section>

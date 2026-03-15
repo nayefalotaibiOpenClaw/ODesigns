@@ -306,6 +306,62 @@ export const createSubscription = mutation({
   },
 });
 
+// ── Site Settings ─────────────────────────────────────
+
+const ALLOWED_SITE_SETTINGS = ["landingVideo1", "landingVideo2"] as const;
+
+export const getSiteSettings = query({
+  args: {},
+  handler: async (ctx) => {
+    const settings = await ctx.db.query("siteSettings").take(50);
+    const map: Record<string, string> = {};
+    for (const s of settings) {
+      if ((ALLOWED_SITE_SETTINGS as readonly string[]).includes(s.key)) {
+        map[s.key] = s.value;
+      }
+    }
+    return map;
+  },
+});
+
+export const updateSiteSetting = mutation({
+  args: {
+    key: v.string(),
+    value: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await assertAdmin(ctx);
+
+    // Validate key is in allowlist
+    if (!(ALLOWED_SITE_SETTINGS as readonly string[]).includes(args.key)) {
+      throw new Error("Invalid setting key");
+    }
+
+    // Validate value is a valid HTTPS URL
+    if (args.value.length > 2000) {
+      throw new Error("Value too long");
+    }
+    if (!args.value.startsWith("https://")) {
+      throw new Error("URL must start with https://");
+    }
+
+    const existing = await ctx.db
+      .query("siteSettings")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, { value: args.value, updatedAt: Date.now() });
+    } else {
+      await ctx.db.insert("siteSettings", {
+        key: args.key,
+        value: args.value,
+        updatedAt: Date.now(),
+      });
+    }
+    return { success: true };
+  },
+});
+
 export const setBetaFeatures = mutation({
   args: {
     targetUserId: v.id("users"),

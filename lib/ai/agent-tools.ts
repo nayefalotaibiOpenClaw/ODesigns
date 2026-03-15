@@ -26,8 +26,8 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
           type: SchemaType.STRING,
           format: "enum",
           description:
-            "Generation engine to use: 'classic' (v5, production-proven), 'wild' (v4, creative freedom), 'guided' (v7, template-based). Default 'guided'.",
-          enum: ["classic", "wild", "guided"],
+            "Generation engine to use: 'wild' (v4, creative freedom), 'classic' (v5, production-proven), 'guided' (v7, template-based app store screenshots), 'saas' (v8, typography-driven CSS-only posts). Only set this if the user explicitly asks for a specific style — otherwise omit to use their current selection.",
+          enum: ["classic", "wild", "guided", "saas"],
         } as Schema,
       },
       required: ["prompt"],
@@ -202,14 +202,17 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
 ];
 
 /** Map style string to engine version number */
-export function styleToVersion(style?: string): 4 | 5 | 7 {
+export function styleToVersion(style?: string): 4 | 5 | 7 | 8 {
   switch (style) {
     case "wild":
       return 4;
     case "classic":
       return 5;
     case "guided":
-    default:
       return 7;
+    case "saas":
+      return 8;
+    default:
+      return 4;
   }
 }

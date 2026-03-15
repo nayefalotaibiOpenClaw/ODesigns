@@ -678,4 +678,35 @@ export default defineSchema({
     .index("by_workspace_status", ["workspaceId", "status"])
     .index("by_slug", ["slug"])
     .index("by_user", ["userId"]),
+
+  // ─── Site Settings (admin-managed key-value) ───────
+  siteSettings: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["key"]),
+
+  // ─── Batch Product Editing Jobs ───────────────────
+  batchJobs: defineTable({
+    userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
+    jobName: v.string(),
+    displayName: v.string(),
+    state: v.string(), // JOB_STATE_PENDING | RUNNING | SUCCEEDED | FAILED | CANCELLED | EXPIRED
+    mode: v.string(), // "product" | "image-edit"
+    totalRequests: v.number(),
+    productsCount: v.number(),
+    inputFile: v.optional(v.string()),
+    // Results stored once job completes (array of result objects as JSON)
+    results: v.optional(v.string()),
+    usage: v.optional(v.string()), // JSON: { model, promptTokens, completionTokens, totalTokens }
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_state", ["userId", "state"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_job_name", ["jobName"]),
 });

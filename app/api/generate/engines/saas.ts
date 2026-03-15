@@ -1,10 +1,11 @@
 /**
- * Engine V4: Wild (W)
- * Copy-first creative engine — single API call for all posts.
- * AI generates a cohesive series with full creative freedom.
+ * Engine V8: SaaS (S)
+ * Typography-driven, CSS-only creative engine for SaaS brands.
+ * Single API call — all posts generated cohesively.
+ * NO images, NO mockups — pure CSS + text design.
  */
 import { NextResponse } from "next/server";
-import { WILD_SYSTEM_PROMPT } from "@/lib/ai/prompts/system-prompt-wild";
+import { SAAS_SYSTEM_PROMPT } from "@/lib/ai/prompts/system-prompt-saas";
 import type { GenerationContext } from "@/lib/ai/types";
 import {
   type GenerateRequest,
@@ -19,15 +20,15 @@ import {
   buildThemeColorValues,
 } from "../_shared";
 
-const WILD_MOODS = [
-  'Bold & dramatic — big typography, strong contrast, dark background, powerful single statement',
-  'Minimal & elegant — lots of white space, light background, delicate typography, understated luxury',
-  'Energetic & vibrant — bright accent colors, dynamic angles, playful layout, movement and energy',
-  'Editorial & sophisticated — magazine-style layout, refined typography, structured grid, premium feel',
-  'Warm & emotional — soft gradients, warm tones, personal touch, heartfelt message',
-  'Modern & geometric — clean shapes, asymmetric layout, tech-inspired, contemporary design',
-  'Organic & natural — flowing shapes, soft curves, nature-inspired decorations, calming mood',
-  'Retro & bold — chunky text, strong borders, nostalgic feel, eye-catching patterns',
+const SAAS_MOODS = [
+  'Product announcement — LIGHT background. Pill badge top, bold headline about a brand feature, polished CSS toggle rows or mini-dashboard below',
+  'Data & statistics — DARK background. Pill badge, metric headline, CSS bar chart with one highlighted bar in a bright accent',
+  'Feature showcase — WARM ACCENT background (t.accentGold). Headline about a core feature, CSS card-style UI elements below',
+  'Bold statement — DARK background. One massive uppercase headline, minimal decoration, brand footer at bottom',
+  'Content/Story — LIGHT background. Conversational headline, short subtitle, accent line divider, brand footer',
+  'Job posting — WARM ACCENT background (t.accentGold). Hiring pill, large job title, bullet details, arrow CTA →',
+  'Comparison/Pricing — LIGHT background. Headline, 2-3 rounded cards with contrasting headers and descriptions',
+  'Integration/Tools — DARK background. Pill badge, headline about connecting tools, CSS app icon grid (rounded squares in accent colors)',
 ];
 
 export async function generate(req: GenerateRequest): Promise<NextResponse> {
@@ -50,63 +51,49 @@ export async function generate(req: GenerateRequest): Promise<NextResponse> {
         if (wi.description) brandContext.push(`About: ${wi.description}`);
         if (wi.features?.length) brandContext.push(`Features: ${wi.features.join(', ')}`);
       }
-      if (ctx.logoUrl) brandContext.push(`Logo URL: ${ctx.logoUrl}`);
+      if (ctx.logoUrl) brandContext.push(`Logo URL: ${ctx.logoUrl} (do NOT use as <img> — mention brand name in text instead)`);
     }
 
+    // Show AI the actual hex values so it can pick contrasting pairs
     const themeColorSection = buildThemeColorValues((context as GenerationContext)?.themeColors);
+
     const contextPostsSection = buildContextPostsSection(contextPosts);
     const contextAssetsSection = buildContextAssetsSection(contextAssets);
     const systemPrompt = [
-      WILD_SYSTEM_PROMPT,
+      SAAS_SYSTEM_PROMPT,
       brandContext.length > 0 ? `## BRAND CONTEXT\n${brandContext.join('\n')}` : '',
       themeColorSection,
       contextPostsSection,
       contextAssetsSection,
     ].filter(Boolean).join('\n\n');
 
-    // Build asset list — skip when user selected specific assets
-    const hasSelectedAssets = contextAssets && contextAssets.length > 0;
-    let assetSection = '';
-    if (!hasSelectedAssets) {
-      const allAssets = context?.assets || [];
-      const assetLines: string[] = [];
-      for (const a of shuffle(allAssets.filter(a => a.type !== 'logo'))) {
-        const typeLabel = ['iphone', 'ipad', 'desktop', 'screenshot'].includes(a.type)
-          ? 'screenshot' : a.type;
-        assetLines.push(`- ${typeLabel}: ${a.url}${a.aiAnalysis ? ` — ${a.aiAnalysis}` : ''}`);
-      }
-      assetSection = assetLines.length > 0
-        ? `\n\nAvailable images (use different ones across posts — each post should pick ONE):\n${assetLines.join('\n')}`
-        : '';
-    }
-
     const hasContext = contextPosts && contextPosts.length > 0;
 
-    // When context posts are provided, skip random moods — follow the reference style instead
-    const moods = hasContext ? [] : shuffle(WILD_MOODS).slice(0, postCount);
+    // When context posts are provided, skip random moods — follow the reference style
+    const moods = hasContext ? [] : shuffle(SAAS_MOODS).slice(0, postCount);
     const moodList = moods.map((m, i) => `Post ${i + 1}: ${m}`).join('\n');
 
-    // Single user prompt for all posts
     const userPrompt = hasContext
-      ? `Generate ${postCount} social media posts for: ${prompt}
+      ? `Generate ${postCount} SaaS-style social media posts for: ${prompt}
 
 ## CRITICAL: FOLLOW THE REFERENCE POSTS
-The user selected reference posts above. You MUST closely replicate their EXACT style:
-- Same layout structure (image placement, text positioning, spacing)
-- Same visual mood (colors, background treatment, border style)
-- Same typography approach (font size, weight, case, tracking)
-- Same content pattern (short elegant headlines, minimal text, image-forward)
-- Same component usage (if they use <img> with borders, you use <img> with borders)
+The user selected reference posts above. Closely replicate their EXACT style:
+- Same layout structure and spacing
+- Same visual mood and typography approach
+- Same copy tone and headline style
+- IMPORTANT: Do NOT add images or mockups — keep it CSS-only like the references.
 
-Create ${postCount} NEW posts that look like they belong in the SAME series as the reference posts. Vary the headlines and images, but keep the design language IDENTICAL.${assetSection}${buildRatioNote(targetRatio)}`
-      : `Generate ${postCount} social media posts for: ${prompt}
+Create ${postCount} NEW posts that belong in the SAME series. Vary the headlines but keep the design language IDENTICAL.${buildRatioNote(targetRatio)}`
+      : `Generate ${postCount} SaaS-style social media posts for: ${prompt}
 
 ## CREATIVE MOODS (one per post)
 ${moodList}
 
-Write original copy for each post — bold headlines and supporting messages that tell stories and sell visions. Each post should have a COMPLETELY different design, layout, copy angle, and asset choice. They should work together as a cohesive brand series.
-
-Do NOT just list features. Think like a creative agency.${assetSection}${buildRatioNote(targetRatio)}`;
+## CRITICAL REMINDERS
+- NO <img>, NO <MockupFrame>, NO image URLs. CSS + text only.
+- Write ORIGINAL headlines specific to this brand — never reuse example text from the system prompt.
+- Every post must have a UNIQUE headline, layout, background color, and CSS visual.
+- Each post should sell a different angle of the brand (feature, benefit, stat, story, announcement).${buildRatioNote(targetRatio)}`;
 
     // Single API call for all posts
     const result = await gemini.generateContent({
@@ -161,15 +148,12 @@ interface ParsedPost {
 
 function parsePostsArray(text: string): ParsedPost[] {
   try {
-    // Strip markdown fences if present
     let clean = text;
     if (clean.startsWith('```')) {
       clean = clean.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     }
 
     const data = JSON.parse(clean);
-
-    // Handle both array and single object
     const arr = Array.isArray(data) ? data : [data];
 
     return arr
@@ -180,9 +164,8 @@ function parsePostsArray(text: string): ParsedPost[] {
         imageKeywords: Array.isArray(p.imageKeywords) ? p.imageKeywords.map(String) : [],
       }));
   } catch {
-    console.error('Failed to parse posts array:', text.slice(0, 300));
+    console.error('Failed to parse SaaS posts array:', text.slice(0, 300));
 
-    // Fallback: try to extract individual JSON objects from the response
     const posts: ParsedPost[] = [];
     const objectPattern = /\{[^{}]*"code"\s*:\s*"[\s\S]*?"\s*,\s*"caption"\s*:\s*"[\s\S]*?"\s*(?:,\s*"imageKeywords"\s*:\s*\[[\s\S]*?\])?\s*\}/g;
     const matches = text.match(objectPattern);

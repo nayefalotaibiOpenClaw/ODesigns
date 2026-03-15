@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, Columns3, ArrowUpDown, Pencil, MousePointer2, Download, Paperclip, ArrowUp, Sparkles, EyeOff, Eye, X, Zap, Clock, ChevronRight, Check, Bot } from "lucide-react";
+import { Loader2, FolderOpen, Image as ImageIcon, Proportions, Smartphone, LayoutGrid, Columns3, ArrowUpDown, Pencil, MousePointer2, Download, Paperclip, ArrowUp, Sparkles, EyeOff, Eye, X, Zap, Clock, ChevronRight, ChevronDown, Check, Bot } from "lucide-react";
 import MobileNavMenu from "@/features/design-editor/components/MobileNavMenu";
 import { downloadPostsAsZip, downloadPostsMultiRatio } from "@/lib/export/download";
 import { EditContext, AspectRatioContext, AspectRatioType, SelectedIdContext, SetSelectedIdContext, HiddenComponentsContext, SetHiddenComponentsContext } from "@/contexts/EditContext";
@@ -70,6 +70,7 @@ export default function DesignPage() {
   const updatePostCodeForRatio = useMutation(api.posts.updateCodeForRatio);
   const reorderPosts = useMutation(api.posts.reorder);
   const removePost = useMutation(api.posts.remove);
+  const removePostBatch = useMutation(api.posts.removeBatch);
   const createPost = useMutation(api.posts.create);
   const createPostBatch = useMutation(api.posts.createBatch);
   const createCollection = useMutation(api.collections.create);
@@ -117,11 +118,20 @@ export default function DesignPage() {
   const generateUploadUrl = useMutation(api.assets.generateUploadUrl);
   const createAsset = useMutation(api.assets.create);
   const removeAsset = useMutation(api.assets.remove);
+  const archiveAsset = useMutation(api.assets.archive);
   const analyzeImage = useAction(api.assets.analyzeImage);
   const assets = useQuery(
     api.assets.listForWorkspace,
     workspaceId && user ? { workspaceId } : "skip"
   );
+
+  const [removingBgAssetIds, setRemovingBgAssetIds] = useState<Set<string>>(new Set());
+  const [bgRemovalError, setBgRemovalError] = useState<string | null>(null);
+  const [bgRemovalProgress, setBgRemovalProgress] = useState<{
+    total: number;
+    completed: number;
+    currentStep: Record<string, string>; // assetId -> step label
+  }>({ total: 0, completed: 0, currentStep: {} });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeMode, setActiveMode] = useState<'default' | 'edit' | 'reorder' | 'select'>('default');
@@ -164,8 +174,8 @@ export default function DesignPage() {
   const [usageWarning, setUsageWarning] = useState<string | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [generateCount, setGenerateCount] = useState(2);
-  const [generateVersion, setGenerateVersion] = useState<4 | 5 | 7>(7);
-  const [generateModel, setGenerateModel] = useState('gemini-3.1-pro-preview');
+  const [generateVersion, setGenerateVersion] = useState<4 | 5 | 7 | 8>(4);
+  const [generateModel, setGenerateModel] = useState('gemini-3.1-flash-lite-preview');
   const [codeViewPosts, setCodeViewPosts] = useState<Set<string>>(new Set());
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [fetchingWebsite, setFetchingWebsite] = useState(false);
@@ -178,6 +188,9 @@ export default function DesignPage() {
   const [contextPosts, setContextPosts] = useState<{ id: string; code: string }[]>([]);
   const [contextAssets, setContextAssets] = useState<{ id: string; url: string; type: string; label?: string; description?: string; aiAnalysis?: string }[]>([]);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [showQuickCountDropdown, setShowQuickCountDropdown] = useState(false);
+  const [showQuickStyleDropdown, setShowQuickStyleDropdown] = useState(false);
+  const [showQuickRatioDropdown, setShowQuickRatioDropdown] = useState(false);
   const [chatMode, setChatMode] = useState<'quick' | 'agent'>('quick');
 
   // Local order state for drag-and-drop (syncs with Convex)
@@ -186,7 +199,7 @@ export default function DesignPage() {
   useEffect(() => {
     setLocalOrder(prev => {
       const serverIds = posts.map(p => p._id);
-      const serverIdSet = new Set(serverIds);
+      const serverIdSet: Set<string> = new Set(serverIds);
       // First load: use server order directly
       if (prev.length === 0) return serverIds;
       // All server posts deleted: preserve generated post IDs
@@ -244,6 +257,21 @@ export default function DesignPage() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showAssetPicker]);
+
+  // Close quick-mode mobile dropdowns on click outside
+  const quickCountRef = useRef<HTMLDivElement>(null);
+  const quickStyleRef = useRef<HTMLDivElement>(null);
+  const quickRatioRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showQuickCountDropdown && !showQuickStyleDropdown && !showQuickRatioDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (showQuickCountDropdown && quickCountRef.current && !quickCountRef.current.contains(e.target as Node)) setShowQuickCountDropdown(false);
+      if (showQuickStyleDropdown && quickStyleRef.current && !quickStyleRef.current.contains(e.target as Node)) setShowQuickStyleDropdown(false);
+      if (showQuickRatioDropdown && quickRatioRef.current && !quickRatioRef.current.contains(e.target as Node)) setShowQuickRatioDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showQuickCountDropdown, showQuickStyleDropdown, showQuickRatioDropdown]);
 
   const toggleCodeView = (id: string) => {
     setCodeViewPosts(prev => {
@@ -375,7 +403,7 @@ export default function DesignPage() {
           };
         })() : undefined,
         assets: (assets || [])
-          .filter(a => a.url)
+          .filter(a => a.url && !a.archived)
           .map(a => ({
             id: a._id,
             url: a.url || '',
@@ -385,6 +413,17 @@ export default function DesignPage() {
             aiAnalysis: a.aiAnalysis,
           })),
         hasSelectedAssets: contextAssets.length > 0,
+        themeColors: {
+          primary: currentTheme.primary,
+          primaryLight: currentTheme.primaryLight,
+          primaryDark: currentTheme.primaryDark,
+          accent: currentTheme.accent,
+          accentLight: currentTheme.accentLight,
+          accentLime: currentTheme.accentLime,
+          accentGold: currentTheme.accentGold,
+          accentOrange: currentTheme.accentOrange,
+          border: currentTheme.border,
+        },
       };
 
       const res = await fetch('/api/generate', {
@@ -469,6 +508,15 @@ export default function DesignPage() {
           })),
         });
 
+        // Prepend new post IDs to localOrder so they appear at the top immediately
+        if (newPostIds.length > 0) {
+          setLocalOrder(prev => {
+            const newIdSet = new Set(newPostIds as string[]);
+            const filtered = prev.filter(id => !newIdSet.has(id));
+            return [...(newPostIds as string[]), ...filtered];
+          });
+        }
+
         // Adapt to additional ratios in background
         const extraRatios = targetRatios.filter(r => r !== '1:1');
         if (extraRatios.length > 0 && newPostIds.length > 0) {
@@ -494,7 +542,7 @@ export default function DesignPage() {
     }
   };
 
-  const ENGINE_LABELS: Record<number, string> = { 4: 'W (Wild)', 5: 'C (Classic)', 7: 'AG (App Store Guided)' };
+  const ENGINE_LABELS: Record<number, string> = { 4: 'W (Wild)', 5: 'C (Classic)', 7: 'AG (App Store Guided)', 8: 'S (SaaS)' };
 
   // After generating posts, adapt each to the additional selected ratios
   const adaptPostToRatios = async (postId: Id<"posts">, baseCode: string, ratios: AspectRatioType[]) => {
@@ -856,7 +904,7 @@ export default function DesignPage() {
     if (!workspaceId || !user || !product.imageUrl) return;
     try {
       // Proxy through our API to avoid CORS issues
-      const imgRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(product.imageUrl)}`);
+      const imgRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(product.imageUrl)}&source=crawl`);
       if (!imgRes.ok) throw new Error("Failed to download product image");
       const blob = await imgRes.blob();
 
@@ -1157,11 +1205,213 @@ export default function DesignPage() {
     }
   };
 
+  const updateStepForAsset = (assetId: string, step: string) => {
+    setBgRemovalProgress(prev => ({
+      ...prev,
+      currentStep: { ...prev.currentStep, [assetId]: step },
+    }));
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const removeBackgroundForOne = async (asset: any) => {
+    const assetId = asset._id;
+
+    // Step 1: Fetch original image
+    updateStepForAsset(assetId, "Fetching image...");
+    const imgRes = await fetch(asset.url);
+    if (!imgRes.ok) throw new Error("Failed to fetch image");
+    const originalBlob = await imgRes.blob();
+
+    let usage = null;
+
+    // Step 2: Gemini AI pre-processing — rough background removal
+    updateStepForAsset(assetId, "AI removing background...");
+    const mimeType = originalBlob.type || "image/png";
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(originalBlob);
+    });
+
+    const res = await fetch("/api/remove-background", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64, mimeType }),
+    });
+
+    let inputForLibrary: Blob;
+    if (res.ok) {
+      const data = await res.json();
+      usage = data.usage;
+      const resultBytes = Uint8Array.from(atob(data.imageBase64), c => c.charCodeAt(0));
+      inputForLibrary = new Blob([resultBytes], { type: data.mimeType });
+    } else {
+      // Fallback to original if Gemini fails — library can still handle it
+      inputForLibrary = originalBlob;
+    }
+
+    // Step 3: @imgly/background-removal — produces clean alpha transparency
+    updateStepForAsset(assetId, "Refining edges...");
+    const { removeBackground } = await import("@imgly/background-removal");
+    const transparentBlob: Blob = await removeBackground(inputForLibrary, {
+      model: "isnet_quint8",
+      output: { format: "image/png" as const },
+    });
+
+    // Step 4: Compress if over 10MB (library outputs uncompressed PNGs)
+    updateStepForAsset(assetId, "Optimizing...");
+    let finalBlob = transparentBlob;
+    if (transparentBlob.size > 9 * 1024 * 1024) {
+      const bmpUrl = URL.createObjectURL(transparentBlob);
+      try {
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Failed to load processed image"));
+          img.src = bmpUrl;
+        });
+        let { width, height } = img;
+        const maxDim = 2048;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const webpBlob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.9));
+          if (webpBlob && webpBlob.size < transparentBlob.size) {
+            finalBlob = webpBlob;
+          }
+        }
+      } finally {
+        URL.revokeObjectURL(bmpUrl);
+      }
+    }
+
+    updateStepForAsset(assetId, "Uploading...");
+    const uploadMime = finalBlob.type || "image/png";
+    const uploadUrl = await generateUploadUrl();
+    const uploadRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": uploadMime },
+      body: finalBlob,
+    });
+    if (!uploadRes.ok) throw new Error("Failed to upload processed image");
+    const { storageId } = await uploadRes.json();
+
+    const ext = uploadMime === "image/webp" ? ".webp" : ".png";
+    const newFileName = asset.fileName.replace(/\.[^.]+$/, "") + "_nobg" + ext;
+    const newAssetId = await createAsset({
+      workspaceId: asset.workspaceId || workspaceId,
+      scope: asset.scope || "workspace",
+      fileId: storageId,
+      fileName: newFileName,
+      type: asset.type,
+    });
+
+    analyzeImage({
+      assetId: newAssetId,
+      storageId,
+      fileName: newFileName,
+      assetType: asset.type,
+      userId: user!._id,
+      workspaceId: asset.workspaceId || workspaceId,
+    }).catch(console.error);
+
+    // Log AI usage (Gemini tokens)
+    if (usage) {
+      logAndIncrement({
+        workspaceId: asset.workspaceId || workspaceId,
+        category: "background_removal",
+        model: usage.model,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
+        endpoint: "/api/remove-background",
+      }).catch(console.error);
+    }
+
+    // Archive the original asset
+    await archiveAsset({ id: asset._id, archived: true });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleRemoveBackground = async (assetOrAssets: any | any[]) => {
+    if (!workspaceId || !user) return;
+    setBgRemovalError(null);
+    const assetList = Array.isArray(assetOrAssets) ? assetOrAssets : [assetOrAssets];
+    const validAssets = assetList.filter((a: { url?: string; _id: string }) => a.url && !removingBgAssetIds.has(a._id));
+    if (validAssets.length === 0) return;
+
+    const newIds = new Set(removingBgAssetIds);
+    validAssets.forEach((a: { _id: string }) => newIds.add(a._id));
+    setRemovingBgAssetIds(new Set(newIds));
+
+    // Initialize progress tracking
+    setBgRemovalProgress({ total: validAssets.length, completed: 0, currentStep: {} });
+
+    let failCount = 0;
+    // Process up to 3 in parallel to avoid overwhelming the API
+    const concurrency = 3;
+    for (let i = 0; i < validAssets.length; i += concurrency) {
+      const batch = validAssets.slice(i, i + concurrency);
+      await Promise.allSettled(
+        batch.map(async (asset: { _id: string }) => {
+          try {
+            await removeBackgroundForOne(asset);
+          } catch (err) {
+            failCount++;
+            console.error(`Remove background failed for ${asset._id}:`, err);
+          } finally {
+            setRemovingBgAssetIds(prev => {
+              const next = new Set(prev);
+              next.delete(asset._id);
+              return next;
+            });
+            setBgRemovalProgress(prev => ({
+              ...prev,
+              completed: prev.completed + 1,
+              currentStep: (() => {
+                const next = { ...prev.currentStep };
+                delete next[asset._id];
+                return next;
+              })(),
+            }));
+          }
+        })
+      );
+    }
+
+    if (failCount > 0) {
+      setBgRemovalError(`Background removal failed for ${failCount} image${failCount > 1 ? "s" : ""}. Please try again.`);
+    }
+
+    // Brief pause at 100% so user sees completion before banner disappears
+    await new Promise(r => setTimeout(r, 1200));
+    setBgRemovalProgress({ total: 0, completed: 0, currentStep: {} });
+  };
+
   const togglePostSelection = useCallback((id: string) => {
     setSelectedPosts(prev =>
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   }, []);
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedPosts.length === 0) return;
+    const ids = selectedPosts.map(id => id as Id<"posts">);
+    await removePostBatch({ ids });
+    setSelectedPosts([]);
+  }, [selectedPosts, removePostBatch]);
 
   const handleAddToContext = useCallback(() => {
     if (selectedPosts.length === 0) return;
@@ -1313,6 +1563,7 @@ export default function DesignPage() {
           onTabClick={handleTabClick}
           workspaces={workspaces?.map(w => ({ _id: w._id, name: w.name }))}
           currentWorkspaceId={workspaceId ?? undefined}
+          activeCollectionId={activeCollectionId ?? undefined}
           currentWorkspaceName={workspace?.name}
           onUploadLogo={handleUploadLogo}
           onDeleteLogo={handleDeleteLogo}
@@ -1365,13 +1616,18 @@ export default function DesignPage() {
               workspaceId: workspaceId || undefined,
             }).catch(console.error);
           }}
+          onRemoveBackground={handleRemoveBackground}
+          removingBgAssetIds={removingBgAssetIds}
+          bgRemovalError={bgRemovalError}
+          bgRemovalProgress={bgRemovalProgress}
+          onArchiveAsset={(id, archived) => archiveAsset({ id: id as Id<"assets">, archived })}
         />
       )}
 
       {/* Main Content — Design + Generate merged */}
       {activeTab !== 'brand' && activeTab !== 'publish' && activeTab !== 'channels' && activeTab !== 'assets' && <div className="flex-1 flex flex-col overflow-hidden">
         {/* Nav Header with Design/Generate sub-tab switcher */}
-        <div className="shrink-0 pt-4 pb-2 px-6 relative z-[90]">
+        <div className="shrink-0 pt-4 pb-2 px-6 relative z-[105]">
           <nav ref={toolbarRef} className="max-w-4xl mx-auto bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-neutral-700/50 rounded-full shadow-sm px-5 h-14 flex items-center gap-4">
             {/* Mobile: nav menu / Desktop: Design label — single element */}
             <div className="md:hidden">
@@ -1384,7 +1640,7 @@ export default function DesignPage() {
 
             <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
 
-            {postCount != null && <span className="text-xs font-medium text-slate-400">{postCount} post{postCount !== 1 ? 's' : ''}</span>}
+            {postCount != null && <span className="hidden sm:inline text-xs font-medium text-slate-400">{postCount} post{postCount !== 1 ? 's' : ''}</span>}
 
             <div className="flex-1" />
 
@@ -1714,10 +1970,18 @@ export default function DesignPage() {
                 if (!collectionId) {
                   collectionId = await createCollection({ workspaceId, name: "Generated Posts", mode: "social_grid", language: workspace?.defaultLanguage || "ar", aspectRatio: "1:1" });
                 }
-                await createPostBatch({
+                const newPostIds = await createPostBatch({
                   collectionId, workspaceId, language: workspace?.defaultLanguage || "ar",
                   posts: codes.map((code, i) => ({ title: `Agent generated (${i + 1}/${codes.length})`, componentCode: code, device: "none" as const, caption: captions[i] || undefined, imageKeywords: imageKeywords[i]?.length ? imageKeywords[i] : undefined })),
                 });
+                // Prepend new post IDs to localOrder so they appear at the top immediately
+                if (newPostIds.length > 0) {
+                  setLocalOrder(prev => {
+                    const newIdSet = new Set(newPostIds as string[]);
+                    const filtered = prev.filter(id => !newIdSet.has(id));
+                    return [...(newPostIds as string[]), ...filtered];
+                  });
+                }
               }
             }}
             onPostEdited={async (postIndex, newCode, postId) => {
@@ -1798,7 +2062,7 @@ export default function DesignPage() {
                 }}
                 placeholder={t("design.describePlaceholder")}
                 rows={2}
-                className="w-full px-5 pt-4 pb-2 text-sm text-slate-900 dark:text-white resize-none focus:outline-none placeholder:text-slate-400 bg-transparent"
+                className="w-full px-5 pt-4 pb-2 text-base md:text-sm text-slate-900 dark:text-white resize-none focus:outline-none placeholder:text-slate-400 bg-transparent"
               />
               {/* Context chips (posts + assets) */}
               {(contextPosts.length > 0 || contextAssets.length > 0) && (
@@ -1887,9 +2151,9 @@ export default function DesignPage() {
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Workspace Assets</span>
                         </div>
                         <div className="px-3 pb-3 max-h-52 overflow-y-auto">
-                          {assets && assets.filter((a) => a.url).length > 0 ? (
+                          {assets && assets.filter((a) => a.url && !a.archived).length > 0 ? (
                             <div className="grid grid-cols-4 gap-1.5">
-                              {assets.filter((a): a is typeof a & { url: string } => !!a.url).map((asset) => {
+                              {assets.filter((a): a is typeof a & { url: string } => !!a.url && !a.archived).map((asset) => {
                                 const isSelected = contextAssetIds.has(asset._id);
                                 return (
                                   <button
@@ -1925,15 +2189,7 @@ export default function DesignPage() {
                       </div>
                     )}
                   </div>
-                  <select
-                    value={generateModel}
-                    onChange={(e) => setGenerateModel(e.target.value)}
-                    className="h-7 px-2 rounded-full bg-slate-100 dark:bg-neutral-800 text-[10px] font-bold text-slate-500 dark:text-neutral-400 border-none outline-none cursor-pointer hover:text-slate-700 dark:hover:text-neutral-200 transition-colors"
-                  >
-                    <option value="gemini-3.1-flash-lite-preview">Flash Lite</option>
-                    <option value="gemini-3-flash-preview">Flash</option>
-                    <option value="gemini-3.1-pro-preview">Pro</option>
-                  </select>
+                  {/* Model dropdown hidden — defaults to Flash Lite */}
                   {/* Agent mode toggle */}
                   <button
                     onClick={() => setChatMode('agent')}
@@ -1946,8 +2202,8 @@ export default function DesignPage() {
 
                 {/* Right: options + send */}
                 <div className="flex items-center gap-1">
-                  {/* Post count */}
-                  <div className="hidden sm:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5">
+                  {/* Post count — desktop pills */}
+                  <div className="hidden md:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5">
                     {[1, 2, 4, 6, 8].map((n) => (
                       <button
                         key={n}
@@ -1962,19 +2218,46 @@ export default function DesignPage() {
                       </button>
                     ))}
                   </div>
+                  {/* Post count — mobile dropdown */}
+                  <div className="relative md:hidden" ref={quickCountRef}>
+                    <button
+                      onClick={() => setShowQuickCountDropdown(prev => !prev)}
+                      className="flex items-center gap-1 h-7 px-2.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-[11px] font-bold text-slate-700 dark:text-neutral-300"
+                    >
+                      {generateCount}x
+                      <ChevronDown size={12} />
+                    </button>
+                    {showQuickCountDropdown && (
+                      <div className="absolute bottom-9 right-0 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-2xl z-[120] overflow-hidden py-1 min-w-[48px]">
+                        {[1, 2, 4, 6, 8].map((n) => (
+                          <button
+                            key={n}
+                            onClick={() => { setGenerateCount(n); setShowQuickCountDropdown(false); }}
+                            className={`w-full px-4 py-2 text-xs font-semibold text-center transition-colors ${
+                              generateCount === n
+                                ? 'bg-slate-100 dark:bg-neutral-800 text-slate-900 dark:text-white'
+                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800 dark:text-neutral-400'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                  {/* Style selector */}
-                  <div className="hidden sm:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
+                  {/* Style selector — desktop pills */}
+                  <div className="hidden md:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
                     {([
-                      { v: 5 as const, label: 'C', title: 'Classic' },
-                      { v: 4 as const, label: 'W', title: 'Wild' },
-                      { v: 7 as const, label: 'AG', title: 'App Store Guided' },
+                      { v: 4 as const, label: 'Social Media', title: 'Social Media' },
+                      { v: 8 as const, label: 'SaaS', title: 'SaaS — typography-driven, CSS-only' },
+                      { v: 7 as const, label: 'App Store', title: 'App Store Preview' },
                     ]).map(({ v, label, title }) => (
                       <button
                         key={v}
                         onClick={() => setGenerateVersion(v)}
                         title={title}
-                        className={`w-7 h-7 rounded-full text-[10px] font-bold transition-colors ${
+                        className={`px-2.5 h-7 rounded-full text-[10px] font-bold transition-colors whitespace-nowrap ${
                           generateVersion === v
                             ? 'bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300'
@@ -1984,9 +2267,40 @@ export default function DesignPage() {
                       </button>
                     ))}
                   </div>
+                  {/* Style selector — mobile dropdown */}
+                  <div className="relative md:hidden ml-1" ref={quickStyleRef}>
+                    <button
+                      onClick={() => setShowQuickStyleDropdown(prev => !prev)}
+                      className="flex items-center gap-1 h-7 px-2.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-[11px] font-bold text-slate-700 dark:text-neutral-300"
+                    >
+                      {generateVersion === 4 ? 'Social' : generateVersion === 8 ? 'SaaS' : 'App'}
+                      <ChevronDown size={12} />
+                    </button>
+                    {showQuickStyleDropdown && (
+                      <div className="absolute bottom-9 right-0 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-2xl z-[120] overflow-hidden py-1 min-w-[120px]">
+                        {([
+                          { v: 4 as const, label: 'Social Media' },
+                          { v: 8 as const, label: 'SaaS' },
+                          { v: 7 as const, label: 'App Store' },
+                        ]).map(({ v, label }) => (
+                          <button
+                            key={v}
+                            onClick={() => { setGenerateVersion(v); setShowQuickStyleDropdown(false); }}
+                            className={`w-full px-4 py-2 text-xs font-semibold text-left transition-colors ${
+                              generateVersion === v
+                                ? 'bg-slate-100 dark:bg-neutral-800 text-slate-900 dark:text-white'
+                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800 dark:text-neutral-400'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                  {/* Ratio selector */}
-                  <div className="flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
+                  {/* Ratio selector — desktop pills */}
+                  <div className="hidden md:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
                     {(['1:1', '9:16', '3:4', '4:3', '16:9'] as AspectRatioType[]).map((r) => (
                       <button
                         key={r}
@@ -2001,6 +2315,33 @@ export default function DesignPage() {
                         {r}
                       </button>
                     ))}
+                  </div>
+                  {/* Ratio selector — mobile dropdown */}
+                  <div className="relative md:hidden ml-1" ref={quickRatioRef}>
+                    <button
+                      onClick={() => setShowQuickRatioDropdown(prev => !prev)}
+                      className="flex items-center gap-1 h-7 px-2.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-[11px] font-bold text-slate-700 dark:text-neutral-300"
+                    >
+                      {aspectRatio}
+                      <ChevronDown size={12} />
+                    </button>
+                    {showQuickRatioDropdown && (
+                      <div className="absolute bottom-9 right-0 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-xl shadow-2xl z-[120] overflow-hidden py-1">
+                        {(['1:1', '9:16', '3:4', '4:3', '16:9'] as AspectRatioType[]).map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => { setAspectRatio(r); setShowQuickRatioDropdown(false); }}
+                            className={`w-full px-4 py-2 text-xs font-semibold text-left transition-colors ${
+                              aspectRatio === r
+                                ? 'bg-slate-100 dark:bg-neutral-800 text-slate-900 dark:text-white'
+                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-neutral-800 dark:text-neutral-400'
+                            }`}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Send */}
@@ -2078,6 +2419,7 @@ export default function DesignPage() {
           onClear={() => setSelectedPosts([])}
           onDownload={handleDownloadSelected}
           onAddToContext={handleAddToContext}
+          onDeleteSelected={handleDeleteSelected}
         />
       )}
 

@@ -6,6 +6,7 @@ import { handleGenerationError } from "./_shared";
 import { generate as generateWild } from "./engines/wild";
 import { generate as generateClassic } from "./engines/classic";
 import { generate as generateAppstoreGuided } from "./engines/appstore-guided";
+import { generate as generateSaas } from "./engines/saas";
 import { requireAuth } from "@/lib/auth/api-auth";
 import { aiRateLimiter } from "@/lib/security/rate-limit";
 
@@ -76,6 +77,8 @@ export async function POST(req: NextRequest) {
         return generateClassic(engineReq);
       case 7:
         return generateAppstoreGuided(engineReq);
+      case 8:
+        return generateSaas(engineReq);
       default:
         return generateAppstoreGuided(engineReq);
     }

@@ -131,6 +131,7 @@ Route: `POST /api/generate` — `version` param selects engine (default: 7).
 | `4` | **Wild** | Single Gemini call generates all posts. AI has full creative freedom — writes complete TSX. Uses 8 mood presets (bold, minimal, energetic, etc.) for variety. Returns JSON array of `{code, caption, imageKeywords}`. |
 | `5` | **Classic** | Parallel Gemini calls (1 per post). Uses `CLASSIC_SYSTEM_PROMPT` + `buildDynamicPrompt()` for brand context. Each post gets a random copy angle + layout blueprint for diversity. AI writes complete TSX. |
 | `7` | **App Store Guided** | Template-based. AI returns JSON content (`headline`, `subtitle`, `background`, `badges`), code assembles it into pre-built TSX templates. 7 templates (A–G) with 8 background presets. |
+| `8` | **SaaS** | Typography-driven, CSS-only creative engine. Single Gemini call like Wild. NO images/mockups — pure CSS geometric shapes, gradients, and bold typography. 8 SaaS mood presets. Returns JSON array. |
 
 ### Shared infrastructure (`_shared.ts`)
 - `getModel(id?)` — returns Gemini client. Allowed: `gemini-3.1-flash-lite-preview` (default), `gemini-3-flash-preview`, `gemini-3.1-pro-preview`

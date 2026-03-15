@@ -188,6 +188,37 @@ export function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+/**
+ * Build a section showing actual hex values of theme colors so the AI
+ * can see which are dark/light and choose contrasting pairs itself.
+ */
+export function buildThemeColorValues(themeColors?: {
+  primary: string;
+  primaryLight: string;
+  primaryDark: string;
+  accent: string;
+  accentLight: string;
+  accentLime: string;
+  accentGold: string;
+  accentOrange: string;
+  border?: string;
+}): string {
+  if (!themeColors) return '';
+  const tc = themeColors;
+  return `\n\n## ACTUAL THEME COLOR VALUES
+t.primary = ${tc.primary}
+t.primaryLight = ${tc.primaryLight}
+t.primaryDark = ${tc.primaryDark}
+t.accent = ${tc.accent}
+t.accentLight = ${tc.accentLight}
+t.accentLime = ${tc.accentLime}
+t.accentGold = ${tc.accentGold}
+t.accentOrange = ${tc.accentOrange}
+t.border = ${tc.border || tc.primary}
+
+Use these actual values to ensure text is always readable — pick a LIGHT color for text on dark backgrounds and a DARK color for text on light backgrounds. Never use similar colors for both background and text.`;
+}
+
 export function buildRatioNote(targetRatio?: string): string {
   if (!targetRatio) return '';
   return `\n\n## TARGET ASPECT RATIO: ${targetRatio}
@@ -310,7 +341,7 @@ export function buildContextAssetsSection(contextAssets?: ContextAsset[]): strin
         lines.push('- USE AS: <MockupFrame id="mockup" src={url} /> — feature prominently');
         break;
       case 'product':
-        lines.push('- USE AS: Hero product image with drop-shadow, positioned creatively');
+        lines.push('- USE AS: Transparent PNG (background already removed). Use <img> with object-contain and filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.3))". Make it large and prominent on a solid/gradient background.');
         break;
       case 'logo':
         lines.push('- USE AS: Pass to PostHeader via logoUrl prop');

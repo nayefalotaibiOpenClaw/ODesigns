@@ -130,6 +130,9 @@ const CAT_COLORS: Record<string, string> = {
   crawl: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
   classification: "bg-pink-500/15 text-pink-400 border-pink-500/20",
   product_extraction: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+  blog_generation: "bg-teal-500/15 text-teal-400 border-teal-500/20",
+  background_removal: "bg-neutral-500/15 text-neutral-400 border-neutral-500/20",
+  product_editing: "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/20",
 };
 
 const PLAN_BADGE: Record<string, string> = {
@@ -535,8 +538,14 @@ export default function AdminOverviewPage() {
   const overview = useQuery(api.admin.getOverview);
   const allUsers = useQuery(api.admin.listAllUsers);
   const recentUsage = useQuery(api.admin.listRecentUsage);
+  const siteSettings = useQuery(api.admin.getSiteSettings);
+  const updateSetting = useMutation(api.admin.updateSiteSetting);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState("");
+  const [videoUrl1, setVideoUrl1] = useState("");
+  const [videoUrl2, setVideoUrl2] = useState("");
+  const [videoSaved, setVideoSaved] = useState(false);
+  const [videoSaving, setVideoSaving] = useState(false);
 
   if (!overview) {
     return (
@@ -606,6 +615,66 @@ export default function AdminOverviewPage() {
         <ChevronDown className="w-4 h-4 text-slate-400 -rotate-90 group-hover:translate-x-1 transition-transform" />
       </a>
 
+      {/* Landing Videos */}
+      <div className="bg-white dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800/50 rounded-2xl p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 bg-blue-500/20 rounded-xl flex items-center justify-center">
+            <FileText className="w-4.5 h-4.5 text-blue-500" />
+          </div>
+          <div>
+            <span className="text-sm font-bold text-slate-800 dark:text-neutral-200">Landing Page Videos</span>
+            <p className="text-[11px] text-slate-400 dark:text-neutral-500">Update video URLs without redeploying</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-slate-500 dark:text-neutral-500 mb-1 block">Video 1 — AI Generation Demo</label>
+            <input
+              type="url"
+              placeholder={siteSettings?.landingVideo1 || "Paste Vercel Blob URL..."}
+              value={videoUrl1}
+              onChange={(e) => { setVideoUrl1(e.target.value); setVideoSaved(false); }}
+              className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 placeholder:text-slate-400 dark:placeholder:text-neutral-500"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 dark:text-neutral-500 mb-1 block">Video 2 — Publishing Demo</label>
+            <input
+              type="url"
+              placeholder={siteSettings?.landingVideo2 || "Paste Vercel Blob URL..."}
+              value={videoUrl2}
+              onChange={(e) => { setVideoUrl2(e.target.value); setVideoSaved(false); }}
+              className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 placeholder:text-slate-400 dark:placeholder:text-neutral-500"
+            />
+          </div>
+          <button
+            onClick={async () => {
+              const url1 = videoUrl1.trim();
+              const url2 = videoUrl2.trim();
+              if (!url1 && !url2) return;
+              if ((url1 && !url1.startsWith("https://")) || (url2 && !url2.startsWith("https://"))) return;
+              setVideoSaving(true);
+              try {
+                if (url1) await updateSetting({ key: "landingVideo1", value: url1 });
+                if (url2) await updateSetting({ key: "landingVideo2", value: url2 });
+                setVideoSaved(true);
+                setVideoUrl1("");
+                setVideoUrl2("");
+              } catch {
+                // Mutation failed
+              } finally {
+                setVideoSaving(false);
+              }
+            }}
+            disabled={(!videoUrl1.trim() && !videoUrl2.trim()) || videoSaving}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {videoSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : videoSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {videoSaving ? "Saving..." : videoSaved ? "Saved" : "Save URLs"}
+          </button>
+        </div>
+      </div>
+
       {/* Users + Activity */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Users */}
@@ -656,9 +725,23 @@ export default function AdminOverviewPage() {
                   <span className="text-[10px] text-slate-400 dark:text-neutral-600 tabular-nums">{timeAgo(log.createdAt, t)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 dark:text-neutral-400 truncate max-w-[120px]">
-                    {log.user?.name || log.user?.email || t("admin.unknown")}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs text-slate-500 dark:text-neutral-400 truncate max-w-[120px]">
+                      {log.user?.name || log.user?.email || t("admin.unknown")}
+                    </span>
+                    {log.metadata && (() => {
+                      try {
+                        const meta = JSON.parse(log.metadata);
+                        return (
+                          <span className="text-[9px] text-slate-300 dark:text-neutral-600 truncate">
+                            {meta.imagesGenerated ? `${meta.imagesGenerated} img` : ""}
+                            {meta.mode ? ` · ${meta.mode}` : ""}
+                            {meta.postsGenerated ? `${meta.postsGenerated} posts` : ""}
+                          </span>
+                        );
+                      } catch { return null; }
+                    })()}
+                  </div>
                   <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-neutral-500 tabular-nums">
                     <span className="text-[9px] text-slate-300 dark:text-neutral-600">{log.model?.replace("gemini-3.1-", "").replace("-preview", "")}</span>
                     <span>{log.totalTokens.toLocaleString()} {t("admin.tok")}</span>

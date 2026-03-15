@@ -34,4 +34,16 @@ export interface GenerationContext {
   assets: AssetInfo[];
   /** When true, skip the general ASSETS section — context assets handle it */
   hasSelectedAssets?: boolean;
+  /** Actual theme hex values so AI can make contrast-aware decisions */
+  themeColors?: {
+    primary: string;
+    primaryLight: string;
+    primaryDark: string;
+    accent: string;
+    accentLight: string;
+    accentLime: string;
+    accentGold: string;
+    accentOrange: string;
+    border: string;
+  };
 }
