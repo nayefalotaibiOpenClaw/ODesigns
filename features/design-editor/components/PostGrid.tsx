@@ -7,6 +7,7 @@ import DynamicPost from "@/app/components/DynamicPost";
 import { PostConfigOverrides } from "@/app/components/OverrideContext";
 import PostWrapper from "@/app/components/PostWrapper";
 import { Id } from "@/convex/_generated/dataModel";
+import InfiniteScrollSentinel from "./InfiniteScrollSentinel";
 
 const ALL_RATIOS: AspectRatioType[] = ['1:1', '9:16', '3:4', '4:3', '16:9'];
 
@@ -143,6 +144,8 @@ interface PostGridProps {
   onSelectPost: (id: string | null) => void;
   onAdaptRatio?: (postId: Id<"posts">, baseCode: string, targetRatio: AspectRatioType) => Promise<void>;
   assets?: { _id: string; url: string | null; type: string; fileName: string }[];
+  postsStatus?: "LoadingFirstPage" | "LoadingMore" | "CanLoadMore" | "Exhausted";
+  onLoadMore?: () => void;
 }
 
 export default function PostGrid({
@@ -157,6 +160,8 @@ export default function PostGrid({
   selectedPostId, onSelectPost,
   onAdaptRatio,
   assets,
+  postsStatus,
+  onLoadMore,
 }: PostGridProps) {
   // Store modes in refs so handlers never need to be recreated
   const modeRef = useRef({ reorderMode, selectMode, selectedPostId });
@@ -820,6 +825,13 @@ export default function PostGrid({
           </div>
         );
       })}
+      {onLoadMore && postsStatus && (
+        <InfiniteScrollSentinel
+          onLoadMore={onLoadMore}
+          canLoadMore={postsStatus === "CanLoadMore"}
+          isLoading={postsStatus === "LoadingFirstPage" || postsStatus === "LoadingMore"}
+        />
+      )}
       <input ref={bgFileRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
     </div>
   );

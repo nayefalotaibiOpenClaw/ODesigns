@@ -11,7 +11,7 @@ import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
 import { localizeHref } from "@/lib/i18n/utils";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useConvexAuth, useQuery, useMutation, useAction } from "convex/react";
+import { useConvexAuth, useQuery, usePaginatedQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import PostPropertiesPanel from "@/app/components/PostPropertiesPanel";
@@ -52,8 +52,17 @@ export default function DesignPage() {
   // Use first collection if none specified
   const activeCollectionId = collectionIdParam ?? collections?.[0]?._id ?? null;
 
-  const posts = useQuery(
-    api.posts.listByCollection,
+  const {
+    results: posts,
+    status: postsStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.posts.listByCollectionPaginated,
+    activeCollectionId ? { collectionId: activeCollectionId } : "skip",
+    { initialNumItems: 18 }
+  );
+  const postCount = useQuery(
+    api.posts.countByCollection,
     activeCollectionId ? { collectionId: activeCollectionId } : "skip"
   );
 
@@ -122,6 +131,7 @@ export default function DesignPage() {
   const setEditMode = useCallback((v: boolean) => setActiveMode(v ? 'edit' : 'default'), []);
   const setReorderMode = useCallback((v: boolean) => setActiveMode(v ? 'reorder' : 'default'), []);
   const setSelectMode = useCallback((v: boolean) => setActiveMode(v ? 'select' : 'default'), []);
+  const [pendingReorder, setPendingReorder] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<AspectRatioType>('1:1');
   const [deviceType, setDeviceType] = useState<"iphone" | "android" | "ipad" | "android_tablet" | "desktop">("iphone");
   const [gridCols, setGridCols] = useState(3);
@@ -171,12 +181,44 @@ export default function DesignPage() {
   const [chatMode, setChatMode] = useState<'quick' | 'agent'>('quick');
 
   // Local order state for drag-and-drop (syncs with Convex)
+  // Merge new post IDs rather than replacing, to preserve drag reorder + generated posts
   const [localOrder, setLocalOrder] = useState<string[]>([]);
   useEffect(() => {
-    if (posts) {
-      setLocalOrder(posts.map(p => p._id));
-    }
+    setLocalOrder(prev => {
+      const serverIds = posts.map(p => p._id);
+      const serverIdSet = new Set(serverIds);
+      // First load: use server order directly
+      if (prev.length === 0) return serverIds;
+      // All server posts deleted: preserve generated post IDs
+      if (posts.length === 0) return prev.filter(id => id.startsWith('generated-'));
+      // Remove deleted posts from localOrder, keep generated post IDs (not in server)
+      const cleaned = prev.filter(id => serverIdSet.has(id) || id.startsWith('generated-'));
+      // Find newly loaded IDs not yet in localOrder
+      const existingIds = new Set(cleaned);
+      const newIds = serverIds.filter(id => !existingIds.has(id));
+      // No changes needed
+      if (newIds.length === 0 && cleaned.length === prev.length) return prev;
+      // No new IDs, just removals
+      if (newIds.length === 0) return cleaned;
+      // Append newly loaded page IDs to end
+      return [...cleaned, ...newIds];
+    });
   }, [posts]);
+
+  // Enable reorder mode once all posts are loaded (after pendingReorder triggered loadMore)
+  useEffect(() => {
+    if (pendingReorder && postsStatus === 'Exhausted') {
+      setPendingReorder(false);
+      setActiveMode('reorder');
+    }
+  }, [pendingReorder, postsStatus]);
+
+  // Keep loading pages while pendingReorder is active
+  useEffect(() => {
+    if (pendingReorder && postsStatus === 'CanLoadMore') {
+      loadMore(100);
+    }
+  }, [pendingReorder, postsStatus, loadMore]);
 
   // Close toolbar dropdown on click outside
   useEffect(() => {
@@ -1234,7 +1276,7 @@ export default function DesignPage() {
     );
   }
 
-  const allPostIds = localOrder.length > 0 ? localOrder : (posts?.map(p => p._id) ?? []);
+  const allPostIds = localOrder.length > 0 ? localOrder : posts.map(p => p._id);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-[#0a0a0a]">
@@ -1342,7 +1384,7 @@ export default function DesignPage() {
 
             <div className="w-px h-5 bg-slate-200 dark:bg-neutral-700" />
 
-            {posts && <span className="text-xs font-medium text-slate-400">{posts.length} post{posts.length !== 1 ? 's' : ''}</span>}
+            {postCount != null && <span className="text-xs font-medium text-slate-400">{postCount} post{postCount !== 1 ? 's' : ''}</span>}
 
             <div className="flex-1" />
 
@@ -1483,11 +1525,29 @@ export default function DesignPage() {
 
               {/* Reorder */}
               <button
-                onClick={() => { setActiveMode(activeMode === 'reorder' ? 'default' : 'reorder'); setToolbarDropdown(null); if (selectMode) setSelectedPosts([]); }}
+                onClick={() => {
+                  if (pendingReorder) {
+                    setPendingReorder(false);
+                    return;
+                  }
+                  if (activeMode === 'reorder') {
+                    setActiveMode('default');
+                  } else if (postsStatus === 'CanLoadMore') {
+                    // Need to load all posts first — pendingReorder triggers useEffect loop
+                    setPendingReorder(true);
+                    setToolbarDropdown(null);
+                    if (selectMode) setSelectedPosts([]);
+                  } else {
+                    setActiveMode('reorder');
+                  }
+                  setToolbarDropdown(null);
+                  if (selectMode) setSelectedPosts([]);
+                }}
+                disabled={pendingReorder}
                 title="Reorder"
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${reorderMode ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-600 dark:hover:text-neutral-300'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${reorderMode ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-sm' : pendingReorder ? 'text-slate-300' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-neutral-800 hover:text-slate-600 dark:hover:text-neutral-300'}`}
               >
-                <ArrowUpDown size={15} />
+                {pendingReorder ? <Loader2 size={15} className="animate-spin" /> : <ArrowUpDown size={15} />}
               </button>
 
               {/* Select & Download */}
@@ -1557,7 +1617,7 @@ export default function DesignPage() {
               <p className="text-sm text-gray-400">{t("design.createCollection")}</p>
             </div>
           </div>
-        ) : posts === undefined ? (
+        ) : postsStatus === "LoadingFirstPage" ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-8 h-8 text-gray-300 animate-spin" />
           </div>
@@ -1605,6 +1665,8 @@ export default function DesignPage() {
               onSelectPost={setSelectedPostId}
               onAdaptRatio={handleAdaptSingleRatio}
               assets={assets as { _id: string; url: string | null; type: string; fileName: string }[]}
+              postsStatus={postsStatus}
+              onLoadMore={() => loadMore(18)}
             />
           </SetHiddenComponentsContext.Provider>
           </HiddenComponentsContext.Provider>

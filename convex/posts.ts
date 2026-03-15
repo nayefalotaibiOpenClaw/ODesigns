@@ -1,4 +1,5 @@
 import { mutation, query } from "./_generated/server";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
 
@@ -56,6 +57,42 @@ export const listByCollection = query({
         q.eq("collectionId", args.collectionId)
       )
       .take(500);
+  },
+});
+
+// Paginated: 18 posts per page, cursor-based
+export const listByCollectionPaginated = query({
+  args: {
+    collectionId: v.id("collections"),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+    return await ctx.db
+      .query("posts")
+      .withIndex("by_collection_order", (q) =>
+        q.eq("collectionId", args.collectionId)
+      )
+      .paginate(args.paginationOpts);
+  },
+});
+
+// Count posts in a collection (lightweight)
+export const countByCollection = query({
+  args: { collectionId: v.id("collections") },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) return 0;
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_collection_order", (q) =>
+        q.eq("collectionId", args.collectionId)
+      )
+      .take(10000);
+    return posts.length;
   },
 });
 
