@@ -9,7 +9,7 @@ function isLocale(value: string): value is Locale {
 
 export default convexAuthNextjsMiddleware(
   (request) => {
-    const { pathname } = request.nextUrl;
+    const { pathname, searchParams } = request.nextUrl;
 
     // Skip non-page routes: API, _next, static files, favicon
     if (
@@ -20,6 +20,20 @@ export default convexAuthNextjsMiddleware(
       pathname === "/favicon.ico"
     ) {
       return;
+    }
+
+    // ─── Affiliate referral tracking ─────────────────
+    const refCode = searchParams.get("ref");
+    if (refCode && /^[a-zA-Z0-9_-]{3,20}$/.test(refCode)) {
+      const cleanUrl = new URL(request.url);
+      cleanUrl.searchParams.delete("ref");
+      const response = NextResponse.redirect(cleanUrl);
+      response.cookies.set("ref", refCode.toUpperCase(), {
+        path: "/",
+        maxAge: 30 * 24 * 3600, // 30 days
+        sameSite: "lax",
+      });
+      return response;
     }
 
     const segments = pathname.split("/");

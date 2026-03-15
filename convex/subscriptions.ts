@@ -2,6 +2,7 @@ import { mutation, query, internalMutation, type QueryCtx, type MutationCtx } fr
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import { internal } from "./_generated/api";
 
 // Plan definitions — single source of truth
 export const PLANS = {
@@ -335,6 +336,23 @@ export const activate = mutation({
     await ctx.db.patch(payment._id, { subscriptionId: subId });
     await ctx.db.patch(userId, { plan: args.plan });
 
+    // Record affiliate conversion if payment has an affiliate code
+    if (payment.metadata) {
+      try {
+        const meta = JSON.parse(payment.metadata);
+        if (meta.affiliateCode) {
+          await ctx.scheduler.runAfter(0, internal.affiliates.recordConversion, {
+            affiliateCode: meta.affiliateCode,
+            referredUserId: userId,
+            paymentId: payment._id,
+            saleAmount: amountPaid,
+          });
+        }
+      } catch {
+        // Invalid metadata JSON — skip silently
+      }
+    }
+
     return subId;
   },
 });
@@ -401,6 +419,23 @@ export const activateByOrderId = internalMutation({
     // Link subscription back to payment
     await ctx.db.patch(payment._id, { subscriptionId: subId });
     await ctx.db.patch(userId, { plan: payment.plan });
+
+    // Record affiliate conversion if payment has an affiliate code
+    if (payment.metadata) {
+      try {
+        const meta = JSON.parse(payment.metadata);
+        if (meta.affiliateCode) {
+          await ctx.scheduler.runAfter(0, internal.affiliates.recordConversion, {
+            affiliateCode: meta.affiliateCode,
+            referredUserId: userId,
+            paymentId: payment._id,
+            saleAmount: payment.amount,
+          });
+        }
+      } catch {
+        // Invalid metadata JSON — skip silently
+      }
+    }
 
     return subId;
   },

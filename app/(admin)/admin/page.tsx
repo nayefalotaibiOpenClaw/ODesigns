@@ -589,6 +589,23 @@ export default function AdminOverviewPage() {
         <ChevronDown className="w-4 h-4 text-slate-400 -rotate-90 group-hover:translate-x-1 transition-transform" />
       </a>
 
+      {/* Affiliate Management Link */}
+      <a
+        href="/admin/affiliates"
+        className="flex items-center justify-between px-5 py-4 bg-white dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800/50 rounded-2xl hover:border-slate-300 dark:hover:border-neutral-700 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+            <DollarSign className="w-4.5 h-4.5 text-emerald-500" />
+          </div>
+          <div>
+            <span className="text-sm font-bold text-slate-800 dark:text-neutral-200">Affiliate Program</span>
+            <p className="text-[11px] text-slate-400 dark:text-neutral-500">Manage affiliates, commissions, and payouts</p>
+          </div>
+        </div>
+        <ChevronDown className="w-4 h-4 text-slate-400 -rotate-90 group-hover:translate-x-1 transition-transform" />
+      </a>
+
       {/* Users + Activity */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Users */}
