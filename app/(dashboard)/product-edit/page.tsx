@@ -21,6 +21,8 @@ import {
   ChevronDown,
   Image as ImageIcon,
   X,
+  Package,
+  Pencil,
 } from "lucide-react";
 
 // ─── Angle presets ────────────────────────────────────────────────
@@ -49,6 +51,7 @@ export default function ProductEditPage() {
   const workspaces = useQuery(api.workspaces.listByUser, user ? {} : "skip");
 
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<Id<"workspaces"> | null>(null);
+  const [editMode, setEditMode] = useState<"product" | "image-edit">("product");
   const [sourceMode, setSourceMode] = useState<"upload" | "asset">("upload");
   const [sourceImage, setSourceImage] = useState<{ base64: string; mimeType: string; preview: string } | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<Id<"assets"> | null>(null);
@@ -119,13 +122,17 @@ export default function ProductEditPage() {
   // Toggle angle selection
   const toggleAngle = (id: string) => {
     setSelectedAngles((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : prev.length < 6 ? [...prev, id] : prev
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
     );
   };
 
-  // Select all angles
+  // Select all / deselect all angles
   const selectAllAngles = () => {
-    setSelectedAngles(ANGLE_PRESETS.slice(0, 6).map((a) => a.id));
+    if (selectedAngles.length === ANGLE_PRESETS.length) {
+      setSelectedAngles([]);
+    } else {
+      setSelectedAngles(ANGLE_PRESETS.map((a) => a.id));
+    }
   };
 
   // Generate
@@ -145,6 +152,7 @@ export default function ProductEditPage() {
           mimeType: sourceImage.mimeType,
           angles: anglesToSend,
           customPrompt: useCustom ? customPrompt : undefined,
+          mode: editMode,
         }),
       });
 
@@ -192,11 +200,39 @@ export default function ProductEditPage() {
               <Camera className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Product Angle Generator</h1>
+              <h1 className="text-2xl font-bold">AI Angle Generator</h1>
               <p className="text-sm text-white/50">
-                Generate different angles of your products using AI — powered by Gemini
+                Generate different angles of any image using AI — powered by Gemini
               </p>
             </div>
+          </div>
+
+          {/* Mode toggle */}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setEditMode("product")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                editMode === "product"
+                  ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                  : "border-white/10 bg-white/[0.02] text-white/50 hover:border-white/20 hover:text-white/70"
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              Product Mode
+              <span className="text-[10px] text-white/30 ml-1">Clean white BG</span>
+            </button>
+            <button
+              onClick={() => setEditMode("image-edit")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                editMode === "image-edit"
+                  ? "border-fuchsia-500 bg-fuchsia-500/15 text-fuchsia-300"
+                  : "border-white/10 bg-white/[0.02] text-white/50 hover:border-white/20 hover:text-white/70"
+              }`}
+            >
+              <Pencil className="w-4 h-4" />
+              Image Edit Mode
+              <span className="text-[10px] text-white/30 ml-1">Keep scene</span>
+            </button>
           </div>
 
           {/* Workspace selector */}
@@ -349,7 +385,7 @@ export default function ProductEditPage() {
                   onClick={selectAllAngles}
                   className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
                 >
-                  Select all
+                  {selectedAngles.length === ANGLE_PRESETS.length ? "Deselect all" : "Select all (8)"}
                 </button>
               </div>
 
@@ -441,7 +477,9 @@ export default function ProductEditPage() {
                 <div className="flex flex-col items-center justify-center py-24">
                   <Loader2 className="w-10 h-10 animate-spin text-violet-500 mb-3" />
                   <p className="text-sm text-white/40">
-                    Generating product angles with Gemini...
+                    {editMode === "image-edit"
+                      ? "Re-rendering image from new angles with Gemini..."
+                      : "Generating product angles with Gemini..."}
                   </p>
                   <p className="text-xs text-white/20 mt-1">This may take 30-60 seconds</p>
                 </div>
