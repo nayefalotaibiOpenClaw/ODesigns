@@ -7,6 +7,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProvider } from "./ThemeContext";
 import { LocaleProvider } from "@/lib/i18n/context";
 import type { Locale } from "@/lib/i18n/config";
+import ReferralTracker from "@/features/auth/ReferralTracker";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -21,6 +22,7 @@ export default function Providers({
     <ConvexAuthNextjsProvider client={convex}>
       <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
         <LocaleProvider initialLocale={initialLocale}>
+          <ReferralTracker />
           <ThemeProvider>{children}</ThemeProvider>
         </LocaleProvider>
       </NextThemesProvider>

@@ -19,8 +19,54 @@ export default defineSchema({
     role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
     createdAt: v.optional(v.number()),
     betaFeatures: v.optional(v.array(v.string())),
+    referredBy: v.optional(v.string()),
   })
     .index("email", ["email"]),
+
+  // ─── Affiliates ─────────────────────────────────────
+  affiliates: defineTable({
+    userId: v.id("users"),
+    code: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("suspended")
+    ),
+    commissionRate: v.number(),
+    bio: v.optional(v.string()),
+    totalClicks: v.number(),
+    totalSignups: v.number(),
+    totalConversions: v.number(),
+    totalEarnings: v.number(),
+    totalPaidOut: v.number(),
+    createdAt: v.number(),
+    approvedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_code", ["code"])
+    .index("by_status", ["status"]),
+
+  // ─── Referrals (affiliate events) ─────────────────
+  referrals: defineTable({
+    affiliateId: v.id("affiliates"),
+    type: v.union(
+      v.literal("click"),
+      v.literal("signup"),
+      v.literal("conversion"),
+      v.literal("payout")
+    ),
+    referredUserId: v.optional(v.id("users")),
+    paymentId: v.optional(v.id("payments")),
+    saleAmount: v.optional(v.number()),
+    commissionAmount: v.optional(v.number()),
+    payoutAmount: v.optional(v.number()),
+    payoutNote: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_affiliate", ["affiliateId"])
+    .index("by_affiliate_type", ["affiliateId", "type"])
+    .index("by_payment", ["paymentId"]),
 
   // ─── Workspaces ──────────────────────────────────────
   workspaces: defineTable({

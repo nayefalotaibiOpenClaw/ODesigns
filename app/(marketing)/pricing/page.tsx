@@ -132,12 +132,20 @@ export default function PricingPage() {
     try {
       const orderId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+      // Read affiliate referral code from cookie (if any)
+      const refMatch = document.cookie.match(/(?:^|;\s*)ref=([^;]+)/);
+      let affiliateCode: string | undefined;
+      if (refMatch) {
+        try { affiliateCode = decodeURIComponent(refMatch[1]); } catch { /* malformed cookie */ }
+      }
+
       // Step 1: Create pending payment in DB — amount is computed server-side
       await createPayment({
         plan: planId,
         billingPeriod,
         orderId,
         currency: "USD",
+        ...(affiliateCode && { affiliateCode }),
       });
 
       // Step 2: Create UPayments charge (amount comes from the server-stored payment record)

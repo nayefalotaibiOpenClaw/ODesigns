@@ -12,6 +12,7 @@ export const createPending = mutation({
     billingPeriod: v.union(v.literal("monthly"), v.literal("yearly")),
     orderId: v.string(),
     currency: v.string(),
+    affiliateCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await auth.getUserId(ctx);
@@ -52,6 +53,7 @@ export const createPending = mutation({
       amount: chargeAmount,
       currency: args.currency,
       status: "pending",
+      ...(args.affiliateCode && { metadata: JSON.stringify({ affiliateCode: args.affiliateCode }) }),
       createdAt: now,
       updatedAt: now,
     });
