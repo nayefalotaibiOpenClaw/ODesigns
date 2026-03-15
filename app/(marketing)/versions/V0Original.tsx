@@ -14,6 +14,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import HeroDemo from "./HeroDemo";
+import HeroVisual from "./HeroVisual";
 import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
 import Link from "@/lib/i18n/LocaleLink";
 import { useLocale } from "@/lib/i18n/context";
@@ -198,9 +199,9 @@ export default function V0Original() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="max-w-2xl mx-auto"
+            className="max-w-3xl mx-auto"
           >
-            <HeroDemo />
+            <HeroVisual />
           </motion.div>
         </div>
       </section>
