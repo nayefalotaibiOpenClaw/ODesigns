@@ -34,7 +34,6 @@ function validateCode(code: string): string {
 export const apply = mutation({
   args: {
     code: v.string(),
-    paypalEmail: v.optional(v.string()),
     bio: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -67,7 +66,6 @@ export const apply = mutation({
       code,
       status: "pending",
       commissionRate: 0.2, // default 20%
-      paypalEmail: args.paypalEmail,
       bio: args.bio,
       totalClicks: 0,
       totalSignups: 0,
@@ -81,7 +79,6 @@ export const apply = mutation({
 
 export const updateProfile = mutation({
   args: {
-    paypalEmail: v.optional(v.string()),
     bio: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -99,7 +96,6 @@ export const updateProfile = mutation({
     }
 
     await ctx.db.patch(affiliate._id, {
-      ...(args.paypalEmail !== undefined && { paypalEmail: args.paypalEmail }),
       ...(args.bio !== undefined && { bio: args.bio }),
     });
   },

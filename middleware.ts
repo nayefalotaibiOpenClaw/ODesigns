@@ -23,17 +23,31 @@ export default convexAuthNextjsMiddleware(
     }
 
     // ─── Affiliate referral tracking ─────────────────
+    // Extract ref code early; it will be attached to whichever response we return
+    let pendingRefCode: string | null = null;
     const refCode = searchParams.get("ref");
     if (refCode && /^[a-zA-Z0-9_-]{3,20}$/.test(refCode)) {
+      pendingRefCode = refCode.toUpperCase();
+    }
+
+    // Helper: attach ref cookie to any response before returning
+    const finalize = (response: NextResponse) => {
+      if (pendingRefCode) {
+        response.cookies.set("ref", pendingRefCode, {
+          path: "/",
+          maxAge: 30 * 24 * 3600, // 30 days
+          sameSite: "lax",
+          httpOnly: false,
+        });
+      }
+      return response;
+    };
+
+    // If ref param present, redirect to clean URL with cookie
+    if (pendingRefCode) {
       const cleanUrl = new URL(request.url);
       cleanUrl.searchParams.delete("ref");
-      const response = NextResponse.redirect(cleanUrl);
-      response.cookies.set("ref", refCode.toUpperCase(), {
-        path: "/",
-        maxAge: 30 * 24 * 3600, // 30 days
-        sameSite: "lax",
-      });
-      return response;
+      return finalize(NextResponse.redirect(cleanUrl));
     }
 
     const segments = pathname.split("/");
@@ -42,7 +56,7 @@ export default convexAuthNextjsMiddleware(
     // If /en/... -> 301 redirect to /... (canonical English has no prefix)
     if (maybeLocale === DEFAULT_LOCALE) {
       const newPath = "/" + segments.slice(2).join("/") || "/";
-      return NextResponse.redirect(new URL(newPath, request.url), 301);
+      return finalize(NextResponse.redirect(new URL(newPath, request.url), 301));
     }
 
     // If valid non-default locale prefix (e.g. /es/pricing) -> rewrite to /pricing, set headers
@@ -55,7 +69,7 @@ export default convexAuthNextjsMiddleware(
         maxAge: 365 * 24 * 3600,
         sameSite: "lax",
       });
-      return response;
+      return finalize(response);
     }
 
     // No locale prefix — check cookie or detect from browser
@@ -63,9 +77,9 @@ export default convexAuthNextjsMiddleware(
 
     if (cookieLocale && isLocale(cookieLocale) && cookieLocale !== DEFAULT_LOCALE) {
       // User has a non-English locale cookie -> redirect to prefixed URL
-      return NextResponse.redirect(
+      return finalize(NextResponse.redirect(
         new URL(`/${cookieLocale}${pathname === "/" ? "" : pathname}`, request.url)
-      );
+      ));
     }
 
     if (!cookieLocale) {
@@ -82,14 +96,14 @@ export default convexAuthNextjsMiddleware(
           maxAge: 365 * 24 * 3600,
           sameSite: "lax",
         });
-        return response;
+        return finalize(response);
       }
     }
 
     // English (default) — no prefix, just set header for layout
     const response = NextResponse.next();
     response.headers.set("x-locale", DEFAULT_LOCALE);
-    return response;
+    return finalize(response);
   }
 );
 

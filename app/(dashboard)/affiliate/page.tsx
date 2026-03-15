@@ -5,7 +5,7 @@ import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   Loader2, Copy, Check, Link2, MousePointerClick, UserPlus,
-  ShoppingCart, DollarSign, Clock, Send, Edit3, Save, X,
+  ShoppingCart, DollarSign, Clock, Send,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/context";
 
@@ -38,7 +38,6 @@ function StatCard({ label, value, icon: Icon }: {
 function ApplyForm() {
   const apply = useMutation(api.affiliates.apply);
   const [code, setCode] = useState("");
-  const [paypalEmail, setPaypalEmail] = useState("");
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -49,7 +48,7 @@ function ApplyForm() {
     setLoading(true);
     setError("");
     try {
-      await apply({ code: code.trim(), paypalEmail: paypalEmail || undefined, bio: bio || undefined });
+      await apply({ code: code.trim(), bio: bio || undefined });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -87,19 +86,6 @@ function ApplyForm() {
           <p className="text-[11px] text-slate-400 dark:text-neutral-600 mt-1">
             3-20 characters. Letters, numbers, dashes, underscores.
           </p>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wide mb-1.5">
-            PayPal Email (for payouts)
-          </label>
-          <input
-            type="email"
-            value={paypalEmail}
-            onChange={(e) => setPaypalEmail(e.target.value)}
-            placeholder="your@email.com"
-            className="w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-          />
         </div>
 
         <div>
@@ -181,13 +167,8 @@ function StatusCard({ status }: { status: string }) {
 function AffiliateDashboard() {
   const affiliate = useQuery(api.affiliates.getMyAffiliate);
   const stats = useQuery(api.affiliates.getMyStats);
-  const updateProfile = useMutation(api.affiliates.updateProfile);
 
   const [copied, setCopied] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [paypalEmail, setPaypalEmail] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
   const referralLink = affiliate ? `${appUrl}/?ref=${affiliate.code}` : "";
@@ -197,19 +178,6 @@ function AffiliateDashboard() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [referralLink]);
-
-  const handleSaveProfile = async () => {
-    setSaving(true);
-    setSaveError("");
-    try {
-      await updateProfile({ paypalEmail: paypalEmail || undefined });
-      setEditing(false);
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   if (!affiliate || !stats) {
     return (
@@ -260,51 +228,6 @@ function AffiliateDashboard() {
         <StatCard label="Conversions" value={stats.totalConversions.toLocaleString()} icon={ShoppingCart} />
         <StatCard label="Total Earned" value={fmt$(stats.totalEarnings)} icon={DollarSign} />
         <StatCard label="Pending Payout" value={fmt$(stats.pendingPayout)} icon={Clock} />
-      </div>
-
-      {/* Profile Section */}
-      <div className="bg-slate-50 dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800/60 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-slate-600 dark:text-neutral-400 uppercase tracking-wide">
-            Payout Details
-          </span>
-          {!editing && (
-            <button
-              onClick={() => { setEditing(true); setPaypalEmail(affiliate.paypalEmail || ""); }}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:text-neutral-500 dark:hover:text-neutral-300"
-            >
-              <Edit3 className="w-3 h-3" /> Edit
-            </button>
-          )}
-        </div>
-        {editing ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-            <input
-              type="email"
-              value={paypalEmail}
-              onChange={(e) => setPaypalEmail(e.target.value)}
-              placeholder="PayPal email"
-              className="flex-1 px-3 py-2 bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-            />
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving}
-              className="px-3 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            </button>
-            <button onClick={() => { setEditing(false); setSaveError(""); }} className="px-3 py-2 text-slate-500 hover:text-slate-700 dark:text-neutral-400">
-              <X className="w-4 h-4" />
-            </button>
-            </div>
-            {saveError && <p className="text-xs text-red-500">{saveError}</p>}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-700 dark:text-neutral-300">
-            {affiliate.paypalEmail || "No PayPal email set — add one to receive payouts."}
-          </p>
-        )}
       </div>
 
       {/* Recent Activity */}

@@ -34,7 +34,6 @@ export default defineSchema({
       v.literal("suspended")
     ),
     commissionRate: v.number(),
-    paypalEmail: v.optional(v.string()),
     bio: v.optional(v.string()),
     totalClicks: v.number(),
     totalSignups: v.number(),
