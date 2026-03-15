@@ -76,7 +76,7 @@ export default function ProductEditPage() {
   const [sourceMode, setSourceMode] = useState<"upload" | "asset">("upload");
   const [sourceImage, setSourceImage] = useState<{ base64: string; mimeType: string; preview: string } | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<Id<"assets"> | null>(null);
-  const [selectedAngles, setSelectedAngles] = useState<string[]>([]);
+  const [angleCounts, setAngleCounts] = useState<Record<string, number>>({});
   const [customPrompt, setCustomPrompt] = useState("");
   const [useCustom, setUseCustom] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -155,30 +155,64 @@ export default function ProductEditPage() {
     []
   );
 
-  // Toggle angle selection
+  // Angle count helpers
+  const getCount = (id: string) => angleCounts[id] || 0;
+  const totalImages = Object.values(angleCounts).reduce((sum, c) => sum + c, 0);
+  const selectedPresets = Object.keys(angleCounts).filter((k) => angleCounts[k] > 0);
+
+  const incrementAngle = (id: string) => {
+    setAngleCounts((prev) => ({ ...prev, [id]: Math.min((prev[id] || 0) + 1, 5) }));
+  };
+  const decrementAngle = (id: string) => {
+    setAngleCounts((prev) => {
+      const next = (prev[id] || 0) - 1;
+      if (next <= 0) {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: next };
+    });
+  };
   const toggleAngle = (id: string) => {
-    setSelectedAngles((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
-    );
+    if (getCount(id) > 0) {
+      setAngleCounts((prev) => {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      });
+    } else {
+      incrementAngle(id);
+    }
   };
 
-  // Select all / deselect all angles
+  // Select all (1 each) / deselect all
   const selectAllAngles = () => {
-    if (selectedAngles.length === ANGLE_PRESETS.length) {
-      setSelectedAngles([]);
+    if (selectedPresets.length === ANGLE_PRESETS.length) {
+      setAngleCounts({});
     } else {
-      setSelectedAngles(ANGLE_PRESETS.map((a) => a.id));
+      const all: Record<string, number> = {};
+      ANGLE_PRESETS.forEach((a) => { all[a.id] = Math.max(angleCounts[a.id] || 0, 1); });
+      setAngleCounts(all);
     }
+  };
+
+  // Build angles array with repeats from counts
+  const buildAnglesArray = () => {
+    const angles: string[] = [];
+    for (const [id, count] of Object.entries(angleCounts)) {
+      for (let i = 0; i < count; i++) angles.push(id);
+    }
+    if (useCustom) angles.push("custom");
+    return angles;
   };
 
   // Generate
   const handleGenerate = async () => {
-    if (!sourceImage || selectedAngles.length === 0) return;
+    if (!sourceImage || totalImages === 0) return;
     setGenerating(true);
     setResults([]);
 
     try {
-      const anglesToSend = useCustom ? [...selectedAngles, "custom"] : selectedAngles;
+      const anglesToSend = buildAnglesArray();
 
       const resp = await fetch("/api/product-edit", {
         method: "POST",
@@ -216,7 +250,7 @@ export default function ProductEditPage() {
             imagesGenerated: successCount,
             anglesRequested: anglesToSend.length,
             mode: editMode,
-            angles: anglesToSend,
+            angleCounts,
           }),
         }).catch(console.error);
       }
@@ -238,11 +272,11 @@ export default function ProductEditPage() {
 
   // ─── Batch: Submit job (50% cost) ──────────────────────────────
   const handleBatchSubmit = async () => {
-    if (!sourceImage || selectedAngles.length === 0) return;
+    if (!sourceImage || totalImages === 0) return;
     setSubmittingBatch(true);
 
     try {
-      const anglesToSend = useCustom ? [...selectedAngles, "custom"] : selectedAngles;
+      const anglesToSend = buildAnglesArray();
       const productKey = selectedAssetId || `upload-${Date.now()}`;
 
       const resp = await fetch("/api/product-edit/batch", {
@@ -592,16 +626,16 @@ export default function ProductEditPage() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-white/80">Presets</h2>
                 <div className="flex items-center gap-2">
-                  {selectedAngles.length > 0 && (
+                  {totalImages > 0 && (
                     <span className="text-[10px] text-white/30 bg-white/5 px-2 py-0.5 rounded-full">
-                      {selectedAngles.length} selected
+                      {totalImages} image{totalImages !== 1 ? "s" : ""}
                     </span>
                   )}
                   <button
                     onClick={selectAllAngles}
                     className="text-xs text-neutral-400 hover:text-white transition-colors"
                   >
-                    {selectedAngles.length === ANGLE_PRESETS.length ? "Deselect all" : "Select all"}
+                    {selectedPresets.length === ANGLE_PRESETS.length ? "Deselect all" : "Select all"}
                   </button>
                 </div>
               </div>
@@ -611,23 +645,34 @@ export default function ProductEditPage() {
               <div className="grid grid-cols-2 gap-1.5 mb-4">
                 {ANGLE_PRESETS.filter((p) => p.group === "angles").map((preset) => {
                   const Icon = preset.icon;
-                  const selected = selectedAngles.includes(preset.id);
+                  const count = getCount(preset.id);
                   return (
-                    <button
+                    <div
                       key={preset.id}
-                      onClick={() => toggleAngle(preset.id)}
-                      className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all ${
-                        selected
-                          ? "border-neutral-500 bg-neutral-800 text-white"
-                          : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:text-white/80"
+                      className={`rounded-lg border text-left transition-all ${
+                        count > 0
+                          ? "border-neutral-500 bg-neutral-800"
+                          : "border-white/10 bg-white/[0.02] hover:border-white/20"
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-white" : ""}`} />
-                      <div>
-                        <p className="text-xs font-medium">{preset.label}</p>
-                        <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => toggleAngle(preset.id)}
+                        className="flex items-start gap-2 p-2 w-full text-left"
+                      >
+                        <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${count > 0 ? "text-white" : "text-white/60"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium ${count > 0 ? "text-white" : "text-white/60"}`}>{preset.label}</p>
+                          <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
+                        </div>
+                      </button>
+                      {count > 0 && (
+                        <div className="flex items-center justify-end gap-1 px-2 pb-2 -mt-1">
+                          <button onClick={() => decrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">−</button>
+                          <span className="text-xs text-white/80 w-4 text-center tabular-nums">{count}</span>
+                          <button onClick={() => incrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">+</button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -637,23 +682,34 @@ export default function ProductEditPage() {
               <div className="grid grid-cols-2 gap-1.5">
                 {ANGLE_PRESETS.filter((p) => p.group === "social").map((preset) => {
                   const Icon = preset.icon;
-                  const selected = selectedAngles.includes(preset.id);
+                  const count = getCount(preset.id);
                   return (
-                    <button
+                    <div
                       key={preset.id}
-                      onClick={() => toggleAngle(preset.id)}
-                      className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all ${
-                        selected
-                          ? "border-neutral-500 bg-neutral-800 text-white"
-                          : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:text-white/80"
+                      className={`rounded-lg border text-left transition-all ${
+                        count > 0
+                          ? "border-neutral-500 bg-neutral-800"
+                          : "border-white/10 bg-white/[0.02] hover:border-white/20"
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-white" : ""}`} />
-                      <div>
-                        <p className="text-xs font-medium">{preset.label}</p>
-                        <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => toggleAngle(preset.id)}
+                        className="flex items-start gap-2 p-2 w-full text-left"
+                      >
+                        <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${count > 0 ? "text-white" : "text-white/60"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium ${count > 0 ? "text-white" : "text-white/60"}`}>{preset.label}</p>
+                          <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
+                        </div>
+                      </button>
+                      {count > 0 && (
+                        <div className="flex items-center justify-end gap-1 px-2 pb-2 -mt-1">
+                          <button onClick={() => decrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">−</button>
+                          <span className="text-xs text-white/80 w-4 text-center tabular-nums">{count}</span>
+                          <button onClick={() => incrementAngle(preset.id)} className="w-5 h-5 rounded bg-neutral-700 hover:bg-neutral-600 text-white/70 text-xs flex items-center justify-center">+</button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -686,9 +742,9 @@ export default function ProductEditPage() {
                 {/* Instant generate */}
                 <button
                   onClick={handleGenerate}
-                  disabled={!sourceImage || selectedAngles.length === 0 || generating}
+                  disabled={!sourceImage || totalImages === 0 || generating}
                   className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                    !sourceImage || selectedAngles.length === 0 || generating
+                    !sourceImage || totalImages === 0 || generating
                       ? "bg-white/5 text-white/20 cursor-not-allowed"
                       : "bg-white text-black hover:bg-neutral-200"
                   }`}
@@ -696,13 +752,13 @@ export default function ProductEditPage() {
                   {generating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating {selectedAngles.length + (useCustom ? 1 : 0)} angle
-                      {selectedAngles.length + (useCustom ? 1 : 0) !== 1 ? "s" : ""}...
+                      Generating {totalImages + (useCustom ? 1 : 0)} image
+                      {totalImages + (useCustom ? 1 : 0) !== 1 ? "s" : ""}...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Generate Instant
+                      Generate {totalImages > 0 ? `${totalImages + (useCustom ? 1 : 0)} Image${totalImages + (useCustom ? 1 : 0) !== 1 ? "s" : ""}` : "Instant"}
                     </>
                   )}
                 </button>
@@ -710,9 +766,9 @@ export default function ProductEditPage() {
                 {/* Batch generate (50% off) */}
                 <button
                   onClick={handleBatchSubmit}
-                  disabled={!sourceImage || selectedAngles.length === 0 || submittingBatch}
+                  disabled={!sourceImage || totalImages === 0 || submittingBatch}
                   className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border ${
-                    !sourceImage || selectedAngles.length === 0 || submittingBatch
+                    !sourceImage || totalImages === 0 || submittingBatch
                       ? "bg-white/5 text-white/20 cursor-not-allowed border-white/5"
                       : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
                   }`}
