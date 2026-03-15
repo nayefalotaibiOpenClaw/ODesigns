@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -84,7 +84,7 @@ export default function ProductEditPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
   const [submittingBatch, setSubmittingBatch] = useState(false);
-  const [pollingJobId, setPollingJobId] = useState<string | null>(null);
+  const [pollingJobId, setPollingJobId] = useState<Id<"batchJobs"> | null>(null);
   const [batchResults, setBatchResults] = useState<GeneratedImage[]>([]);
   const [showBatchPanel, setShowBatchPanel] = useState(false);
 
@@ -105,10 +105,11 @@ export default function ProductEditPage() {
   );
 
   // Auto-select first workspace
-  const firstWs = workspaces?.[0]?._id;
-  if (firstWs && !selectedWorkspaceId) {
-    setSelectedWorkspaceId(firstWs);
-  }
+  useEffect(() => {
+    if (workspaces?.[0]?._id && !selectedWorkspaceId) {
+      setSelectedWorkspaceId(workspaces[0]._id);
+    }
+  }, [workspaces, selectedWorkspaceId]);
 
   // Product-type assets only
   const productAssets = assets?.filter((a) => !a.archived) || [];
@@ -291,7 +292,7 @@ export default function ProductEditPage() {
   };
 
   // ─── Batch: Poll job status ────────────────────────────────────
-  const handlePollJob = async (jobId: string, jobName: string) => {
+  const handlePollJob = async (jobId: Id<"batchJobs">, jobName: string) => {
     setPollingJobId(jobId);
 
     try {
@@ -305,21 +306,27 @@ export default function ProductEditPage() {
 
       // Update state in Convex
       const updates: {
-        id: typeof jobId extends string ? Id<"batchJobs"> : never;
+        id: Id<"batchJobs">;
         state: string;
         results?: string;
         usage?: string;
         completedAt?: number;
         errorMessage?: string;
       } = {
-        id: jobId as Id<"batchJobs">,
+        id: jobId,
         state: data.state,
       };
 
       if (data.state === "JOB_STATE_SUCCEEDED" && data.results) {
-        // Store results (without base64 images to save space — keep metadata)
-        // For viewing, we'll re-fetch. Store a summary.
-        updates.results = JSON.stringify(data.results);
+        // Store only metadata (not base64 images — too large for Convex docs).
+        // To view results again, we re-fetch from Gemini via the batch GET endpoint.
+        const resultsSummary = data.results.map((r: { productKey?: string; angle: string; error?: string }) => ({
+          productKey: r.productKey,
+          angle: r.angle,
+          error: r.error,
+          success: !r.error,
+        }));
+        updates.results = JSON.stringify(resultsSummary);
         updates.completedAt = Date.now();
         if (data.usage) updates.usage = JSON.stringify(data.usage);
 
@@ -365,12 +372,12 @@ export default function ProductEditPage() {
   };
 
   // ─── Batch: View saved results ─────────────────────────────────
-  const handleViewResults = async (jobId: string) => {
-    // Fetch full job with results from Convex
+  const handleViewResults = async (jobId: Id<"batchJobs">) => {
+    // Re-fetch results from Gemini batch API (images not stored in Convex due to size)
+    const jobName = batchJobs?.find((j) => j._id === jobId)?.jobName;
+    if (!jobName) return;
     try {
-      const resp = await fetch(`/api/product-edit/batch?jobName=${encodeURIComponent(
-        batchJobs?.find((j) => j._id === jobId)?.jobName || ""
-      )}`);
+      const resp = await fetch(`/api/product-edit/batch?jobName=${encodeURIComponent(jobName)}`);
       if (!resp.ok) return;
       const data = await resp.json();
       if (data.results) {

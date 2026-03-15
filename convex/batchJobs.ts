@@ -87,10 +87,18 @@ export const listByUser = query({
     }
 
     // Don't return full results blob in list view (too large)
-    return jobs.map((j) => ({
-      ...j,
-      results: j.results ? `[${JSON.parse(j.results).length} results]` : undefined,
-    }));
+    return jobs.map((j) => {
+      let resultsSummary: string | undefined;
+      if (j.results) {
+        try {
+          const parsed = JSON.parse(j.results);
+          resultsSummary = `[${Array.isArray(parsed) ? parsed.length : 0} results]`;
+        } catch {
+          resultsSummary = "[results]";
+        }
+      }
+      return { ...j, results: resultsSummary };
+    });
   },
 });
 

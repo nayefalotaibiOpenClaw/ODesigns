@@ -41,9 +41,8 @@ IMPORTANT RULES:
 - The product must be the clear focal point`;
 }
 
-// Import presets from the parent route's constants
-// (duplicated here to keep batch route self-contained)
-const PRESETS: Record<string, string> = {
+// ─── Presets (duplicated to keep batch route self-contained) ──────
+const PRODUCT_PRESETS: Record<string, string> = {
   "front-clean": "Show this exact product from a clean front-facing angle on a pure white background. Well-lit, centered, subtle shadow. Keep product exactly as-is.",
   "three-quarter": "Show from a 3/4 perspective angle (rotated ~45° right) on white background. Professional studio lighting with soft shadow. Keep all details exactly.",
   "side-view": "Show from a direct side profile view on white background. Professional studio lighting. Keep all details exactly.",
@@ -60,6 +59,25 @@ const PRESETS: Record<string, string> = {
   "minimal-shadow": "Product on clean white surface with only a long dramatic directional shadow. Ultra-minimal editorial style. Keep all details exactly.",
   "seasonal-autumn": "Product in warm autumn setting — golden/orange tones, fallen leaves, cozy textures, warm wood. Golden-hour lighting. Keep product exactly as-is.",
   "texture-surface": "Product on beautiful textured surface (marble, slate, wood, concrete, terrazzo). Simple composition, soft directional lighting. Premium editorial feel. Keep all details exactly.",
+};
+
+const IMAGE_EDIT_PRESETS: Record<string, string> = {
+  "front-clean": "Re-render this scene from a straight-on front-facing camera angle. Keep the SAME background, environment, and all objects. Only change camera position.",
+  "three-quarter": "Re-render this scene from a 3/4 perspective (~45° right). Keep SAME background, environment, lighting. Only change camera angle.",
+  "side-view": "Re-render this scene from a direct side profile. Keep SAME background, environment, lighting. Only change camera.",
+  "top-down": "Re-render this scene from directly above (bird's eye). Keep SAME background, objects, lighting. Only change camera.",
+  "slight-tilt": "Re-render this scene with camera slightly tilted (~15°). Keep SAME background, environment. Add subtle Dutch angle for dynamic feel.",
+  "close-up": "Re-render as a close-up shot, zooming in on the main subject. Keep SAME background, lighting, style. Only zoom in closer.",
+  "lifestyle": "Re-render with same subject but enhance environment to feel more lifestyle/aspirational. Keep subject exactly as-is. Warmer, more premium feel.",
+  "hero-angle": "Re-render from a dramatic low camera angle looking upward. Keep SAME background, environment, lighting. Hero perspective for powerful feel.",
+  "hand-holding": "Re-render showing a hand elegantly holding the main subject. Keep SAME subject and color palette. Soft blurred background. Candid Instagram feel.",
+  "flat-lay-styled": "Re-render as styled flat lay (top-down) with subject as hero, adding complementary props. Keep subject exactly as-is. Soft even lighting.",
+  "in-use": "Re-render showing subject being actively used naturally. Keep subject exactly as-is. Authentic candid feel. Blurred background, natural lighting.",
+  "gradient-bg": "Re-render replacing background with smooth modern gradient complementing subject's colors. Keep subject exactly as-is. Soft reflection/shadow. Editorial feel.",
+  "splash-action": "Re-render with dynamic action elements (splash, burst, smoke). Subject must stay sharp and in focus. Keep all details. High-speed photography feel.",
+  "minimal-shadow": "Re-render ultra-minimal — subject on clean white surface with dramatic directional shadow only. Keep subject exactly as-is. Editorial feel.",
+  "seasonal-autumn": "Re-render in warm autumn setting — golden tones, fallen leaves, cozy textures. Keep subject exactly as-is. Golden-hour lighting.",
+  "texture-surface": "Re-render placing subject on textured surface (marble, slate, wood, terrazzo). Keep subject exactly as-is. Simple composition, soft directional lighting.",
 };
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -103,6 +121,7 @@ export async function POST(req: NextRequest) {
     }
 
     const systemPrompt = getSystemPrompt(mode);
+    const presets = mode === "image-edit" ? IMAGE_EDIT_PRESETS : PRODUCT_PRESETS;
 
     // Build JSONL lines — one line per (product × angle)
     const jsonlLines: string[] = [];
@@ -115,7 +134,7 @@ export async function POST(req: NextRequest) {
       for (const angle of angles) {
         const prompt = angle === "custom" && product.customPrompt
           ? product.customPrompt
-          : PRESETS[angle];
+          : presets[angle];
         if (!prompt) continue;
 
         const requestKey = `${product.key}__${angle}`;
