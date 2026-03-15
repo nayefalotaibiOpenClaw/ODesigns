@@ -133,10 +133,18 @@ export async function POST(req: NextRequest) {
     // Generate each angle in parallel
     const results = await Promise.all(
       angles.map(async (angle) => {
-        const prompt =
-          angle === "custom" && customPrompt
-            ? customPrompt
-            : presets[angle];
+        let prompt: string | undefined;
+        if (angle === "custom" && customPrompt) {
+          // Wrap custom prompt to ensure the AI uses the reference image
+          prompt = `REFERENCE IMAGE: The attached image shows the EXACT product you must use. Study every detail — the packaging, colors, branding, labels, text, shape, and texture. You MUST use this exact product in the output, not a generic or imagined version.
+
+USER REQUEST:
+${customPrompt}
+
+CRITICAL: The product in your output MUST match the attached reference image exactly. Do not invent or guess what the product looks like — copy it precisely from the reference image.`;
+        } else {
+          prompt = presets[angle];
+        }
 
         if (!prompt) {
           return { angle, error: "Unknown angle preset" };

@@ -132,9 +132,12 @@ export async function POST(req: NextRequest) {
       const angles = product.angles || ["front-clean"];
 
       for (const angle of angles) {
-        const prompt = angle === "custom" && product.customPrompt
-          ? product.customPrompt
-          : presets[angle];
+        let prompt: string | undefined;
+        if (angle === "custom" && product.customPrompt) {
+          prompt = `REFERENCE IMAGE: The attached image shows the EXACT product you must use. Study every detail — the packaging, colors, branding, labels, text, shape, and texture. You MUST use this exact product in the output, not a generic or imagined version.\n\nUSER REQUEST:\n${product.customPrompt}\n\nCRITICAL: The product in your output MUST match the attached reference image exactly. Do not invent or guess what the product looks like — copy it precisely from the reference image.`;
+        } else {
+          prompt = presets[angle];
+        }
         if (!prompt) continue;
 
         const requestKey = `${product.key}__${angle}`;

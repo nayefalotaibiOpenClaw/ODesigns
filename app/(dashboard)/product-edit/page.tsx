@@ -79,6 +79,7 @@ export default function ProductEditPage() {
   const [angleCounts, setAngleCounts] = useState<Record<string, number>>({});
   const [customPrompt, setCustomPrompt] = useState("");
   const [useCustom, setUseCustom] = useState(false);
+  const [customCount, setCustomCount] = useState(1);
   const [generating, setGenerating] = useState(false);
   const [results, setResults] = useState<GeneratedImage[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -201,7 +202,9 @@ export default function ProductEditPage() {
     for (const [id, count] of Object.entries(angleCounts)) {
       for (let i = 0; i < count; i++) angles.push(id);
     }
-    if (useCustom) angles.push("custom");
+    if (useCustom) {
+      for (let i = 0; i < customCount; i++) angles.push("custom");
+    }
     return angles;
   };
 
@@ -726,14 +729,30 @@ export default function ProductEditPage() {
                   <span className="text-xs text-white/60">Add custom prompt</span>
                 </label>
                 {useCustom && (
-                  <textarea
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="e.g. Show product floating with dramatic lighting and smoke effects..."
-                    rows={3}
-                    maxLength={1000}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-neutral-600 resize-none"
-                  />
+                  <>
+                    <textarea
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      placeholder="e.g. Show product floating with dramatic lighting and smoke effects..."
+                      rows={3}
+                      maxLength={1000}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-neutral-600 resize-none"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-[10px] text-white/30">Variations</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setCustomCount((c) => Math.max(1, c - 1))}
+                          className="w-5 h-5 rounded bg-neutral-800 hover:bg-neutral-700 text-white/70 text-xs flex items-center justify-center"
+                        >−</button>
+                        <span className="text-xs text-white/80 w-4 text-center tabular-nums">{customCount}</span>
+                        <button
+                          onClick={() => setCustomCount((c) => Math.min(5, c + 1))}
+                          className="w-5 h-5 rounded bg-neutral-800 hover:bg-neutral-700 text-white/70 text-xs flex items-center justify-center"
+                        >+</button>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -752,13 +771,13 @@ export default function ProductEditPage() {
                   {generating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating {totalImages + (useCustom ? 1 : 0)} image
-                      {totalImages + (useCustom ? 1 : 0) !== 1 ? "s" : ""}...
+                      Generating {totalImages + (useCustom ? customCount : 0)} image
+                      {totalImages + (useCustom ? customCount : 0) !== 1 ? "s" : ""}...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      Generate {totalImages > 0 ? `${totalImages + (useCustom ? 1 : 0)} Image${totalImages + (useCustom ? 1 : 0) !== 1 ? "s" : ""}` : "Instant"}
+                      Generate {totalImages > 0 ? `${totalImages + (useCustom ? customCount : 0)} Image${totalImages + (useCustom ? customCount : 0) !== 1 ? "s" : ""}` : "Instant"}
                     </>
                   )}
                 </button>
