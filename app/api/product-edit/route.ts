@@ -51,6 +51,22 @@ const PRODUCT_PRESETS: Record<string, string> = {
     "A tight close-up shot of two hands cradling and presenting this exact product. The person is wearing a stylish solid-colored outfit (blue, earth tone, or neutral). Shot is cropped to show mainly the hands and the product against the clothing as background. Soft natural lighting, editorial fashion photography style. The product is the absolute hero — every detail sharp and visible. Keep the product EXACTLY as shown in the reference image. Think high-end brand campaign.",
   "person-holding":
     "A lifestyle photograph of a person holding this exact product close to the camera. The person is slightly out of focus in the background wearing casual stylish clothing. The product is in sharp focus in the foreground, held at about chest height. Warm natural lighting, candid and authentic feel. The composition feels like a real Instagram post — not overly staged. Keep the product EXACTLY as shown in the reference image.",
+  "drive-thru":
+    "A commercial drive-thru handoff moment — one hand passing this exact product through a car window to another hand receiving it. Shot from outside the car at window level. The product bag/packaging is the hero, branding visible. Moody urban lighting or warm golden tones. The car body and window frame the composition. Keep the product EXACTLY as shown in the reference image. Authentic fast-casual brand photography style.",
+  "group-table":
+    "A top-down overhead shot of a wooden table with multiple hands reaching for this exact product from different directions. The product is placed in the center as the hero, with plates, drinks, and napkins scattered around creating a busy social dining scene. Warm ambient restaurant lighting with a slight film grain. Multiple people's hands and arms visible from the edges. Keep the product EXACTLY as shown in the reference image. Convivial, social, Instagram-worthy group dining moment.",
+  "sauce-pour":
+    "A dramatic action shot against a clean light background — one hand holds this exact product while another hand pours sauce, drizzle, or topping onto it from above. The sauce creates a beautiful mid-air stream. Hard directional lighting creates sharp shadows on the clean background. Both hands have stylish accessories (rings, bracelets). The product is the hero. Keep the product EXACTLY as shown in the reference image. Bold editorial food photography with high contrast.",
+  "pool-backdrop":
+    "Multiple hands holding variations of this exact product up against a beautiful blue swimming pool water background. Shot from above looking down at the pool surface. The hands reach in from the edges of the frame. Bright summer daylight, vibrant blue water creates a stunning backdrop. The products are wrapped in branded packaging. Keep the product EXACTLY as shown in the reference image. Summer campaign, aspirational pool party vibes.",
+  "tray-serving":
+    "A person wearing a branded or plain t-shirt serving this exact product on a metal serving tray or paper-lined tray. Shot at waist level, the tray is the focal point with the product centered on it. The person's torso is slightly out of focus behind. Restaurant/kitchen environment with warm lighting. Keep the product EXACTLY as shown in the reference image. Authentic fast-casual service moment, editorial quality.",
+  "velvet-backdrop":
+    "This exact product presented on an open palm of a hand, held up against a rich dark velvet curtain or fabric backdrop (deep green, burgundy, or navy). The hand enters from below, presenting the product like a prized offering. Dramatic moody lighting with the product as the glowing hero. Keep the product EXACTLY as shown in the reference image. Premium, theatrical, high-end brand campaign feel.",
+  "floating-product":
+    "This exact product floating/levitating in mid-air against a clean cream or light beige background. Multiple pieces or angles of the product scattered at different heights and rotations, creating a dynamic floating composition. Soft even studio lighting, no harsh shadows. The products appear weightless and artfully arranged. Keep the product EXACTLY as shown in the reference image. Clean editorial menu/catalog style.",
+  "nails-grip":
+    "A dramatic close-up of a single hand with stylish painted nails (bold color like green, red, or dark) gripping this exact product tightly. Shot against a clean muted background (sage green, soft gray, or cream). The hand is the compositional focus alongside the product — every nail, ring, and texture visible. Soft directional studio lighting. Keep the product EXACTLY as shown in the reference image. High-fashion editorial food photography.",
 };
 
 // ─── Image edit mode: preserves scene/background, changes camera angle ───
@@ -99,6 +115,22 @@ const IMAGE_EDIT_PRESETS: Record<string, string> = {
     "Re-render this scene as a tight close-up of hands cradling the subject against a solid-colored outfit. Keep the subject exactly as-is. Soft natural lighting, editorial fashion photography style. Product is the hero.",
   "person-holding":
     "Re-render this scene with a person holding the subject close to camera. Person slightly out of focus wearing casual stylish clothing. Keep the subject exactly as-is. Warm natural lighting, candid Instagram feel.",
+  "drive-thru":
+    "Re-render as a drive-thru handoff — one hand passing subject through car window to another hand. Keep subject exactly as-is. Moody urban lighting, car window framing.",
+  "group-table":
+    "Re-render as overhead shot of table with multiple hands reaching for subject from all directions. Keep subject exactly as-is. Warm restaurant lighting, social dining scene.",
+  "sauce-pour":
+    "Re-render with one hand holding subject while another pours sauce onto it from above. Clean light background, hard directional lighting, sharp shadows. Keep subject exactly as-is.",
+  "pool-backdrop":
+    "Re-render with hands holding subject up against blue pool water background. Bright summer daylight, vibrant blue backdrop. Keep subject exactly as-is.",
+  "tray-serving":
+    "Re-render with person serving subject on metal tray. Restaurant setting, warm lighting. Keep subject exactly as-is. Authentic service moment.",
+  "velvet-backdrop":
+    "Re-render with subject presented on open palm against dark velvet curtain backdrop. Dramatic moody lighting. Keep subject exactly as-is. Premium theatrical feel.",
+  "floating-product":
+    "Re-render with subject floating/levitating at multiple angles against clean cream background. Weightless, dynamic composition. Keep subject exactly as-is. Editorial catalog style.",
+  "nails-grip":
+    "Re-render as close-up of hand with painted nails gripping subject against clean muted background. Keep subject exactly as-is. High-fashion editorial style.",
 };
 
 export async function POST(req: NextRequest) {

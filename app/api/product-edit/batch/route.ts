@@ -64,6 +64,14 @@ const PRODUCT_PRESETS: Record<string, string> = {
   "car-window": "Hand holding product out car window against blue sky. Bright cheerful daylight, aspirational. Keep product exactly as-is.",
   "held-close-up": "Tight close-up of hands cradling product against solid-colored outfit. Editorial fashion photography. Keep product exactly as-is.",
   "person-holding": "Person holding product close to camera, slightly out of focus. Warm natural lighting, candid Instagram feel. Keep product exactly as-is.",
+  "drive-thru": "Drive-thru handoff — hand passing product through car window. Moody urban lighting, car window framing. Keep product exactly as-is.",
+  "group-table": "Overhead table with multiple hands reaching for product. Warm restaurant lighting, social dining. Keep product exactly as-is.",
+  "sauce-pour": "Hand holding product while another pours sauce onto it. Clean light background, hard directional lighting. Keep product exactly as-is.",
+  "pool-backdrop": "Hands holding product against blue pool water background. Bright summer daylight. Keep product exactly as-is.",
+  "tray-serving": "Person serving product on metal tray. Restaurant setting, warm lighting. Keep product exactly as-is.",
+  "velvet-backdrop": "Product on open palm against dark velvet curtain. Dramatic moody lighting, premium feel. Keep product exactly as-is.",
+  "floating-product": "Product floating/levitating at multiple angles against cream background. Dynamic, editorial catalog style. Keep product exactly as-is.",
+  "nails-grip": "Close-up of hand with painted nails gripping product against muted background. High-fashion editorial. Keep product exactly as-is.",
 };
 
 const IMAGE_EDIT_PRESETS: Record<string, string> = {
@@ -88,6 +96,14 @@ const IMAGE_EDIT_PRESETS: Record<string, string> = {
   "car-window": "Re-render scene with hand holding subject out car window against blue sky. Keep subject exactly as-is. Bright cheerful daylight.",
   "held-close-up": "Re-render as tight close-up of hands cradling subject against solid-colored outfit. Keep subject exactly as-is. Editorial fashion photography.",
   "person-holding": "Re-render with person holding subject close to camera. Keep subject exactly as-is. Warm natural lighting, candid feel.",
+  "drive-thru": "Re-render as drive-thru handoff through car window. Keep subject exactly as-is. Moody urban lighting.",
+  "group-table": "Re-render as overhead table with multiple hands reaching. Keep subject exactly as-is. Warm restaurant lighting.",
+  "sauce-pour": "Re-render with hand pouring sauce onto subject. Clean light background, hard lighting. Keep subject exactly as-is.",
+  "pool-backdrop": "Re-render with hands holding subject against blue pool water. Keep subject exactly as-is. Bright summer daylight.",
+  "tray-serving": "Re-render with person serving subject on tray. Restaurant setting. Keep subject exactly as-is.",
+  "velvet-backdrop": "Re-render with subject on open palm against dark velvet curtain. Keep subject exactly as-is. Dramatic moody lighting.",
+  "floating-product": "Re-render with subject floating/levitating against cream background. Keep subject exactly as-is. Editorial catalog style.",
+  "nails-grip": "Re-render as close-up of painted nails gripping subject. Muted background. Keep subject exactly as-is. High-fashion editorial.",
 };
 
 // ─── Types ───────────────────────────────────────────────────────

@@ -64,6 +64,14 @@ const ANGLE_PRESETS = [
   { id: "car-window", label: "Car Window", icon: CircleDot, description: "Held out car window, blue sky", group: "lifestyle" },
   { id: "held-close-up", label: "Held Close-Up", icon: Hand, description: "Hands cradling product, editorial", group: "lifestyle" },
   { id: "person-holding", label: "Person Holding", icon: User, description: "Candid person holding product", group: "lifestyle" },
+  { id: "drive-thru", label: "Drive-Thru", icon: Car, description: "Handoff through car window", group: "lifestyle" },
+  { id: "group-table", label: "Group Table", icon: LayoutGrid, description: "Overhead table, many hands reaching", group: "lifestyle" },
+  { id: "sauce-pour", label: "Sauce Pour", icon: Zap, description: "Action sauce drizzle, clean backdrop", group: "lifestyle" },
+  { id: "pool-backdrop", label: "Pool Backdrop", icon: Palette, description: "Hands up against blue pool water", group: "lifestyle" },
+  { id: "tray-serving", label: "Tray Serving", icon: Square, description: "Served on tray, restaurant feel", group: "lifestyle" },
+  { id: "velvet-backdrop", label: "Velvet Backdrop", icon: Star, description: "Open palm, dark velvet curtain", group: "lifestyle" },
+  { id: "floating-product", label: "Floating", icon: ArrowUp, description: "Levitating on cream background", group: "lifestyle" },
+  { id: "nails-grip", label: "Nails Grip", icon: Hand, description: "Painted nails gripping, editorial", group: "lifestyle" },
 ];
 
 interface GeneratedImage {
