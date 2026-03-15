@@ -202,12 +202,15 @@ export default function AssetsPanel({
                         <RefreshCw size={10} className="text-white" />
                       </button>
                     )}
-                    <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {removingBgAssetIds?.has(asset._id) ? (
-                        <div className="w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center">
-                          <Loader2 size={10} className="animate-spin" />
-                        </div>
-                      ) : (
+                    {/* BG removal overlay */}
+                    {removingBgAssetIds?.has(asset._id) && (
+                      <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center gap-1 z-10">
+                        <Loader2 size={16} className="animate-spin text-[#52B788]" />
+                        <span className="text-[9px] font-bold text-white/90">Removing...</span>
+                      </div>
+                    )}
+                    {!removingBgAssetIds?.has(asset._id) && (
+                      <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onRemoveBackground(asset)}
                           className="w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
@@ -215,14 +218,14 @@ export default function AssetsPanel({
                         >
                           <Eraser size={10} />
                         </button>
-                      )}
-                      <button
-                        onClick={() => onRemoveAsset(asset._id)}
-                        className="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                      >
-                        <X size={10} />
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => onRemoveAsset(asset._id)}
+                          className="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    )}
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <p className="text-[9px] text-white truncate font-medium">{asset.description || asset.fileName}</p>
                     </div>

@@ -127,8 +127,11 @@ export default function DesignPage() {
 
   const [removingBgAssetIds, setRemovingBgAssetIds] = useState<Set<string>>(new Set());
   const [bgRemovalError, setBgRemovalError] = useState<string | null>(null);
-  // "library" = @imgly only (free, real alpha), "hybrid" = Gemini + @imgly (better isolation, costs tokens)
-  const [bgRemovalMode, setBgRemovalMode] = useState<"library" | "hybrid">("library");
+  const [bgRemovalProgress, setBgRemovalProgress] = useState<{
+    total: number;
+    completed: number;
+    currentStep: Record<string, string>; // assetId -> step label
+  }>({ total: 0, completed: 0, currentStep: {} });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeMode, setActiveMode] = useState<'default' | 'edit' | 'reorder' | 'select'>('default');
@@ -1202,44 +1205,57 @@ export default function DesignPage() {
     }
   };
 
+  const updateStepForAsset = (assetId: string, step: string) => {
+    setBgRemovalProgress(prev => ({
+      ...prev,
+      currentStep: { ...prev.currentStep, [assetId]: step },
+    }));
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const removeBackgroundForOne = async (asset: any) => {
+    const assetId = asset._id;
+
     // Step 1: Fetch original image
+    updateStepForAsset(assetId, "Fetching image...");
     const imgRes = await fetch(asset.url);
     if (!imgRes.ok) throw new Error("Failed to fetch image");
     const originalBlob = await imgRes.blob();
 
-    let inputForLibrary: Blob = originalBlob;
     let usage = null;
 
-    // Step 2 (hybrid mode only): Gemini nano banana pre-processing
-    if (bgRemovalMode === "hybrid") {
-      const mimeType = originalBlob.type || "image/png";
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1]);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(originalBlob);
-      });
+    // Step 2: Gemini AI pre-processing — rough background removal
+    updateStepForAsset(assetId, "AI removing background...");
+    const mimeType = originalBlob.type || "image/png";
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(originalBlob);
+    });
 
-      const res = await fetch("/api/remove-background", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType }),
-      });
+    const res = await fetch("/api/remove-background", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64, mimeType }),
+    });
 
-      if (res.ok) {
-        const data = await res.json();
-        usage = data.usage;
-        const resultBytes = Uint8Array.from(atob(data.imageBase64), c => c.charCodeAt(0));
-        inputForLibrary = new Blob([resultBytes], { type: data.mimeType });
-      }
+    let inputForLibrary: Blob;
+    if (res.ok) {
+      const data = await res.json();
+      usage = data.usage;
+      const resultBytes = Uint8Array.from(atob(data.imageBase64), c => c.charCodeAt(0));
+      inputForLibrary = new Blob([resultBytes], { type: data.mimeType });
+    } else {
+      // Fallback to original if Gemini fails — library can still handle it
+      inputForLibrary = originalBlob;
     }
 
-    // Step 3: @imgly/background-removal — produces real alpha transparency
+    // Step 3: @imgly/background-removal — produces clean alpha transparency
+    updateStepForAsset(assetId, "Refining edges...");
     const { removeBackground } = await import("@imgly/background-removal");
     const transparentBlob: Blob = await removeBackground(inputForLibrary, {
       model: "isnet_quint8",
@@ -1247,6 +1263,7 @@ export default function DesignPage() {
     });
 
     // Step 4: Compress if over 10MB (library outputs uncompressed PNGs)
+    updateStepForAsset(assetId, "Optimizing...");
     let finalBlob = transparentBlob;
     if (transparentBlob.size > 9 * 1024 * 1024) {
       const bmpUrl = URL.createObjectURL(transparentBlob);
@@ -1280,6 +1297,7 @@ export default function DesignPage() {
       }
     }
 
+    updateStepForAsset(assetId, "Uploading...");
     const uploadMime = finalBlob.type || "image/png";
     const uploadUrl = await generateUploadUrl();
     const uploadRes = await fetch(uploadUrl, {
@@ -1292,7 +1310,7 @@ export default function DesignPage() {
 
     const ext = uploadMime === "image/webp" ? ".webp" : ".png";
     const newFileName = asset.fileName.replace(/\.[^.]+$/, "") + "_nobg" + ext;
-    const assetId = await createAsset({
+    const newAssetId = await createAsset({
       workspaceId: asset.workspaceId || workspaceId,
       scope: asset.scope || "workspace",
       fileId: storageId,
@@ -1301,7 +1319,7 @@ export default function DesignPage() {
     });
 
     analyzeImage({
-      assetId,
+      assetId: newAssetId,
       storageId,
       fileName: newFileName,
       assetType: asset.type,
@@ -1309,7 +1327,7 @@ export default function DesignPage() {
       workspaceId: asset.workspaceId || workspaceId,
     }).catch(console.error);
 
-    // Log AI usage (Gemini tokens — only in hybrid mode)
+    // Log AI usage (Gemini tokens)
     if (usage) {
       logAndIncrement({
         workspaceId: asset.workspaceId || workspaceId,
@@ -1338,28 +1356,48 @@ export default function DesignPage() {
     validAssets.forEach((a: { _id: string }) => newIds.add(a._id));
     setRemovingBgAssetIds(new Set(newIds));
 
+    // Initialize progress tracking
+    setBgRemovalProgress({ total: validAssets.length, completed: 0, currentStep: {} });
+
     let failCount = 0;
-    // Process all in parallel
-    await Promise.allSettled(
-      validAssets.map(async (asset: { _id: string }) => {
-        try {
-          await removeBackgroundForOne(asset);
-        } catch (err) {
-          failCount++;
-          console.error(`Remove background failed for ${asset._id}:`, err);
-        } finally {
-          setRemovingBgAssetIds(prev => {
-            const next = new Set(prev);
-            next.delete(asset._id);
-            return next;
-          });
-        }
-      })
-    );
+    // Process up to 3 in parallel to avoid overwhelming the API
+    const concurrency = 3;
+    for (let i = 0; i < validAssets.length; i += concurrency) {
+      const batch = validAssets.slice(i, i + concurrency);
+      await Promise.allSettled(
+        batch.map(async (asset: { _id: string }) => {
+          try {
+            await removeBackgroundForOne(asset);
+          } catch (err) {
+            failCount++;
+            console.error(`Remove background failed for ${asset._id}:`, err);
+          } finally {
+            setRemovingBgAssetIds(prev => {
+              const next = new Set(prev);
+              next.delete(asset._id);
+              return next;
+            });
+            setBgRemovalProgress(prev => ({
+              ...prev,
+              completed: prev.completed + 1,
+              currentStep: (() => {
+                const next = { ...prev.currentStep };
+                delete next[asset._id];
+                return next;
+              })(),
+            }));
+          }
+        })
+      );
+    }
 
     if (failCount > 0) {
       setBgRemovalError(`Background removal failed for ${failCount} image${failCount > 1 ? "s" : ""}. Please try again.`);
     }
+
+    // Brief pause at 100% so user sees completion before banner disappears
+    await new Promise(r => setTimeout(r, 1200));
+    setBgRemovalProgress({ total: 0, completed: 0, currentStep: {} });
   };
 
   const togglePostSelection = useCallback((id: string) => {
@@ -1525,6 +1563,7 @@ export default function DesignPage() {
           onTabClick={handleTabClick}
           workspaces={workspaces?.map(w => ({ _id: w._id, name: w.name }))}
           currentWorkspaceId={workspaceId ?? undefined}
+          activeCollectionId={activeCollectionId ?? undefined}
           currentWorkspaceName={workspace?.name}
           onUploadLogo={handleUploadLogo}
           onDeleteLogo={handleDeleteLogo}
@@ -1580,6 +1619,7 @@ export default function DesignPage() {
           onRemoveBackground={handleRemoveBackground}
           removingBgAssetIds={removingBgAssetIds}
           bgRemovalError={bgRemovalError}
+          bgRemovalProgress={bgRemovalProgress}
           onArchiveAsset={(id, archived) => archiveAsset({ id: id as Id<"assets">, archived })}
         />
       )}
