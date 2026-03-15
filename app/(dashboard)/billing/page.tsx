@@ -133,6 +133,7 @@ export default function BillingPage() {
 
   const postsPercent = usage ? Math.min(100, Math.round((usage.postsUsed / Math.max(1, usage.postsLimit)) * 100)) : 0;
   const tokensPercent = usage ? Math.min(100, Math.round((usage.aiTokensUsed / Math.max(1, usage.aiTokensLimit)) * 100)) : 0;
+  const photoshootPercent = usage ? Math.min(100, Math.round(((usage.photoshootImagesUsed || 0) / Math.max(1, usage.photoshootImagesLimit || 1)) * 100)) : 0;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -268,6 +269,24 @@ export default function BillingPage() {
                   />
                 </div>
               </div>
+
+              {/* Photoshoot Images */}
+              {(usage.photoshootImagesLimit || 0) > 0 && (
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-neutral-400">{t("billing.photoshootImages")}</span>
+                    <span className="text-white font-medium">
+                      {usage.photoshootImagesUsed || 0} / {usage.photoshootImagesLimit || 0}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${photoshootPercent > 90 ? "bg-red-500" : photoshootPercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
+                      style={{ width: `${photoshootPercent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

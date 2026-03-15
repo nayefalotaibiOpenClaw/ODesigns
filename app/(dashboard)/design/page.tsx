@@ -26,6 +26,7 @@ import DownloadBar from "@/features/design-editor/components/DownloadBar";
 import PublishChannelsPage from "@/features/design-editor/components/PublishChannelsPage";
 import BrandPanel from "@/features/design-editor/components/BrandPanel";
 import AgentChatPanel from "@/features/design-editor/components/AgentChatPanel";
+import PhotoshootPage from "@/features/design-editor/components/PhotoshootPage";
 import { FONTS } from "@/features/design-editor/constants/fonts";
 
 export default function DesignPage() {
@@ -1624,8 +1625,21 @@ export default function DesignPage() {
         />
       )}
 
+      {/* Photoshoot full page */}
+      {activeTab === 'photoshoot' && workspaceId && user && (
+        <PhotoshootPage
+          workspaceId={workspaceId}
+          userId={user._id}
+          activeTab={activeTab}
+          onTabClick={handleTabClick}
+          workspaces={workspaces?.map(w => ({ _id: w._id, name: w.name }))}
+          currentWorkspaceId={workspaceId ?? undefined}
+          currentWorkspaceName={workspace?.name}
+        />
+      )}
+
       {/* Main Content — Design + Generate merged */}
-      {activeTab !== 'brand' && activeTab !== 'publish' && activeTab !== 'channels' && activeTab !== 'assets' && <div className="flex-1 flex flex-col overflow-hidden">
+      {activeTab !== 'brand' && activeTab !== 'publish' && activeTab !== 'channels' && activeTab !== 'assets' && activeTab !== 'photoshoot' && <div className="flex-1 flex flex-col overflow-hidden">
         {/* Nav Header with Design/Generate sub-tab switcher */}
         <div className="shrink-0 pt-4 pb-2 px-6 relative z-[105]">
           <nav ref={toolbarRef} className="max-w-4xl mx-auto bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-neutral-700/50 rounded-full shadow-sm px-5 h-14 flex items-center gap-4">

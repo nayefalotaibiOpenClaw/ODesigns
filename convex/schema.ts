@@ -304,6 +304,8 @@ export default defineSchema({
     currency: v.string(),
     paymentId: v.optional(v.string()),
     upaymentOrderId: v.optional(v.string()),
+    photoshootImagesLimit: v.optional(v.number()),
+    photoshootImagesUsed: v.optional(v.number()),
     startsAt: v.number(),
     expiresAt: v.number(),
     createdAt: v.number(),
@@ -686,6 +688,77 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_key", ["key"]),
+
+  // ─── Photoshoot Presets ──────────────────────────────
+  photoshootPresets: defineTable({
+    workspaceId: v.optional(v.id("workspaces")),
+    userId: v.optional(v.id("users")),
+    scope: v.union(v.literal("global"), v.literal("workspace")),
+    name: v.string(),
+    slug: v.string(),
+    description: v.optional(v.string()),
+    prompt: v.string(),
+    mode: v.union(v.literal("product"), v.literal("image-edit")),
+    group: v.union(
+      v.literal("angles"),
+      v.literal("social"),
+      v.literal("lifestyle"),
+      v.literal("creative"),
+      v.literal("custom")
+    ),
+    sortOrder: v.optional(v.number()),
+    archived: v.optional(v.boolean()),
+    createdAt: v.number(),
+  })
+    .index("by_scope", ["scope"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_slug", ["slug"]),
+
+  // ─── Photoshoot Preferences ────────────────────────
+  photoshootPreferences: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    defaultPresetSlugs: v.array(v.string()),
+    defaultMode: v.union(v.literal("product"), v.literal("image-edit")),
+    schedule: v.union(
+      v.literal("off"),
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("monthly")
+    ),
+    scheduleDayOfWeek: v.optional(v.number()),
+    scheduleDayOfMonth: v.optional(v.number()),
+    scheduleHour: v.optional(v.number()),
+    lastAutopilotRunAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"]),
+
+  // ─── Photoshoot Results ────────────────────────────
+  photoshootResults: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    sourceAssetId: v.id("assets"),
+    resultAssetId: v.optional(v.id("assets")),
+    resultFileId: v.optional(v.id("_storage")),
+    presetSlug: v.string(),
+    customPrompt: v.optional(v.string()),
+    mode: v.union(v.literal("product"), v.literal("image-edit")),
+    status: v.union(
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("saved")
+    ),
+    archived: v.optional(v.boolean()),
+    batchJobId: v.optional(v.id("batchJobs")),
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_source_asset", ["sourceAssetId"])
+    .index("by_workspace_source", ["workspaceId", "sourceAssetId"])
+    .index("by_batch_job", ["batchJobId"]),
 
   // ─── Batch Product Editing Jobs ───────────────────
   batchJobs: defineTable({

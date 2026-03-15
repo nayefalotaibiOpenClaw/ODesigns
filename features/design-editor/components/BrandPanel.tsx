@@ -26,9 +26,13 @@ import {
   Layers,
   ShoppingBag,
 } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { type Theme } from "@/contexts/ThemeContext";
 import { FONTS } from "@/features/design-editor/constants/fonts";
 import { PALETTES } from "@/features/design-editor/constants/palettes";
+import DynamicPost from "@/app/components/DynamicPost";
 import MobileNavMenu from "./MobileNavMenu";
 import { type SidebarTab } from "./Sidebar";
 
@@ -127,6 +131,7 @@ interface BrandPanelProps {
   onTabClick?: (tab: SidebarTab) => void;
   workspaces?: { _id: string; name: string }[];
   currentWorkspaceId?: string;
+  activeCollectionId?: string;
   currentWorkspaceName?: string;
   onUploadLogo: (file: File, variant: "logo" | "logoDark") => Promise<void>;
   onDeleteLogo: (variant: "logo" | "logoDark") => Promise<void>;
@@ -134,6 +139,36 @@ interface BrandPanelProps {
   onUpdateBranding: (field: string, value: string) => Promise<void>;
   onUpdateWebsiteInfo: (updates: Partial<WebsiteInfo>) => Promise<void>;
   onUpdateWorkspace: (updates: { website?: string; industry?: string }) => Promise<void>;
+}
+
+// ─── Theme Preview Tile ─────────────────────────────────────────────
+
+function ThemePreviewTile({ code }: { code: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.25);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width;
+      if (w > 0) setScale(w / 400);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="rounded-lg overflow-hidden aspect-square relative bg-neutral-800">
+      <div
+        className="absolute top-0 left-0 pointer-events-none origin-top-left"
+        style={{ width: '400px', height: '400px', transform: `scale(${scale})` }}
+      >
+        <div className="w-full h-full">
+          <DynamicPost code={code} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -156,6 +191,7 @@ export default function BrandPanel({
   onTabClick,
   workspaces: wsList,
   currentWorkspaceId: wsId,
+  activeCollectionId: collectionId,
   currentWorkspaceName: wsName,
   onUploadLogo,
   onDeleteLogo,
@@ -176,6 +212,12 @@ export default function BrandPanel({
   const logoInputRef = useRef<HTMLInputElement>(null);
   const logoDarkInputRef = useRef<HTMLInputElement>(null);
   const screenshotRef = useRef<HTMLInputElement>(null);
+
+  // Fetch posts from active collection for live theme preview
+  const previewPosts = useQuery(
+    api.posts.listByCollection,
+    collectionId ? { collectionId: collectionId as Id<"collections"> } : "skip"
+  );
 
   const handleStartFetch = async () => {
     if (!fetchUrl.trim() || fetching) return;
@@ -521,15 +563,23 @@ export default function BrandPanel({
                 <h2 className="text-xs font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest">Theme</h2>
               </div>
 
-              {/* Live preview */}
-              <div className="rounded-xl p-5 text-center" style={{ backgroundColor: currentTheme.primaryLight, fontFamily: currentTheme.font }}>
-                <p className="text-xl font-black" style={{ color: currentTheme.primary }}>Brand Preview</p>
-                <p className="text-xs font-bold mt-1" style={{ color: currentTheme.accent }}>Your colors & typography</p>
-                <div className="flex justify-center gap-2 mt-3">
-                  <span className="px-4 py-1.5 rounded-full text-white text-[11px] font-bold" style={{ backgroundColor: currentTheme.accent }}>Primary</span>
-                  <span className="px-4 py-1.5 rounded-full text-[11px] font-bold" style={{ backgroundColor: currentTheme.accentLime, color: currentTheme.primary }}>Accent</span>
+              {/* Live preview with real posts */}
+              {previewPosts && previewPosts.length > 0 ? (
+                <div className="grid grid-cols-3 gap-1.5">
+                  {previewPosts.slice(0, 6).map((post) => (
+                    <ThemePreviewTile key={post._id} code={post.componentCode} />
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-xl p-5 text-center" style={{ backgroundColor: currentTheme.primaryLight, fontFamily: currentTheme.font }}>
+                  <p className="text-xl font-black" style={{ color: currentTheme.primary }}>Brand Preview</p>
+                  <p className="text-xs font-bold mt-1" style={{ color: currentTheme.accent }}>Your colors & typography</p>
+                  <div className="flex justify-center gap-2 mt-3">
+                    <span className="px-4 py-1.5 rounded-full text-white text-[11px] font-bold" style={{ backgroundColor: currentTheme.accent }}>Primary</span>
+                    <span className="px-4 py-1.5 rounded-full text-[11px] font-bold" style={{ backgroundColor: currentTheme.accentLime, color: currentTheme.primary }}>Accent</span>
+                  </div>
+                </div>
+              )}
 
               {/* Colors */}
               <div>
@@ -542,6 +592,7 @@ export default function BrandPanel({
                     { key: 'accentLime', label: 'Highlight' },
                     { key: 'accentLight', label: 'Soft' },
                     { key: 'accentGold', label: 'Gold' },
+                    { key: 'accentOrange', label: 'Orange' },
                     { key: 'border', label: 'Border' },
                     { key: 'primaryDark', label: 'Dark' },
                   ] as { key: keyof Theme; label: string }[]).map(({ key, label }) => (

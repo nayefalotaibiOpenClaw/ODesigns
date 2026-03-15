@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Send, X, Building2, LayoutGrid, LinkIcon, Check, FileText } from "lucide-react";
+import { Upload, Send, X, Building2, LayoutGrid, LinkIcon, Check, FileText, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/i18n/context";
 import { localizeHref } from "@/lib/i18n/utils";
 import type { TranslationKey } from "@/lib/i18n/types";
 
-export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | 'blogs' | null;
+export type SidebarTab = 'brand' | 'design' | 'theme' | 'assets' | 'generate' | 'publish' | 'channels' | 'blogs' | 'photoshoot' | null;
 
 export const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?: number }>; labelKey: TranslationKey; fullPage?: boolean; beta?: boolean }[] = [
   { id: 'brand', icon: Building2, labelKey: 'sidebar.brand', fullPage: true },
@@ -17,6 +17,7 @@ export const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.ComponentType<{ size?:
   // generate is now a sub-tab inside Design page
   { id: 'publish', icon: Send, labelKey: 'sidebar.publish', fullPage: true },
   { id: 'channels', icon: LinkIcon, labelKey: 'sidebar.channels', fullPage: true },
+  { id: 'photoshoot', icon: Camera, labelKey: 'sidebar.photoshoot', fullPage: true },
   { id: 'blogs', icon: FileText, labelKey: 'sidebar.blogs', fullPage: true, beta: true },
 ];
 

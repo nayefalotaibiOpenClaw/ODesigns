@@ -8,20 +8,20 @@ import { internal } from "./_generated/api";
 export const PLANS = {
   trial: {
     name: "Free Trial",
-    monthly: { price: 0, postsLimit: 6, aiTokensLimit: 30_000 },
-    yearly: { price: 0, postsLimit: 6, aiTokensLimit: 30_000 },
+    monthly: { price: 0, postsLimit: 6, aiTokensLimit: 30_000, photoshootImagesLimit: 5 },
+    yearly: { price: 0, postsLimit: 6, aiTokensLimit: 30_000, photoshootImagesLimit: 5 },
     currency: "USD",
   },
   starter: {
     name: "Starter",
-    monthly: { price: 40, postsLimit: 100, aiTokensLimit: 500_000 },
-    yearly: { price: 384, postsLimit: 1_200, aiTokensLimit: 6_000_000 }, // 20% off
+    monthly: { price: 40, postsLimit: 100, aiTokensLimit: 500_000, photoshootImagesLimit: 50 },
+    yearly: { price: 384, postsLimit: 1_200, aiTokensLimit: 6_000_000, photoshootImagesLimit: 600 }, // 20% off
     currency: "USD",
   },
   pro: {
     name: "Pro",
-    monthly: { price: 100, postsLimit: 250, aiTokensLimit: 1_250_000 },
-    yearly: { price: 960, postsLimit: 3_000, aiTokensLimit: 15_000_000 }, // 20% off
+    monthly: { price: 100, postsLimit: 250, aiTokensLimit: 1_250_000, photoshootImagesLimit: 100 },
+    yearly: { price: 960, postsLimit: 3_000, aiTokensLimit: 15_000_000, photoshootImagesLimit: 1200 }, // 20% off
     currency: "USD",
   },
 } as const;
@@ -99,6 +99,8 @@ export const getUsage = query({
           postsLimit: expiredSub.postsLimit,
           aiTokensUsed: expiredSub.aiTokensUsed,
           aiTokensLimit: expiredSub.aiTokensLimit,
+          photoshootImagesUsed: expiredSub.photoshootImagesUsed || 0,
+          photoshootImagesLimit: expiredSub.photoshootImagesLimit || 0,
           canGenerate: false,
           expiresAt: expiredSub.expiresAt,
           daysLeft: 0,
@@ -114,6 +116,8 @@ export const getUsage = query({
         postsLimit: 0,
         aiTokensUsed: 0,
         aiTokensLimit: 0,
+        photoshootImagesUsed: 0,
+        photoshootImagesLimit: 0,
         canGenerate: false,
         expiresAt: null,
         daysLeft: 0,
@@ -134,6 +138,8 @@ export const getUsage = query({
       postsLimit: sub.postsLimit,
       aiTokensUsed: sub.aiTokensUsed,
       aiTokensLimit: sub.aiTokensLimit,
+      photoshootImagesUsed: sub.photoshootImagesUsed || 0,
+      photoshootImagesLimit: sub.photoshootImagesLimit || 0,
       canGenerate: !isCancelled && sub.postsUsed < sub.postsLimit && sub.aiTokensUsed < sub.aiTokensLimit,
       expiresAt: sub.expiresAt,
       daysLeft,
@@ -222,6 +228,64 @@ export const canGenerate = query({
   },
 });
 
+// Check if user can use photoshoot (used before photoshoot generation)
+export const canPhotoshoot = query({
+  args: { imagesCount: v.number() },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) return { allowed: false, reason: "Not authenticated" };
+
+    const sub = await findUsableSub(ctx, userId);
+
+    if (!sub || sub.expiresAt < Date.now()) {
+      return { allowed: false, reason: "No active plan. Please subscribe to continue." };
+    }
+
+    if (sub.status === "cancelled") {
+      return { allowed: false, reason: "Subscription cancelled." };
+    }
+
+    const used = sub.photoshootImagesUsed || 0;
+    const limit = sub.photoshootImagesLimit || 0;
+
+    if (used + args.imagesCount > limit) {
+      const msg = sub.plan === "trial"
+        ? `Free trial photoshoot limit reached (${used}/${limit}). Upgrade to keep generating.`
+        : `Photoshoot image limit reached (${used}/${limit}). Please upgrade your plan.`;
+      return { allowed: false, reason: msg };
+    }
+
+    return { allowed: true, reason: null };
+  },
+});
+
+// Increment photoshoot usage after generation
+export const incrementPhotoshoot = mutation({
+  args: { imagesGenerated: v.number() },
+  handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const imagesGenerated = Math.max(0, args.imagesGenerated);
+
+    const sub = await findUsableSub(ctx, userId);
+
+    if (!sub) throw new Error("No active subscription");
+    if (sub.status === "cancelled") throw new Error("Subscription is cancelled.");
+    if (sub.expiresAt < Date.now()) throw new Error("Subscription expired");
+
+    const newUsed = (sub.photoshootImagesUsed || 0) + imagesGenerated;
+    const limit = sub.photoshootImagesLimit || 0;
+
+    await ctx.db.patch(sub._id, { photoshootImagesUsed: newUsed });
+
+    return {
+      limitReached: newUsed > limit,
+      reason: newUsed > limit ? `Photoshoot image limit reached (${newUsed}/${limit})` : null,
+    };
+  },
+});
+
 // Start free trial for a new user
 export const startTrial = mutation({
   args: {},
@@ -250,6 +314,8 @@ export const startTrial = mutation({
       aiTokensUsed: 0,
       postsLimit: trialConfig.postsLimit,
       postsUsed: 0,
+      photoshootImagesLimit: trialConfig.photoshootImagesLimit,
+      photoshootImagesUsed: 0,
       amountPaid: 0,
       currency: "USD",
       startsAt: now,
@@ -323,6 +389,8 @@ export const activate = mutation({
       aiTokensUsed: 0,
       postsLimit: planConfig.postsLimit,
       postsUsed: 0,
+      photoshootImagesLimit: planConfig.photoshootImagesLimit,
+      photoshootImagesUsed: 0,
       amountPaid,
       currency: args.currency,
       paymentId: args.paymentId,
@@ -407,6 +475,8 @@ export const activateByOrderId = internalMutation({
       aiTokensUsed: 0,
       postsLimit: planConfig.postsLimit,
       postsUsed: 0,
+      photoshootImagesLimit: planConfig.photoshootImagesLimit,
+      photoshootImagesUsed: 0,
       amountPaid: payment.amount,
       currency: payment.currency,
       paymentId: args.paymentId,
@@ -673,6 +743,8 @@ export const downgrade = mutation({
       aiTokensUsed: 0,
       postsLimit: newConfig.postsLimit,
       postsUsed: 0,
+      photoshootImagesLimit: newConfig.photoshootImagesLimit,
+      photoshootImagesUsed: 0,
       amountPaid: 0,
       currency: "USD",
       startsAt: now,
