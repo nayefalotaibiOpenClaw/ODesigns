@@ -130,6 +130,9 @@ const CAT_COLORS: Record<string, string> = {
   crawl: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
   classification: "bg-pink-500/15 text-pink-400 border-pink-500/20",
   product_extraction: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+  blog_generation: "bg-teal-500/15 text-teal-400 border-teal-500/20",
+  background_removal: "bg-neutral-500/15 text-neutral-400 border-neutral-500/20",
+  product_editing: "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/20",
 };
 
 const PLAN_BADGE: Record<string, string> = {
@@ -705,9 +708,23 @@ export default function AdminOverviewPage() {
                   <span className="text-[10px] text-slate-400 dark:text-neutral-600 tabular-nums">{timeAgo(log.createdAt, t)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 dark:text-neutral-400 truncate max-w-[120px]">
-                    {log.user?.name || log.user?.email || t("admin.unknown")}
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs text-slate-500 dark:text-neutral-400 truncate max-w-[120px]">
+                      {log.user?.name || log.user?.email || t("admin.unknown")}
+                    </span>
+                    {log.metadata && (() => {
+                      try {
+                        const meta = JSON.parse(log.metadata);
+                        return (
+                          <span className="text-[9px] text-slate-300 dark:text-neutral-600 truncate">
+                            {meta.imagesGenerated ? `${meta.imagesGenerated} img` : ""}
+                            {meta.mode ? ` · ${meta.mode}` : ""}
+                            {meta.postsGenerated ? `${meta.postsGenerated} posts` : ""}
+                          </span>
+                        );
+                      } catch { return null; }
+                    })()}
+                  </div>
                   <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-neutral-500 tabular-nums">
                     <span className="text-[9px] text-slate-300 dark:text-neutral-600">{log.model?.replace("gemini-3.1-", "").replace("-preview", "")}</span>
                     <span>{log.totalTokens.toLocaleString()} {t("admin.tok")}</span>

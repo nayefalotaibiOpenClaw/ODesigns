@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import FloatingNav from "@/app/components/FloatingNav";
@@ -23,18 +23,39 @@ import {
   X,
   Package,
   Pencil,
+  Hand,
+  LayoutGrid,
+  Play,
+  Palette,
+  Zap,
+  Square,
+  Leaf,
+  Layers,
+  Clock,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Timer,
 } from "lucide-react";
 
 // ─── Angle presets ────────────────────────────────────────────────
 const ANGLE_PRESETS = [
-  { id: "front-clean", label: "Front Clean", icon: Eye, description: "Clean front view, white background" },
-  { id: "three-quarter", label: "3/4 Angle", icon: Box, description: "45° perspective view" },
-  { id: "side-view", label: "Side View", icon: RotateCcw, description: "Direct side profile" },
-  { id: "top-down", label: "Top Down", icon: ArrowUp, description: "Bird's eye flat lay" },
-  { id: "slight-tilt", label: "Dynamic Tilt", icon: Sparkles, description: "Energetic 15° tilt" },
-  { id: "close-up", label: "Close-Up", icon: Search, description: "Macro detail shot" },
-  { id: "lifestyle", label: "Lifestyle", icon: Camera, description: "In-context lifestyle setting" },
-  { id: "hero-angle", label: "Hero Angle", icon: Star, description: "Dramatic low-angle hero shot" },
+  { id: "front-clean", label: "Front Clean", icon: Eye, description: "Clean front view, white background", group: "angles" },
+  { id: "three-quarter", label: "3/4 Angle", icon: Box, description: "45° perspective view", group: "angles" },
+  { id: "side-view", label: "Side View", icon: RotateCcw, description: "Direct side profile", group: "angles" },
+  { id: "top-down", label: "Top Down", icon: ArrowUp, description: "Bird's eye flat lay", group: "angles" },
+  { id: "slight-tilt", label: "Dynamic Tilt", icon: Sparkles, description: "Energetic 15° tilt", group: "angles" },
+  { id: "close-up", label: "Close-Up", icon: Search, description: "Macro detail shot", group: "angles" },
+  { id: "lifestyle", label: "Lifestyle", icon: Camera, description: "In-context lifestyle setting", group: "angles" },
+  { id: "hero-angle", label: "Hero Angle", icon: Star, description: "Dramatic low-angle hero shot", group: "angles" },
+  { id: "hand-holding", label: "Hand Model", icon: Hand, description: "Hand holding/presenting product", group: "social" },
+  { id: "flat-lay-styled", label: "Styled Flat Lay", icon: LayoutGrid, description: "Aesthetic flat lay with props", group: "social" },
+  { id: "in-use", label: "In Use", icon: Play, description: "Product being used naturally", group: "social" },
+  { id: "gradient-bg", label: "Gradient BG", icon: Palette, description: "Modern vibrant gradient backdrop", group: "social" },
+  { id: "splash-action", label: "Action Splash", icon: Zap, description: "Dynamic splash/motion effects", group: "social" },
+  { id: "minimal-shadow", label: "Minimal Shadow", icon: Square, description: "Ultra-clean with dramatic shadow", group: "social" },
+  { id: "seasonal-autumn", label: "Autumn Vibes", icon: Leaf, description: "Warm fall/cozy seasonal feel", group: "social" },
+  { id: "texture-surface", label: "Texture Surface", icon: Layers, description: "Marble, wood, slate backdrop", group: "social" },
 ];
 
 interface GeneratedImage {
@@ -62,6 +83,20 @@ export default function ProductEditPage() {
   const [results, setResults] = useState<GeneratedImage[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
+  const [submittingBatch, setSubmittingBatch] = useState(false);
+  const [pollingJobId, setPollingJobId] = useState<string | null>(null);
+  const [batchResults, setBatchResults] = useState<GeneratedImage[]>([]);
+  const [showBatchPanel, setShowBatchPanel] = useState(false);
+
+  const logAndIncrement = useMutation(api.aiUsage.logAndIncrement);
+  const createBatchJob = useMutation(api.batchJobs.create);
+  const updateBatchState = useMutation(api.batchJobs.updateState);
+
+  // Batch jobs list (real-time from Convex)
+  const batchJobs = useQuery(
+    api.batchJobs.listByUser,
+    selectedWorkspaceId ? { workspaceId: selectedWorkspaceId } : {}
+  );
 
   // Get assets for selected workspace
   const assets = useQuery(
@@ -164,6 +199,26 @@ export default function ProductEditPage() {
 
       const data = await resp.json();
       setResults(data.results || []);
+
+      // Log AI usage for cost tracking
+      if (data.usage && selectedWorkspaceId) {
+        const successCount = (data.results || []).filter((r: GeneratedImage) => r.imageBase64).length;
+        logAndIncrement({
+          workspaceId: selectedWorkspaceId,
+          category: "product_editing",
+          model: data.usage.model || "gemini-3.1-flash-image-preview",
+          promptTokens: data.usage.promptTokens || 0,
+          completionTokens: data.usage.completionTokens || 0,
+          totalTokens: data.usage.totalTokens || 0,
+          endpoint: "/api/product-edit",
+          metadata: JSON.stringify({
+            imagesGenerated: successCount,
+            anglesRequested: anglesToSend.length,
+            mode: editMode,
+            angles: anglesToSend,
+          }),
+        }).catch(console.error);
+      }
     } catch (err) {
       console.error("Request failed:", err);
     } finally {
@@ -178,6 +233,161 @@ export default function ProductEditPage() {
     link.href = `data:${img.mimeType};base64,${img.imageBase64}`;
     link.download = `product-${img.angle}.png`;
     link.click();
+  };
+
+  // ─── Batch: Submit job (50% cost) ──────────────────────────────
+  const handleBatchSubmit = async () => {
+    if (!sourceImage || selectedAngles.length === 0) return;
+    setSubmittingBatch(true);
+
+    try {
+      const anglesToSend = useCustom ? [...selectedAngles, "custom"] : selectedAngles;
+      const productKey = selectedAssetId || `upload-${Date.now()}`;
+
+      const resp = await fetch("/api/product-edit/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          products: [
+            {
+              key: productKey,
+              imageBase64: sourceImage.base64,
+              mimeType: sourceImage.mimeType,
+              angles: anglesToSend,
+              customPrompt: useCustom ? customPrompt : undefined,
+            },
+          ],
+          mode: editMode,
+          displayName: `product-edit-${new Date().toISOString().slice(0, 10)}`,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        console.error("Batch error:", err);
+        return;
+      }
+
+      const data = await resp.json();
+
+      // Save to Convex
+      await createBatchJob({
+        workspaceId: selectedWorkspaceId || undefined,
+        jobName: data.jobName,
+        displayName: data.message || `Batch: ${anglesToSend.length} angles`,
+        state: data.state || "JOB_STATE_PENDING",
+        mode: editMode,
+        totalRequests: data.totalRequests,
+        productsCount: data.productsCount,
+        inputFile: data.inputFile,
+      });
+
+      setShowBatchPanel(true);
+    } catch (err) {
+      console.error("Batch submit failed:", err);
+    } finally {
+      setSubmittingBatch(false);
+    }
+  };
+
+  // ─── Batch: Poll job status ────────────────────────────────────
+  const handlePollJob = async (jobId: string, jobName: string) => {
+    setPollingJobId(jobId);
+
+    try {
+      const resp = await fetch(`/api/product-edit/batch?jobName=${encodeURIComponent(jobName)}`);
+      if (!resp.ok) {
+        console.error("Poll error:", await resp.text());
+        return;
+      }
+
+      const data = await resp.json();
+
+      // Update state in Convex
+      const updates: {
+        id: typeof jobId extends string ? Id<"batchJobs"> : never;
+        state: string;
+        results?: string;
+        usage?: string;
+        completedAt?: number;
+        errorMessage?: string;
+      } = {
+        id: jobId as Id<"batchJobs">,
+        state: data.state,
+      };
+
+      if (data.state === "JOB_STATE_SUCCEEDED" && data.results) {
+        // Store results (without base64 images to save space — keep metadata)
+        // For viewing, we'll re-fetch. Store a summary.
+        updates.results = JSON.stringify(data.results);
+        updates.completedAt = Date.now();
+        if (data.usage) updates.usage = JSON.stringify(data.usage);
+
+        // Show results in the UI
+        setBatchResults(
+          data.results.map((r: { productKey?: string; angle: string; imageBase64?: string; mimeType?: string; description?: string; error?: string }) => ({
+            angle: r.angle,
+            imageBase64: r.imageBase64,
+            mimeType: r.mimeType,
+            description: r.description,
+            error: r.error,
+          }))
+        );
+
+        // Log AI usage
+        if (data.usage && selectedWorkspaceId) {
+          const successCount = data.results.filter((r: { imageBase64?: string }) => r.imageBase64).length;
+          logAndIncrement({
+            workspaceId: selectedWorkspaceId,
+            category: "product_editing",
+            model: data.usage.model || "gemini-3.1-flash-image-preview",
+            promptTokens: data.usage.promptTokens || 0,
+            completionTokens: data.usage.completionTokens || 0,
+            totalTokens: data.usage.totalTokens || 0,
+            endpoint: "/api/product-edit/batch",
+            metadata: JSON.stringify({
+              imagesGenerated: successCount,
+              mode: editMode,
+              batch: true,
+            }),
+          }).catch(console.error);
+        }
+      } else if (data.state === "JOB_STATE_FAILED") {
+        updates.errorMessage = "Batch job failed";
+      }
+
+      await updateBatchState(updates);
+    } catch (err) {
+      console.error("Poll failed:", err);
+    } finally {
+      setPollingJobId(null);
+    }
+  };
+
+  // ─── Batch: View saved results ─────────────────────────────────
+  const handleViewResults = async (jobId: string) => {
+    // Fetch full job with results from Convex
+    try {
+      const resp = await fetch(`/api/product-edit/batch?jobName=${encodeURIComponent(
+        batchJobs?.find((j) => j._id === jobId)?.jobName || ""
+      )}`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.results) {
+        setBatchResults(
+          data.results.map((r: { angle: string; imageBase64?: string; mimeType?: string; description?: string; error?: string }) => ({
+            angle: r.angle,
+            imageBase64: r.imageBase64,
+            mimeType: r.mimeType,
+            description: r.description,
+            error: r.error,
+          }))
+        );
+        setResults([]);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   if (authLoading || !isAuthenticated) {
@@ -380,33 +590,68 @@ export default function ProductEditPage() {
             {/* ─── Angle Presets ────────────────────────────────── */}
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-white/80">Angles</h2>
-                <button
-                  onClick={selectAllAngles}
-                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-                >
-                  {selectedAngles.length === ANGLE_PRESETS.length ? "Deselect all" : "Select all (8)"}
-                </button>
+                <h2 className="text-sm font-semibold text-white/80">Presets</h2>
+                <div className="flex items-center gap-2">
+                  {selectedAngles.length > 0 && (
+                    <span className="text-[10px] text-white/30 bg-white/5 px-2 py-0.5 rounded-full">
+                      {selectedAngles.length} selected
+                    </span>
+                  )}
+                  <button
+                    onClick={selectAllAngles}
+                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    {selectedAngles.length === ANGLE_PRESETS.length ? "Deselect all" : "Select all"}
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {ANGLE_PRESETS.map((preset) => {
+              {/* Camera Angles */}
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2 font-medium">Camera Angles</p>
+              <div className="grid grid-cols-2 gap-1.5 mb-4">
+                {ANGLE_PRESETS.filter((p) => p.group === "angles").map((preset) => {
                   const Icon = preset.icon;
                   const selected = selectedAngles.includes(preset.id);
                   return (
                     <button
                       key={preset.id}
                       onClick={() => toggleAngle(preset.id)}
-                      className={`flex items-start gap-2 p-2.5 rounded-lg border text-left transition-all ${
+                      className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all ${
                         selected
                           ? "border-violet-500 bg-violet-500/10 text-white"
                           : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:text-white/80"
                       }`}
                     >
-                      <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${selected ? "text-violet-400" : ""}`} />
+                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-violet-400" : ""}`} />
                       <div>
                         <p className="text-xs font-medium">{preset.label}</p>
-                        <p className="text-[10px] text-white/30 mt-0.5">{preset.description}</p>
+                        <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Social Media Styles */}
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2 font-medium">Social Media Styles</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {ANGLE_PRESETS.filter((p) => p.group === "social").map((preset) => {
+                  const Icon = preset.icon;
+                  const selected = selectedAngles.includes(preset.id);
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => toggleAngle(preset.id)}
+                      className={`flex items-start gap-2 p-2 rounded-lg border text-left transition-all ${
+                        selected
+                          ? "border-fuchsia-500 bg-fuchsia-500/10 text-white"
+                          : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:text-white/80"
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${selected ? "text-fuchsia-400" : ""}`} />
+                      <div>
+                        <p className="text-xs font-medium">{preset.label}</p>
+                        <p className="text-[10px] text-white/30 mt-0.5 leading-tight">{preset.description}</p>
                       </div>
                     </button>
                   );
@@ -436,39 +681,224 @@ export default function ProductEditPage() {
                 )}
               </div>
 
-              {/* Generate button */}
+              {/* Generate buttons */}
+              <div className="mt-4 space-y-2">
+                {/* Instant generate */}
+                <button
+                  onClick={handleGenerate}
+                  disabled={!sourceImage || selectedAngles.length === 0 || generating}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                    !sourceImage || selectedAngles.length === 0 || generating
+                      ? "bg-white/5 text-white/20 cursor-not-allowed"
+                      : "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500 shadow-lg shadow-violet-500/20"
+                  }`}
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating {selectedAngles.length + (useCustom ? 1 : 0)} angle
+                      {selectedAngles.length + (useCustom ? 1 : 0) !== 1 ? "s" : ""}...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Generate Instant
+                    </>
+                  )}
+                </button>
+
+                {/* Batch generate (50% off) */}
+                <button
+                  onClick={handleBatchSubmit}
+                  disabled={!sourceImage || selectedAngles.length === 0 || submittingBatch}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border ${
+                    !sourceImage || selectedAngles.length === 0 || submittingBatch
+                      ? "bg-white/5 text-white/20 cursor-not-allowed border-white/5"
+                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                  }`}
+                >
+                  {submittingBatch ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Submitting batch...
+                    </>
+                  ) : (
+                    <>
+                      <Timer className="w-4 h-4" />
+                      Batch Generate
+                      <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded-full">50% off</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* ─── Batch Jobs Panel ───────────────────────────────── */}
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <button
-                onClick={handleGenerate}
-                disabled={!sourceImage || selectedAngles.length === 0 || generating}
-                className={`w-full mt-4 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                  !sourceImage || selectedAngles.length === 0 || generating
-                    ? "bg-white/5 text-white/20 cursor-not-allowed"
-                    : "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500 shadow-lg shadow-violet-500/20"
-                }`}
+                onClick={() => setShowBatchPanel(!showBatchPanel)}
+                className="flex items-center justify-between w-full"
               >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating {selectedAngles.length + (useCustom ? 1 : 0)} angle
-                    {selectedAngles.length + (useCustom ? 1 : 0) !== 1 ? "s" : ""}...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Generate {selectedAngles.length + (useCustom ? 1 : 0)} Angle
-                    {selectedAngles.length + (useCustom ? 1 : 0) !== 1 ? "s" : ""}
-                  </>
-                )}
+                <h2 className="text-sm font-semibold text-white/80 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Batch Jobs
+                  {batchJobs && batchJobs.length > 0 && (
+                    <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-full text-white/40">
+                      {batchJobs.length}
+                    </span>
+                  )}
+                </h2>
+                <ChevronDown className={`w-4 h-4 text-white/30 transition-transform ${showBatchPanel ? "rotate-180" : ""}`} />
               </button>
+
+              {showBatchPanel && (
+                <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
+                  {!batchJobs || batchJobs.length === 0 ? (
+                    <p className="text-xs text-white/30 text-center py-4">No batch jobs yet</p>
+                  ) : (
+                    batchJobs.map((job) => {
+                      const isSucceeded = job.state === "JOB_STATE_SUCCEEDED";
+                      const isFailed = job.state === "JOB_STATE_FAILED" || job.state === "JOB_STATE_EXPIRED";
+                      const isPending = job.state === "JOB_STATE_PENDING" || job.state === "JOB_STATE_RUNNING";
+                      const isPolling = pollingJobId === job._id;
+
+                      return (
+                        <div
+                          key={job._id}
+                          className="p-3 rounded-lg border border-white/10 bg-white/[0.02]"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              {isSucceeded ? (
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                              ) : isFailed ? (
+                                <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                              ) : (
+                                <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                              )}
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                isSucceeded ? "bg-emerald-500/15 text-emerald-400"
+                                : isFailed ? "bg-red-500/15 text-red-400"
+                                : "bg-amber-500/15 text-amber-400"
+                              }`}>
+                                {job.state.replace("JOB_STATE_", "").toLowerCase()}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-white/30">
+                              {new Date(job.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-1.5">
+                            <div className="text-[11px] text-white/50">
+                              {job.totalRequests} images · {job.mode}
+                              {job.usage && (() => {
+                                try {
+                                  const u = JSON.parse(job.usage);
+                                  return ` · ${u.totalTokens?.toLocaleString()} tok`;
+                                } catch { return ""; }
+                              })()}
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              {isPending && (
+                                <button
+                                  onClick={() => handlePollJob(job._id, job.jobName)}
+                                  disabled={isPolling}
+                                  className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 transition-colors"
+                                  title="Check status"
+                                >
+                                  {isPolling ? (
+                                    <Loader2 className="w-3.5 h-3.5 text-white/40 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-3.5 h-3.5 text-white/40" />
+                                  )}
+                                </button>
+                              )}
+                              {isSucceeded && (
+                                <button
+                                  onClick={() => handleViewResults(job._id)}
+                                  className="p-1.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
+                                  title="View results"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* ─── Right: Results ─────────────────────────────────── */}
           <div className="lg:col-span-2">
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 min-h-[500px]">
-              <h2 className="text-sm font-semibold text-white/80 mb-4">Generated Angles</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-white/80">Generated Angles</h2>
+                {batchResults.length > 0 && (
+                  <button
+                    onClick={() => setBatchResults([])}
+                    className="text-[10px] text-white/30 hover:text-white/50"
+                  >
+                    Clear batch results
+                  </button>
+                )}
+              </div>
 
-              {results.length === 0 && !generating ? (
+              {/* Show batch results if any */}
+              {batchResults.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[10px] uppercase tracking-wider text-emerald-400/60 mb-2 font-medium flex items-center gap-1">
+                    <Timer className="w-3 h-3" /> Batch Results (50% off)
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    {batchResults.map((result, i) => {
+                      const preset = ANGLE_PRESETS.find((p) => p.id === result.angle);
+                      return (
+                        <div key={`batch-${i}`} className="rounded-xl border border-emerald-500/20 overflow-hidden bg-neutral-900 group">
+                          {result.error ? (
+                            <div className="aspect-square flex items-center justify-center bg-red-500/5">
+                              <div className="text-center p-4">
+                                <X className="w-8 h-8 text-red-400 mx-auto mb-2" />
+                                <p className="text-sm text-red-400">{result.error}</p>
+                              </div>
+                            </div>
+                          ) : result.imageBase64 ? (
+                            <>
+                              <div
+                                className="aspect-square relative cursor-pointer"
+                                onClick={() => setPreviewImage(`data:${result.mimeType};base64,${result.imageBase64}`)}
+                              >
+                                <img
+                                  src={`data:${result.mimeType};base64,${result.imageBase64}`}
+                                  alt={preset?.label || result.angle}
+                                  className="w-full h-full object-contain bg-white"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                  <Eye className="w-6 h-6 text-white" />
+                                </div>
+                              </div>
+                              <div className="p-3 flex items-center justify-between">
+                                <p className="text-sm font-medium">{preset?.label || result.angle}</p>
+                                <button onClick={() => downloadImage(result)} className="p-2 rounded-lg bg-white/5 hover:bg-white/10" title="Download">
+                                  <Download className="w-4 h-4 text-white/60" />
+                                </button>
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {results.length === 0 && batchResults.length === 0 && !generating ? (
                 <div className="flex flex-col items-center justify-center py-24 text-white/20">
                   <ImageIcon className="w-12 h-12 mb-3" />
                   <p className="text-sm">Select an image and angles, then hit generate</p>

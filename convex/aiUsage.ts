@@ -25,7 +25,8 @@ const categoryValidator = v.union(
   v.literal("classification"),
   v.literal("product_extraction"),
   v.literal("blog_generation"),
-  v.literal("background_removal")
+  v.literal("background_removal"),
+  v.literal("product_editing")
 );
 
 // Helper to find user's usable subscription
