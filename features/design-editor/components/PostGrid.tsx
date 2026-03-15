@@ -353,7 +353,7 @@ export default function PostGrid({
             onDragEnter={() => handleDragEnterCb(id)}
             onDragEnd={handleDragEndCb}
             onClick={(e) => handleCardClick(e, id)}
-            className={`relative group post-card ${isPostSelected ? 'ring-2 ring-blue-500 rounded-xl' : ''}`}
+            className={`relative group post-card hover:z-[101] ${isPostSelected ? 'ring-2 ring-blue-500 rounded-xl' : ''}`}
             style={draggingId === id ? { opacity: 0.4, transition: 'opacity 0.2s' } : undefined}
           >
             {/* Post toolbar — floating pill above card */}
@@ -411,7 +411,7 @@ export default function PostGrid({
                     const historyUrls = Array.from(imageHistory[id] || []).filter(u => !imageUrls.includes(u));
                     return (
                       <div
-                        className="absolute top-full left-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-3 z-30 w-[360px] max-h-[420px] overflow-y-auto -translate-x-1/2"
+                        className="absolute top-full left-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-3 z-[110] w-[360px] max-h-[420px] overflow-y-auto -translate-x-1/2"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {/* Background color */}
@@ -656,7 +656,7 @@ export default function PostGrid({
                       </button>
                       {captionOpenId === id && (
                         <div
-                          className="absolute top-full left-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-3 z-30 w-[360px] -translate-x-1/2"
+                          className="absolute top-full left-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 p-3 z-[110] w-[360px] -translate-x-1/2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {/* Caption */}
@@ -728,7 +728,7 @@ export default function PostGrid({
                         <Scaling size={14} />
                       </button>
                       {resizeOpenId === id && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 py-1.5 z-30 min-w-[140px]">
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 py-1.5 z-[110] min-w-[140px]">
                           <p className="px-3 pb-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider">Adapt to</p>
                           {ALL_RATIOS.filter(r => r !== '1:1').map((r) => {
                             const hasIt = existingRatios.has(r);
