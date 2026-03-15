@@ -44,6 +44,34 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // AI crawler-friendly headers for llms.txt files
+      {
+        source: "/llms:path*.txt",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "text/plain; charset=utf-8",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=86400",
+          },
+          {
+            key: "X-Robots-Tag",
+            value: "noindex",
+          },
+        ],
+      },
+      // Cache control for sitemap
+      {
+        source: "/sitemap.xml",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=3600",
+          },
+        ],
+      },
     ];
   },
 };

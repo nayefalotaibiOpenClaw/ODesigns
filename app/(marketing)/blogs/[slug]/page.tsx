@@ -76,36 +76,69 @@ export default async function BlogDetailPage({
   try {
     const blog = await fetchQuery(api.blogs.getBySlug, { slug });
     if (blog) {
-      blogJsonLd = {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        headline: blog.title,
-        description: blog.excerpt,
-        author: {
-          "@type": "Organization",
-          name: blog.author,
-          url: BASE_URL,
-        },
-        publisher: {
-          "@type": "Organization",
-          name: "oDesigns",
-          url: BASE_URL,
-          logo: {
-            "@type": "ImageObject",
-            url: `${BASE_URL}/og-image.png`,
+      const blogUrl = `${BASE_URL}/blogs/${blog.slug}`;
+      const blogLang = blog.language === "ar" ? "ar" : "en";
+      blogJsonLd = [
+        {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: blog.title,
+          description: blog.excerpt,
+          author: {
+            "@type": "Organization",
+            name: blog.author,
+            url: BASE_URL,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "oDesigns",
+            url: BASE_URL,
+            logo: {
+              "@type": "ImageObject",
+              url: `${BASE_URL}/og-image.png`,
+            },
+          },
+          datePublished: new Date(blog.publishedAt).toISOString(),
+          dateModified: new Date(blog.publishedAt).toISOString(),
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": blogUrl,
+          },
+          image: `${BASE_URL}/og-image.png`,
+          keywords: blog.tags.join(", "),
+          inLanguage: blogLang,
+          url: blogUrl,
+          isPartOf: {
+            "@type": "Blog",
+            "@id": `${BASE_URL}/blogs`,
+            name: "oDesigns Blog",
           },
         },
-        datePublished: new Date(blog.publishedAt).toISOString(),
-        dateModified: new Date(blog.publishedAt).toISOString(),
-        mainEntityOfPage: {
-          "@type": "WebPage",
-          "@id": `${BASE_URL}/blogs/${blog.slug}`,
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: BASE_URL,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Blog",
+              item: `${BASE_URL}/blogs`,
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: blog.title,
+              item: blogUrl,
+            },
+          ],
         },
-        image: `${BASE_URL}/og-image.png`,
-        keywords: blog.tags.join(", "),
-        inLanguage: blog.language === "ar" ? "ar" : "en",
-        url: `${BASE_URL}/blogs/${blog.slug}`,
-      };
+      ];
     }
   } catch {
     // Render without JSON-LD if fetch fails

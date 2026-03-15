@@ -1,0 +1,98 @@
+# oDesigns — Complete Guide
+
+> AI-powered social media post generator and design tool. Create, schedule, and publish stunning social media designs, ads, and app store previews across all platforms from one dashboard.
+
+## What is oDesigns?
+
+oDesigns is an AI-powered SaaS platform that transforms how businesses create social media content. Instead of hiring designers or spending hours in complex design tools, users simply describe what they want — or paste their website URL — and AI generates complete, professional social media post designs with matching captions, ready to publish.
+
+Designs can be exported as PNG images or published directly to connected social media accounts.
+
+## Capabilities
+
+### Content Generation
+- AI generates complete social media post designs from a text description or URL
+- Creates app store screenshots and preview images for iOS and Android
+- Generates ads and promotional content for any social platform
+- Multiple design styles: bold, minimal, energetic, elegant, and more
+- Each generation produces multiple unique design variations to choose from
+
+### Publishing & Scheduling
+- Direct publishing to Instagram, Facebook, Threads, and Twitter/X
+- Bulk scheduling with a visual calendar view
+- Queue management for planned content
+- Multi-account support for agencies
+
+### Brand Management
+- Upload brand colors, fonts, and logos
+- AI automatically applies brand elements to every design
+- Workspace-level branding for managing multiple clients
+- Consistent brand identity across all generated content
+
+### Templates & Design
+- Pre-built template library for common social media needs
+- App store screenshot templates with device mockups
+- Seasonal campaign templates
+- Product showcase and portfolio templates
+- Restaurant and food-focused templates
+
+### Export & Flexibility
+- PNG download for individual posts
+- ZIP bulk export for multiple posts
+- Multiple aspect ratios: 1:1 (Instagram), 4:5 (portrait), 9:16 (Stories/Reels), 16:9 (landscape)
+- Drag-and-drop editing for fine-tuning designs
+
+### Multi-Language Support
+Full interface and content generation in:
+- English
+- Arabic (with full RTL support)
+- Spanish
+- Portuguese
+- French
+- Turkish
+- Indonesian
+
+## Who Uses oDesigns?
+
+### Small Business Owners
+Create professional social media content without design skills or agency costs. Generate a week's worth of posts in minutes.
+
+### Marketing Agencies
+Manage multiple client brands from one platform. Each workspace maintains separate branding, social accounts, and content calendars.
+
+### E-Commerce Stores
+Generate product showcase posts, sale announcements, and promotional content. Paste product URLs and AI creates designs from product information.
+
+### Content Creators
+Maintain consistent posting schedules with bulk generation and scheduling. Create content batches in advance.
+
+### Restaurant & Food Businesses
+Showcase menu items, daily specials, and promotions with food-focused templates and AI-generated designs.
+
+### Real Estate Agents
+Create property listing posts, open house announcements, and market update content.
+
+### App Developers
+Generate professional app store screenshots and promotional materials with device mockups and clean layouts.
+
+## Pricing
+
+oDesigns offers tiered pricing:
+- **Free Plan**: Core features with limited monthly generations
+- **Pro Plan**: Higher generation limits, all templates, priority support
+- **Business Plan**: Maximum limits, team collaboration, advanced features
+
+Current pricing details: https://odesigns.app/pricing
+
+## Links
+
+- Website: https://odesigns.app
+- Blog: https://odesigns.app/blogs
+- Templates: https://odesigns.app/templates
+- Use Cases: https://odesigns.app/use-cases
+- Pricing: https://odesigns.app/pricing
+- Contact: https://odesigns.app/contact
+
+## Sitemap
+
+- XML Sitemap: https://odesigns.app/sitemap.xml

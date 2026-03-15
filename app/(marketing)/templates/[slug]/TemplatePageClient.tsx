@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "@/lib/i18n/LocaleLink";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
@@ -8,90 +8,16 @@ import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import { useLocale } from "@/lib/i18n/context";
 import { ArrowRight, Sparkles, Lightbulb } from "lucide-react";
+import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
 
-// Post components for showcase
-import LuxuryFashionPost from "@/features/posts/templates/showcase/LuxuryFashionPost";
-import FitnessAppPost from "@/features/posts/templates/showcase/FitnessAppPost";
-import BeautyCosmeticsPost from "@/features/posts/templates/showcase/BeautyCosmeticsPost";
-import SeasonsRomancePost from "@/features/posts/templates/seasons/SeasonsRomancePost";
-import SeasonsHeroPost from "@/features/posts/templates/seasons/SeasonsHeroPost";
-import SeasonsSubscriptionPost from "@/features/posts/templates/seasons/SeasonsSubscriptionPost";
-import SmartMenuPost from "@/features/posts/templates/sylo/SmartMenuPost";
-import DashboardOverviewPost from "@/features/posts/templates/sylo/DashboardOverviewPost";
-import OnlineOrderingPost from "@/features/posts/templates/sylo/OnlineOrderingPost";
-
-import { type Theme, defaultTheme, ThemeCtx } from "@/contexts/ThemeContext";
-import { EditContext, AspectRatioContext } from "@/contexts/EditContext";
-
-const themes: Theme[] = [
-  defaultTheme,
-  {
-    primary: "#1e3a5f", primaryLight: "#e8f0fe", primaryDark: "#0d1f33",
-    accent: "#3b82f6", accentLight: "#60a5fa", accentLime: "#67e8f9",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#2a4a6f",
-    font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  {
-    primary: "#3b1f6e", primaryLight: "#f3e8ff", primaryDark: "#1e0f3a",
-    accent: "#8b5cf6", accentLight: "#a78bfa", accentLime: "#c4b5fd",
-    accentGold: "#fbbf24", accentOrange: "#f97316", border: "#4c2d8a",
-    font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  {
-    primary: "#134e4a", primaryLight: "#f0fdfa", primaryDark: "#042f2e",
-    accent: "#14b8a6", accentLight: "#2dd4bf", accentLime: "#5eead4",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#1a5c57",
-    font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-];
-
-const PostPreview = ({
-  children,
-  theme,
-  size = 280,
-}: {
-  children: React.ReactNode;
-  theme: Theme;
-  size?: number;
-}) => {
-  const scale = size / 600;
-  return (
-    <EditContext.Provider value={false}>
-      <AspectRatioContext.Provider value="1:1">
-        <ThemeCtx.Provider value={theme}>
-          <div
-            dir="ltr"
-            className="rounded-2xl overflow-hidden shadow-xl pointer-events-none select-none"
-            style={{ width: size, height: size }}
-          >
-            <div
-              style={{
-                width: 600,
-                height: 600,
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
-              }}
-            >
-              {children}
-            </div>
-          </div>
-        </ThemeCtx.Provider>
-      </AspectRatioContext.Provider>
-    </EditContext.Provider>
-  );
-};
-
-const showcasePosts = [
-  { component: <LuxuryFashionPost />, theme: themes[2], label: "Fashion" },
-  { component: <FitnessAppPost />, theme: themes[3], label: "Fitness" },
-  { component: <BeautyCosmeticsPost />, theme: themes[0], label: "Beauty" },
-  { component: <SeasonsRomancePost />, theme: themes[2], label: "Romance" },
-  { component: <SeasonsHeroPost />, theme: themes[0], label: "Seasons" },
-  { component: <SeasonsSubscriptionPost />, theme: themes[1], label: "Subscription" },
-  { component: <SmartMenuPost />, theme: themes[0], label: "Smart Menu" },
-  { component: <DashboardOverviewPost />, theme: themes[1], label: "Dashboard" },
-  { component: <OnlineOrderingPost />, theme: themes[3], label: "Ordering" },
-];
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export default function TemplatePageClient({ slug }: { slug: string }) {
   const { dir, t, locale } = useLocale();
@@ -101,6 +27,10 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
     type: "template",
     language: dbLanguage,
   });
+
+  // Fetch featured posts from Convex (social category for 1:1 showcase)
+  const allFeatured = useQuery(api.featuredPosts.list, { category: "social" });
+  const showcasePosts = useMemo(() => shuffle(allFeatured ?? []), [allFeatured]);
 
   if (template === undefined) {
     return (
@@ -166,38 +96,36 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
       </section>
 
       {/* Scrolling post carousel — two rows, opposite directions */}
-      <section className="py-16 overflow-hidden space-y-6">
-        <motion.div
-          initial={{ x: 0 }}
-          animate={{ x: "-50%" }}
-          transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-          className="flex gap-6 px-6"
-        >
-          {[...showcasePosts, ...showcasePosts].map((item, i) => (
-            <div key={`top-${i}`} style={{ minWidth: 240 }}>
-              <PostPreview theme={item.theme} size={240}>
-                {item.component}
-              </PostPreview>
-            </div>
-          ))}
-        </motion.div>
-        <motion.div
-          initial={{ x: "-50%" }}
-          animate={{ x: 0 }}
-          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-          className="flex gap-6 px-6"
-        >
-          {[...showcasePosts.slice().reverse(), ...showcasePosts.slice().reverse()].map(
-            (item, i) => (
-              <div key={`bot-${i}`} style={{ minWidth: 240 }}>
-                <PostPreview theme={item.theme} size={240}>
-                  {item.component}
-                </PostPreview>
+      {showcasePosts.length > 0 && (
+        <section className="py-16 overflow-hidden space-y-6">
+          <motion.div
+            initial={{ x: 0 }}
+            animate={{ x: "-50%" }}
+            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+            className="flex gap-6 px-6"
+          >
+            {[...showcasePosts, ...showcasePosts].map((item, i) => (
+              <div key={`top-${item._id}-${i}`} style={{ minWidth: 240 }}>
+                <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={240} />
               </div>
-            )
-          )}
-        </motion.div>
-      </section>
+            ))}
+          </motion.div>
+          <motion.div
+            initial={{ x: "-50%" }}
+            animate={{ x: 0 }}
+            transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+            className="flex gap-6 px-6"
+          >
+            {[...showcasePosts.slice().reverse(), ...showcasePosts.slice().reverse()].map(
+              (item, i) => (
+                <div key={`bot-${item._id}-${i}`} style={{ minWidth: 240 }}>
+                  <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={240} />
+                </div>
+              )
+            )}
+          </motion.div>
+        </section>
+      )}
 
       {/* Examples — Dark cards grid */}
       <section className="py-24 px-6">
@@ -248,28 +176,21 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-16 items-start">
             {/* Post showcase column */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="flex-1 hidden lg:block sticky top-32"
-            >
-              <div className="grid grid-cols-2 gap-4 -rotate-3">
-                <PostPreview theme={themes[0]} size={220}>
-                  <SeasonsHeroPost />
-                </PostPreview>
-                <PostPreview theme={themes[2]} size={220}>
-                  <FitnessAppPost />
-                </PostPreview>
-                <PostPreview theme={themes[1]} size={220}>
-                  <DashboardOverviewPost />
-                </PostPreview>
-                <PostPreview theme={themes[3]} size={220}>
-                  <SeasonsRomancePost />
-                </PostPreview>
-              </div>
-            </motion.div>
+            {showcasePosts.length >= 4 && (
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="flex-1 hidden lg:block sticky top-32"
+              >
+                <div className="grid grid-cols-2 gap-4 -rotate-3">
+                  {showcasePosts.slice(0, 4).map((item) => (
+                    <FeaturedPostPreview key={item._id} code={item.componentCode} theme={item.theme} size={220} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Tips list */}
             <div className="flex-1 space-y-6">
@@ -311,11 +232,9 @@ export default function TemplatePageClient({ slug }: { slug: string }) {
       <section className="py-32 px-6 bg-black text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.06] pointer-events-none">
           <div className="absolute inset-0 grid grid-cols-3 md:grid-cols-5 gap-3 p-4 rotate-6 scale-125 origin-center">
-            {showcasePosts.map((item, i) => (
-              <div key={i} className="aspect-square">
-                <PostPreview theme={item.theme} size={250}>
-                  {item.component}
-                </PostPreview>
+            {showcasePosts.map((item) => (
+              <div key={item._id} className="aspect-square">
+                <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={250} />
               </div>
             ))}
           </div>

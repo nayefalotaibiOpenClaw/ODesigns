@@ -107,31 +107,58 @@ export default async function UseCasePage({
     notFound();
   }
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: useCase.title,
-    description: useCase.excerpt,
-    url: `${BASE_URL}/use-cases/${useCase.slug}`,
-    inLanguage: useCase.language || "en",
-    datePublished: new Date(useCase.publishedAt).toISOString(),
-    publisher: {
-      "@type": "Organization",
-      name: "oDesigns",
-      url: BASE_URL,
-    },
-    mainEntity: {
-      "@type": "SoftwareApplication",
-      name: "oDesigns",
-      applicationCategory: "DesignApplication",
-      operatingSystem: "Web",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
+  const useCaseUrl = `${BASE_URL}/use-cases/${useCase.slug}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: useCase.title,
+      description: useCase.excerpt,
+      url: useCaseUrl,
+      inLanguage: useCase.language || "en",
+      datePublished: new Date(useCase.publishedAt).toISOString(),
+      publisher: {
+        "@type": "Organization",
+        name: "oDesigns",
+        url: BASE_URL,
+      },
+      mainEntity: {
+        "@type": "SoftwareApplication",
+        name: "oDesigns",
+        applicationCategory: "DesignApplication",
+        operatingSystem: "Web",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
       },
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: BASE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Use Cases",
+          item: `${BASE_URL}/use-cases`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: useCase.title,
+          item: useCaseUrl,
+        },
+      ],
+    },
+  ];
 
   // Server-fetched structured data from Convex DB (not user input)
   const structuredData = JSON.stringify(jsonLd);

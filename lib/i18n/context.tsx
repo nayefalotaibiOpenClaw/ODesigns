@@ -5,8 +5,13 @@ import type { TranslationKey, Locale, Direction } from "./types";
 import { getLocaleCookie, setLocaleCookie, detectBrowserLocale } from "./utils";
 import en from "./locales/en.json";
 import ar from "./locales/ar.json";
+import es from "./locales/es.json";
+import pt from "./locales/pt.json";
+import fr from "./locales/fr.json";
+import tr from "./locales/tr.json";
+import id from "./locales/id.json";
 
-const translations: Record<Locale, Record<string, string>> = { en, ar };
+const translations: Record<Locale, Record<string, string>> = { en, ar, es, pt, fr, tr, id };
 
 interface LocaleContextValue {
   locale: Locale;
@@ -27,18 +32,21 @@ function getInitialLocale(): Locale {
   return "en";
 }
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
+export function LocaleProvider({ children, initialLocale }: { children: React.ReactNode; initialLocale?: Locale }) {
   // Initialize to "en" for SSR, then sync to real locale in useEffect to avoid hydration mismatch
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const [locale, setLocaleState] = useState<Locale>(initialLocale || "en");
   const [hydrated, setHydrated] = useState(false);
 
-  // After hydration, sync to the real locale from cookie/browser
+  // After hydration, sync locale — URL-based initialLocale takes priority over cookie
   useEffect(() => {
-    const real = getInitialLocale();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocaleState(real);
+    if (!initialLocale) {
+      const real = getInitialLocale();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLocaleState(real);
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setLocale = useCallback((newLocale: Locale) => {

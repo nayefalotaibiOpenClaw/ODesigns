@@ -1,0 +1,55 @@
+# oDesigns
+
+> AI-powered social media post generator and design tool. Create stunning social media posts, ads, and app store previews in seconds — schedule and publish across Instagram, Facebook, Threads, and Twitter/X from one dashboard.
+
+## What is oDesigns?
+
+oDesigns is a SaaS platform that helps businesses, marketers, and creators generate professional social media content using AI. Users describe their brand or paste a website URL, and AI generates ready-to-publish post designs with captions. No design skills required.
+
+## Key Capabilities
+
+- Generate professional social media posts with AI in seconds
+- Create app store screenshots and preview images
+- Design ads and promotional content for any platform
+- Schedule and publish to Instagram, Facebook, Threads, and Twitter/X
+- Maintain brand consistency with custom colors, fonts, and logos
+- Adapt designs to any aspect ratio (1:1, 4:5, 9:16, 16:9)
+- Bulk schedule posts with a visual calendar
+- Export as PNG or bulk ZIP download
+- Full multi-language support: English, Arabic, Spanish, Portuguese, French, Turkish, Indonesian
+
+## Who Uses oDesigns?
+
+- Small businesses building social media presence without hiring designers
+- Marketing agencies managing multiple client brands
+- E-commerce stores promoting products and sales
+- Restaurants and food businesses showcasing menus
+- Real estate agents creating property listings
+- App developers generating app store screenshots and promotional materials
+- Content creators maintaining consistent posting schedules
+- Freelancers offering social media management services
+
+## Pricing
+
+- Free plan available with core features
+- Pro and Business plans with higher limits and advanced capabilities
+- Details: https://odesigns.app/pricing
+
+## Pages
+
+- Homepage: https://odesigns.app
+- Blog: https://odesigns.app/blogs
+- Templates: https://odesigns.app/templates
+- Use Cases: https://odesigns.app/use-cases
+- Pricing: https://odesigns.app/pricing
+- Contact: https://odesigns.app/contact
+
+## Languages
+
+- English: https://odesigns.app
+- Arabic: https://odesigns.app/ar
+- Spanish: https://odesigns.app/es
+- Portuguese: https://odesigns.app/pt
+- French: https://odesigns.app/fr
+- Turkish: https://odesigns.app/tr
+- Indonesian: https://odesigns.app/id

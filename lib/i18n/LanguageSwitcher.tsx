@@ -2,7 +2,9 @@
 
 import { useLocale } from "./context";
 import { useState, useRef, useEffect } from "react";
-import type { Locale } from "./config";
+import { usePathname } from "next/navigation";
+import { DEFAULT_LOCALE, type Locale } from "./config";
+import { stripLocalePrefix } from "./utils";
 
 const LANGUAGES: { code: Locale; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "EN" },
@@ -16,6 +18,7 @@ const LANGUAGES: { code: Locale; label: string; flag: string }[] = [
 
 export default function LanguageSwitcher() {
   const { locale, setLocale } = useLocale();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -46,6 +49,12 @@ export default function LanguageSwitcher() {
               onClick={() => {
                 setLocale(lang.code);
                 setOpen(false);
+                // Navigate to the correct locale-prefixed URL
+                const basePath = stripLocalePrefix(pathname);
+                const newPath = lang.code === DEFAULT_LOCALE
+                  ? basePath
+                  : `/${lang.code}${basePath === "/" ? "" : basePath}`;
+                window.location.href = newPath;
               }}
               className={`w-full text-start px-4 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center justify-between ${
                 locale === lang.code ? "font-bold text-blue-600 dark:text-blue-400" : "text-neutral-700 dark:text-neutral-300"

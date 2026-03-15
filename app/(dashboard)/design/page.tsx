@@ -1537,7 +1537,7 @@ export default function DesignPage() {
                   try {
                     const res = await fetch('/api/adapt-ratio', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: post.componentCode, targetRatio: ratio }) });
                     if (res.ok) { const data = await res.json(); if (data.code) await updatePostCodeForRatio({ id: post._id as Id<"posts">, ratio: ratio as AspectRatioType, componentCode: data.code }); }
-                  } catch (err) { console.error(`Failed to adapt post ${idx + 1} to ${ratio}:`, err); }
+                  } catch (err) { console.error(`Failed to adapt post ${j + 1} to ${ratio}:`, err); }
                 }
               }
             }}

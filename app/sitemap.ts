@@ -3,16 +3,26 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { LOCALES, DEFAULT_LOCALE } from "@/lib/i18n/config";
 
+// Revalidate every hour so dynamic pages from Convex stay fresh
+export const revalidate = 3600;
+
 function localizedUrl(baseUrl: string, path: string, locale: string): string {
   return locale === DEFAULT_LOCALE ? `${baseUrl}${path}` : `${baseUrl}/${locale}${path}`;
 }
 
 function withAlternates(baseUrl: string, path: string) {
   return {
-    languages: Object.fromEntries(
-      LOCALES.map((l) => [l, localizedUrl(baseUrl, path, l)])
-    ) as Record<string, string>,
+    languages: {
+      ...Object.fromEntries(
+        LOCALES.map((l) => [l, localizedUrl(baseUrl, path, l)])
+      ),
+      "x-default": localizedUrl(baseUrl, path, DEFAULT_LOCALE),
+    } as Record<string, string>,
   };
+}
+
+function roundPriority(priority: number): number {
+  return Math.round(priority * 100) / 100;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -28,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/contact", changeFrequency: "monthly", priority: 0.5 },
     { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
     { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
+    { path: "/data-deletion", changeFrequency: "yearly", priority: 0.2 },
   ];
 
   // Generate entries for each locale for static pages
@@ -36,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: localizedUrl(baseUrl, path || "/", locale),
       lastModified: new Date(),
       changeFrequency,
-      priority: locale === DEFAULT_LOCALE ? priority : priority * 0.9,
+      priority: roundPriority(locale === DEFAULT_LOCALE ? priority : priority * 0.9),
       alternates: withAlternates(baseUrl, path || "/"),
     }))
   );
@@ -68,26 +79,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         alternates: withAlternates(baseUrl, `/templates/${slug}`),
       }))
     );
-  } catch {
-    // If Convex is unavailable during build, skip dynamic pages
+  } catch (error) {
+    console.error("[sitemap] Failed to fetch use-cases/templates:", error);
   }
 
-  // Dynamic blog pages — only generate for the blog's own language
+  // Dynamic blog pages — group by slug to link alternates across languages
   let blogPages: MetadataRoute.Sitemap = [];
   try {
     const blogs = await fetchQuery(api.blogs.list, {});
+    // Group blogs by slug to find cross-language alternates
+    const blogsBySlug = new Map<string, { language: string; publishedAt: number }[]>();
+    for (const blog of blogs) {
+      const existing = blogsBySlug.get(blog.slug) || [];
+      existing.push({ language: blog.language || "en", publishedAt: blog.publishedAt });
+      blogsBySlug.set(blog.slug, existing);
+    }
+
     blogPages = blogs.map((blog) => {
       const blogLocale = blog.language || "en";
       const path = `/blogs/${blog.slug}`;
+      const variants = blogsBySlug.get(blog.slug) || [];
+      // If this slug exists in multiple languages, add alternates
+      const alternates = variants.length > 1
+        ? {
+            languages: {
+              ...Object.fromEntries(
+                variants.map((v) => [v.language, localizedUrl(baseUrl, path, v.language === "en" ? DEFAULT_LOCALE : v.language)])
+              ),
+              "x-default": localizedUrl(baseUrl, path, DEFAULT_LOCALE),
+            } as Record<string, string>,
+          }
+        : undefined;
       return {
         url: localizedUrl(baseUrl, path, blogLocale === "en" ? DEFAULT_LOCALE : blogLocale),
         lastModified: new Date(blog.publishedAt),
         changeFrequency: "monthly" as const,
         priority: 0.7,
+        ...(alternates && { alternates }),
       };
     });
-  } catch {
-    // If Convex is unavailable during build, return static pages only
+  } catch (error) {
+    console.error("[sitemap] Failed to fetch blogs:", error);
   }
 
   return [

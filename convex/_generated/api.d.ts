@@ -16,6 +16,7 @@ import type * as blogs from "../blogs.js";
 import type * as branding from "../branding.js";
 import type * as collections from "../collections.js";
 import type * as crons from "../crons.js";
+import type * as featuredPosts from "../featuredPosts.js";
 import type * as generations from "../generations.js";
 import type * as http from "../http.js";
 import type * as lib_encryption from "../lib/encryption.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   branding: typeof branding;
   collections: typeof collections;
   crons: typeof crons;
+  featuredPosts: typeof featuredPosts;
   generations: typeof generations;
   http: typeof http;
   "lib/encryption": typeof lib_encryption;

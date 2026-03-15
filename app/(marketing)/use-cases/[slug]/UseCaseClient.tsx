@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "@/lib/i18n/LocaleLink";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import { useLocale } from "@/lib/i18n/context";
+import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
 import {
   ArrowRight,
   Sparkles,
@@ -24,89 +25,14 @@ import {
   Building2,
 } from "lucide-react";
 
-// Post components for showcase
-import SaaSDashboardPost from "@/features/posts/templates/showcase/SaaSDashboardPost";
-import FoodDeliveryPost from "@/features/posts/templates/showcase/FoodDeliveryPost";
-import RealEstatePost from "@/features/posts/templates/showcase/RealEstatePost";
-import SeasonsHeroPost from "@/features/posts/templates/seasons/SeasonsHeroPost";
-import SeasonsGiftPost from "@/features/posts/templates/seasons/SeasonsGiftPost";
-import SeasonsSubscriptionPost from "@/features/posts/templates/seasons/SeasonsSubscriptionPost";
-import AnalyticsPost from "@/features/posts/templates/sylo/AnalyticsPost";
-import LoyaltyPost from "@/features/posts/templates/sylo/LoyaltyPost";
-import CloudPOSPost from "@/features/posts/templates/sylo/CloudPOSPost";
-
-import { type Theme, defaultTheme, ThemeCtx } from "@/contexts/ThemeContext";
-import { EditContext, AspectRatioContext } from "@/contexts/EditContext";
-
-const themes: Theme[] = [
-  defaultTheme,
-  {
-    primary: "#1e3a5f", primaryLight: "#e8f0fe", primaryDark: "#0d1f33",
-    accent: "#3b82f6", accentLight: "#60a5fa", accentLime: "#67e8f9",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#2a4a6f",
-    font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  {
-    primary: "#3b1f6e", primaryLight: "#f3e8ff", primaryDark: "#1e0f3a",
-    accent: "#8b5cf6", accentLight: "#a78bfa", accentLime: "#c4b5fd",
-    accentGold: "#fbbf24", accentOrange: "#f97316", border: "#4c2d8a",
-    font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  {
-    primary: "#881337", primaryLight: "#fff1f2", primaryDark: "#4c0519",
-    accent: "#e11d48", accentLight: "#fb7185", accentLime: "#fda4af",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#9f1239",
-    font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-];
-
-const PostPreview = ({
-  children,
-  theme,
-  size = 280,
-}: {
-  children: React.ReactNode;
-  theme: Theme;
-  size?: number;
-}) => {
-  const scale = size / 600;
-  return (
-    <EditContext.Provider value={false}>
-      <AspectRatioContext.Provider value="1:1">
-        <ThemeCtx.Provider value={theme}>
-          <div
-            dir="ltr"
-            className="rounded-2xl overflow-hidden shadow-xl pointer-events-none select-none"
-            style={{ width: size, height: size }}
-          >
-            <div
-              style={{
-                width: 600,
-                height: 600,
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
-              }}
-            >
-              {children}
-            </div>
-          </div>
-        </ThemeCtx.Provider>
-      </AspectRatioContext.Provider>
-    </EditContext.Provider>
-  );
-};
-
-const showcasePosts = [
-  { component: <SaaSDashboardPost />, theme: themes[1], label: "SaaS" },
-  { component: <FoodDeliveryPost />, theme: themes[0], label: "Food" },
-  { component: <RealEstatePost />, theme: themes[2], label: "Real Estate" },
-  { component: <SeasonsHeroPost />, theme: themes[3], label: "Seasons" },
-  { component: <SeasonsGiftPost />, theme: themes[0], label: "Gift" },
-  { component: <SeasonsSubscriptionPost />, theme: themes[1], label: "Subscription" },
-  { component: <AnalyticsPost />, theme: themes[0], label: "Analytics" },
-  { component: <LoyaltyPost />, theme: themes[2], label: "Loyalty" },
-  { component: <CloudPOSPost />, theme: themes[1], label: "Cloud POS" },
-];
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 const iconMap: Record<string, React.ElementType> = {
   Sparkles, Share2, Palette, CalendarDays, Home, TrendingUp,
@@ -121,6 +47,10 @@ export default function UseCaseClient({ slug }: { slug: string }) {
     type: "use-case",
     language: dbLanguage,
   });
+
+  // Fetch featured posts from Convex
+  const allFeatured = useQuery(api.featuredPosts.list, { category: "social" });
+  const showcasePosts = useMemo(() => shuffle(allFeatured ?? []), [allFeatured]);
 
   if (useCase === undefined) {
     // Loading
@@ -147,38 +77,34 @@ export default function UseCaseClient({ slug }: { slug: string }) {
       {/* Hero with floating posts */}
       <section className="pt-36 pb-20 px-6 relative">
         {/* Floating post previews behind hero text */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 0.15, y: 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute top-20 -left-10 hidden lg:block"
-          >
-            <PostPreview theme={themes[0]} size={200}>
-              <SeasonsHeroPost />
-            </PostPreview>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 0.15, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-            className="absolute top-32 -right-10 hidden lg:block"
-          >
-            <PostPreview theme={themes[2]} size={180}>
-              <AnalyticsPost />
-            </PostPreview>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 0.1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.6 }}
-            className="absolute bottom-10 left-[8%] hidden lg:block"
-          >
-            <PostPreview theme={themes[1]} size={160}>
-              <CloudPOSPost />
-            </PostPreview>
-          </motion.div>
-        </div>
+        {showcasePosts.length >= 3 && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 0.15, y: 0 }}
+              transition={{ duration: 1.2 }}
+              className="absolute top-20 -left-10 hidden lg:block"
+            >
+              <FeaturedPostPreview code={showcasePosts[0].componentCode} theme={showcasePosts[0].theme} size={200} />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 0.15, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.3 }}
+              className="absolute top-32 -right-10 hidden lg:block"
+            >
+              <FeaturedPostPreview code={showcasePosts[1].componentCode} theme={showcasePosts[1].theme} size={180} />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 0.1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.6 }}
+              className="absolute bottom-10 left-[8%] hidden lg:block"
+            >
+              <FeaturedPostPreview code={showcasePosts[2].componentCode} theme={showcasePosts[2].theme} size={160} />
+            </motion.div>
+          </div>
+        )}
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.span
@@ -228,29 +154,29 @@ export default function UseCaseClient({ slug }: { slug: string }) {
       </section>
 
       {/* Scrolling post carousel */}
-      <section className="py-12 overflow-hidden">
-        <motion.div
-          initial={{ x: 0 }}
-          animate={{ x: "-50%" }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="flex gap-6 px-6"
-        >
-          {[...showcasePosts, ...showcasePosts].map((item, i) => (
-            <div key={i} style={{ minWidth: 280 }}>
-              <PostPreview theme={item.theme} size={280}>
-                {item.component}
-              </PostPreview>
-              <div className="mt-4 flex items-center justify-between px-2">
-                <span className="font-bold text-sm">{item.label}</span>
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
-                  <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
+      {showcasePosts.length > 0 && (
+        <section className="py-12 overflow-hidden">
+          <motion.div
+            initial={{ x: 0 }}
+            animate={{ x: "-50%" }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            className="flex gap-6 px-6"
+          >
+            {[...showcasePosts, ...showcasePosts].map((item, i) => (
+              <div key={`${item._id}-${i}`} style={{ minWidth: 280 }}>
+                <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={280} />
+                <div className="mt-4 flex items-center justify-between px-2">
+                  <span className="font-bold text-sm">{item.label}</span>
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
+                    <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </motion.div>
-      </section>
+            ))}
+          </motion.div>
+        </section>
+      )}
 
       {/* Pain Points — Dark cards like landing page */}
       <section className="py-24 px-6">
@@ -333,33 +259,27 @@ export default function UseCaseClient({ slug }: { slug: string }) {
             </div>
 
             {/* Post collage */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="flex-1 relative hidden lg:block"
-            >
-              <div className="grid grid-cols-2 gap-4 rotate-3">
-                <div className="space-y-4">
-                  <PostPreview theme={themes[0]} size={240}>
-                    <FoodDeliveryPost />
-                  </PostPreview>
-                  <PostPreview theme={themes[2]} size={240}>
-                    <LoyaltyPost />
-                  </PostPreview>
+            {showcasePosts.length >= 4 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="flex-1 relative hidden lg:block"
+              >
+                <div className="grid grid-cols-2 gap-4 rotate-3">
+                  <div className="space-y-4">
+                    <FeaturedPostPreview code={showcasePosts[0].componentCode} theme={showcasePosts[0].theme} size={240} />
+                    <FeaturedPostPreview code={showcasePosts[1].componentCode} theme={showcasePosts[1].theme} size={240} />
+                  </div>
+                  <div className="space-y-4 mt-10">
+                    <FeaturedPostPreview code={showcasePosts[2].componentCode} theme={showcasePosts[2].theme} size={240} />
+                    <FeaturedPostPreview code={showcasePosts[3].componentCode} theme={showcasePosts[3].theme} size={240} />
+                  </div>
                 </div>
-                <div className="space-y-4 mt-10">
-                  <PostPreview theme={themes[1]} size={240}>
-                    <SeasonsGiftPost />
-                  </PostPreview>
-                  <PostPreview theme={themes[3]} size={240}>
-                    <SaaSDashboardPost />
-                  </PostPreview>
-                </div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0a] via-transparent to-transparent pointer-events-none" />
-            </motion.div>
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0a] via-transparent to-transparent pointer-events-none" />
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
@@ -368,11 +288,9 @@ export default function UseCaseClient({ slug }: { slug: string }) {
       <section className="py-32 px-6 bg-black text-white relative overflow-hidden">
         {/* Background post grid */}
         <div className="absolute inset-0 grid grid-cols-4 gap-4 p-8 opacity-[0.06] pointer-events-none">
-          {showcasePosts.slice(0, 8).map((item, i) => (
-            <div key={i} className="aspect-square">
-              <PostPreview theme={item.theme} size={300}>
-                {item.component}
-              </PostPreview>
+          {showcasePosts.slice(0, 8).map((item) => (
+            <div key={item._id} className="aspect-square">
+              <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={300} />
             </div>
           ))}
         </div>

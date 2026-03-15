@@ -1,176 +1,39 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import FloatingNav from "@/app/components/FloatingNav";
 import HeroDemo from "./HeroDemo";
-
-// ... existing code ...
-
-// Real post components - Sylo
-import AnalyticsPost from "@/features/posts/templates/sylo/AnalyticsPost";
-import LoyaltyPost from "@/features/posts/templates/sylo/LoyaltyPost";
-import InventoryPost from "@/features/posts/templates/sylo/InventoryPost";
-import CloudPOSPost from "@/features/posts/templates/sylo/CloudPOSPost";
-import DashboardOverviewPost from "@/features/posts/templates/sylo/DashboardOverviewPost";
-import OnlineOrderingPost from "@/features/posts/templates/sylo/OnlineOrderingPost";
-import SmartMenuPost from "@/features/posts/templates/sylo/SmartMenuPost";
-// Real post components - Seasons
-import SeasonsHeroPost from "@/features/posts/templates/seasons/SeasonsHeroPost";
-import SeasonsGiftPost from "@/features/posts/templates/seasons/SeasonsGiftPost";
-import SeasonsRomancePost from "@/features/posts/templates/seasons/SeasonsRomancePost";
-import SeasonsSubscriptionPost from "@/features/posts/templates/seasons/SeasonsSubscriptionPost";
-// Showcase posts
-import SaaSDashboardPost from "@/features/posts/templates/showcase/SaaSDashboardPost";
-import FoodDeliveryPost from "@/features/posts/templates/showcase/FoodDeliveryPost";
-import LuxuryFashionPost from "@/features/posts/templates/showcase/LuxuryFashionPost";
-import FitnessAppPost from "@/features/posts/templates/showcase/FitnessAppPost";
-import TravelBookingPost from "@/features/posts/templates/showcase/TravelBookingPost";
-import FintechBankingPost from "@/features/posts/templates/showcase/FintechBankingPost";
-import RealEstatePost from "@/features/posts/templates/showcase/RealEstatePost";
-import BeautyCosmeticsPost from "@/features/posts/templates/showcase/BeautyCosmeticsPost";
-// App Store preview posts
-import AppStoreMeditationPost from "@/features/posts/templates/appstore/AppStoreMeditationPost";
-import AppStoreReadingPost from "@/features/posts/templates/appstore/AppStoreReadingPost";
-import AppStoreDeliveryPost from "@/features/posts/templates/appstore/AppStoreDeliveryPost";
-import AppStoreFinancePost from "@/features/posts/templates/appstore/AppStoreFinancePost";
-import AppStoreProductPost from "@/features/posts/templates/appstore/AppStoreProductPost";
-import AppStoreBankingPost from "@/features/posts/templates/appstore/AppStoreBankingPost";
-import AppStoreShoppingPost from "@/features/posts/templates/appstore/AppStoreShoppingPost";
-import AppStoreNewsPost from "@/features/posts/templates/appstore/AppStoreNewsPost";
+import FeaturedPostPreview from "@/features/posts/shared/FeaturedPostPreview";
 
 // Contexts for rendering posts
-import { type Theme, defaultTheme, ThemeCtx } from "@/contexts/ThemeContext";
-import { EditContext, AspectRatioContext } from "@/contexts/EditContext";
+import { type Theme, defaultTheme } from "@/contexts/ThemeContext";
 
 // i18n
 import { useLocale } from "@/lib/i18n/context";
 
-const themes: Theme[] = [
-  defaultTheme, // Green
-  { // Blue
-    primary: "#1e3a5f", primaryLight: "#e8f0fe", primaryDark: "#0d1f33",
-    accent: "#3b82f6", accentLight: "#60a5fa", accentLime: "#67e8f9",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#2a4a6f", font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  { // Purple
-    primary: "#3b1f6e", primaryLight: "#f3e8ff", primaryDark: "#1e0f3a",
-    accent: "#8b5cf6", accentLight: "#a78bfa", accentLime: "#c4b5fd",
-    accentGold: "#fbbf24", accentOrange: "#f97316", border: "#4c2d8a", font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  { // Rose
-    primary: "#881337", primaryLight: "#fff1f2", primaryDark: "#4c0519",
-    accent: "#e11d48", accentLight: "#fb7185", accentLime: "#fda4af",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#9f1239", font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  { // Teal
-    primary: "#134e4a", primaryLight: "#f0fdfa", primaryDark: "#042f2e",
-    accent: "#14b8a6", accentLight: "#2dd4bf", accentLime: "#5eead4",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#1a5c57", font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  { // Amber/warm
-    primary: "#78350f", primaryLight: "#fffbeb", primaryDark: "#451a03",
-    accent: "#d97706", accentLight: "#fbbf24", accentLime: "#fde68a",
-    accentGold: "#fbbf24", accentOrange: "#f97316", border: "#92400e", font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-  { // Navy
-    primary: "#1e1b4b", primaryLight: "#eef2ff", primaryDark: "#0c0a26",
-    accent: "#6366f1", accentLight: "#818cf8", accentLime: "#a5b4fc",
-    accentGold: "#fbbf24", accentOrange: "#fb923c", border: "#312e81", font: "var(--font-cairo), 'Cairo', sans-serif",
-  },
-];
-
 import type { AspectRatioType } from "@/contexts/EditContext";
-
-// Aspect ratio configs: inner render size and outer display dimensions
-const ratioConfigs: Record<string, { innerW: number; innerH: number; displayW: (s: number) => number; displayH: (s: number) => number; ratio: AspectRatioType }> = {
-  "1:1":  { innerW: 600, innerH: 600, displayW: s => s, displayH: s => s, ratio: "1:1" },
-  "9:16": { innerW: 600, innerH: 1067, displayW: s => s * 0.6, displayH: s => s * 1.067, ratio: "9:16" },
-  "16:9": { innerW: 1067, innerH: 600, displayW: s => s * 1.2, displayH: s => s * 0.675, ratio: "16:9" },
-};
-
-const PostPreview = ({ children, theme, size = 300, aspect = "1:1" }: { children: React.ReactNode; theme: Theme; size?: number; aspect?: string }) => {
-  const cfg = ratioConfigs[aspect] || ratioConfigs["1:1"];
-  const w = cfg.displayW(size);
-  const h = cfg.displayH(size);
-  const scale = w / cfg.innerW;
-
-  return (
-    <EditContext.Provider value={false}>
-      <AspectRatioContext.Provider value={cfg.ratio}>
-        <ThemeCtx.Provider value={theme}>
-          <div
-            dir="ltr"
-            className="rounded-2xl overflow-hidden shadow-xl pointer-events-none select-none"
-            style={{ width: w, height: h }}
-          >
-            <div style={{ width: cfg.innerW, height: cfg.innerH, transform: `scale(${scale})`, transformOrigin: "top left" }}>
-              {children}
-            </div>
-          </div>
-        </ThemeCtx.Provider>
-      </AspectRatioContext.Provider>
-    </EditContext.Provider>
-  );
-};
 
 type TabKey = "social" | "appstore" | "ads";
 
-// Social media posts — 1:1 square (showcase + existing mix)
-const socialPosts = [
-  { component: <SaaSDashboardPost />, theme: themes[6], label: "SaaS Dashboard" },
-  { component: <FoodDeliveryPost />, theme: themes[0], label: "Food Delivery" },
-  { component: <LuxuryFashionPost />, theme: themes[2], label: "Luxury Fashion" },
-  { component: <FitnessAppPost />, theme: themes[4], label: "Fitness App" },
-  { component: <TravelBookingPost />, theme: themes[1], label: "Travel Booking" },
-  { component: <FintechBankingPost />, theme: themes[0], label: "Fintech" },
-  { component: <RealEstatePost />, theme: themes[4], label: "Real Estate" },
-  { component: <BeautyCosmeticsPost />, theme: themes[3], label: "Beauty" },
-  { component: <AnalyticsPost />, theme: themes[0], label: "Analytics" },
-  { component: <LoyaltyPost />, theme: themes[1], label: "Loyalty" },
-  { component: <InventoryPost />, theme: themes[2], label: "Inventory" },
-];
+// Shuffle an array using Fisher-Yates
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
-// App Store Preview — 9:16 tall (dedicated App Store templates)
-const appStorePosts = [
-  { component: <AppStoreMeditationPost />, theme: themes[2], label: "Meditation" },
-  { component: <AppStoreReadingPost />, theme: themes[5], label: "Reading" },
-  { component: <AppStoreDeliveryPost />, theme: themes[0], label: "Food Delivery" },
-  { component: <AppStoreFinancePost />, theme: themes[1], label: "Finance" },
-  { component: <AppStoreProductPost />, theme: themes[6], label: "Device" },
-  { component: <AppStoreBankingPost />, theme: themes[4], label: "Banking" },
-  { component: <AppStoreShoppingPost />, theme: themes[3], label: "Shopping" },
-  { component: <AppStoreNewsPost />, theme: themes[0], label: "News" },
-];
-
-// Ads — 16:9 landscape
-const adsPosts = [
-  { component: <LuxuryFashionPost />, theme: themes[2], label: "Luxury Fashion" },
-  { component: <SaaSDashboardPost />, theme: themes[6], label: "SaaS Dashboard" },
-  { component: <TravelBookingPost />, theme: themes[1], label: "Travel Booking" },
-  { component: <FoodDeliveryPost />, theme: themes[0], label: "Food Delivery" },
-  { component: <FitnessAppPost />, theme: themes[4], label: "Fitness App" },
-  { component: <RealEstatePost />, theme: themes[5], label: "Real Estate" },
-  { component: <BeautyCosmeticsPost />, theme: themes[3], label: "Beauty" },
-  { component: <FintechBankingPost />, theme: themes[0], label: "Fintech" },
-];
-
-const tabPostsMap: Record<TabKey, { posts: typeof socialPosts; aspect: string; size: number; minW: string }> = {
-  social:   { posts: socialPosts,   aspect: "1:1",  size: 280, minW: "280px" },
-  appstore: { posts: appStorePosts, aspect: "9:16", size: 280, minW: "168px" },
-  ads:      { posts: adsPosts,      aspect: "16:9", size: 280, minW: "336px" },
+const aspectMap: Record<TabKey, { aspect: AspectRatioType; size: number; minW: string }> = {
+  social:   { aspect: "1:1",  size: 280, minW: "280px" },
+  appstore: { aspect: "9:16", size: 280, minW: "168px" },
+  ads:      { aspect: "16:9", size: 280, minW: "336px" },
 };
-
-// Collage posts for bottom CTA section
-const collagePostItems = [
-  { component: <SaaSDashboardPost />, theme: themes[6] },
-  { component: <FoodDeliveryPost />, theme: themes[0] },
-  { component: <LuxuryFashionPost />, theme: themes[2] },
-  { component: <FitnessAppPost />, theme: themes[4] },
-  { component: <TravelBookingPost />, theme: themes[1] },
-  { component: <BeautyCosmeticsPost />, theme: themes[3] },
-];
 
 const FloatingLogo = ({ delay, children, top, left, right }: { delay: number; children: React.ReactNode; top?: string; left?: string; right?: string }) => (
   <motion.div
@@ -197,8 +60,31 @@ const FloatingLogo = ({ delay, children, top, left, right }: { delay: number; ch
 
 export default function V0Original() {
   const [activeTab, setActiveTab] = useState<TabKey>("social");
-  const currentTab = tabPostsMap[activeTab];
   const { t } = useLocale();
+
+  // Fetch featured posts from Convex
+  const allFeatured = useQuery(api.featuredPosts.list, {});
+
+  // Split by category and shuffle for random display
+  const { socialPosts, appStorePosts, adsPosts } = useMemo(() => {
+    if (!allFeatured || allFeatured.length === 0) {
+      return { socialPosts: [], appStorePosts: [], adsPosts: [] };
+    }
+    return {
+      socialPosts: shuffle(allFeatured.filter((p) => p.category === "social")),
+      appStorePosts: shuffle(allFeatured.filter((p) => p.category === "appstore")),
+      adsPosts: shuffle(allFeatured.filter((p) => p.category === "ads")),
+    };
+  }, [allFeatured]);
+
+  const tabPostsMap: Record<TabKey, { posts: typeof socialPosts; aspect: AspectRatioType; size: number; minW: string }> = {
+    social:   { posts: socialPosts,   ...aspectMap.social },
+    appstore: { posts: appStorePosts, ...aspectMap.appstore },
+    ads:      { posts: adsPosts,      ...aspectMap.ads },
+  };
+
+  const currentTab = tabPostsMap[activeTab];
+  const collageItems = useMemo(() => shuffle(socialPosts).slice(0, 6), [socialPosts]);
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "social", label: t("landing.tabSocial") },
@@ -283,44 +169,46 @@ export default function V0Original() {
           </motion.div>
         </div>
 
-        {/* Real Posts Carousel */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="w-full overflow-hidden mt-12"
-          >
+        {/* Featured Posts Carousel */}
+        {currentTab.posts.length > 0 && (
+          <AnimatePresence mode="wait">
             <motion.div
-              initial={{ x: 0 }}
-              animate={{ x: "-15%" }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className="flex gap-6 px-6"
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="w-full overflow-hidden mt-12"
             >
-              {currentTab.posts.map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  viewport={{ once: true }}
-                  style={{ minWidth: currentTab.minW }}
-                >
-                  <PostPreview theme={item.theme} size={currentTab.size} aspect={currentTab.aspect}>{item.component}</PostPreview>
-                  <div className="mt-4 flex items-center justify-between px-2">
-                    <span className="font-bold text-sm">{item.label}</span>
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
-                      <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
+              <motion.div
+                initial={{ x: 0 }}
+                animate={{ x: "-15%" }}
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                className="flex gap-6 px-6"
+              >
+                {currentTab.posts.map((item, i) => (
+                  <motion.div
+                    key={item._id + "-" + i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    viewport={{ once: true }}
+                    style={{ minWidth: currentTab.minW }}
+                  >
+                    <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={currentTab.size} aspect={currentTab.aspect} />
+                    <div className="mt-4 flex items-center justify-between px-2">
+                      <span className="font-bold text-sm">{item.label}</span>
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
+                        <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-neutral-700" />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        </AnimatePresence>
+          </AnimatePresence>
+        )}
       </section>
 
       {/* Feature Section 1: Automation */}
@@ -462,11 +350,11 @@ export default function V0Original() {
            </div>
 
            <div className="flex-1 bg-slate-50 dark:bg-neutral-900 relative overflow-hidden hidden md:block min-h-[500px]">
-              {/* Real post collage */}
+              {/* Featured post collage */}
               <div className="absolute inset-0 grid grid-cols-2 gap-3 p-6 rotate-12 scale-125 origin-center">
-                {collagePostItems.map((item, i) => (
-                  <div key={i} className="aspect-square">
-                    <PostPreview theme={item.theme} size={220}>{item.component}</PostPreview>
+                {collageItems.map((item, i) => (
+                  <div key={item._id + "-collage-" + i} className="aspect-square">
+                    <FeaturedPostPreview code={item.componentCode} theme={item.theme} size={220} />
                   </div>
                 ))}
               </div>

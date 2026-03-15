@@ -544,6 +544,31 @@ export default defineSchema({
     .index("by_published", ["published", "publishedAt"])
     .index("by_type_language", ["type", "language"]),
 
+  // ─── Featured Posts (marketing showcase) ────────────
+  featuredPosts: defineTable({
+    label: v.string(),
+    componentCode: v.string(),
+    category: v.union(
+      v.literal("social"),
+      v.literal("appstore"),
+      v.literal("ads")
+    ),
+    theme: v.object({
+      primary: v.string(),
+      primaryLight: v.string(),
+      primaryDark: v.string(),
+      accent: v.string(),
+      accentLight: v.string(),
+      accentLime: v.string(),
+      accentGold: v.string(),
+      accentOrange: v.string(),
+      border: v.string(),
+      font: v.string(),
+    }),
+    createdAt: v.number(),
+  })
+    .index("by_category", ["category"]),
+
   // ─── Generations ─────────────────────────────────────
   generations: defineTable({
     workspaceId: v.id("workspaces"),

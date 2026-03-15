@@ -107,20 +107,47 @@ export default async function TemplateDetailPage({
     notFound();
   }
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: template.title,
-    description: template.excerpt,
-    url: `${BASE_URL}/templates/${template.slug}`,
-    inLanguage: template.language || "en",
-    datePublished: new Date(template.publishedAt).toISOString(),
-    publisher: {
-      "@type": "Organization",
-      name: "oDesigns",
-      url: BASE_URL,
+  const templateUrl = `${BASE_URL}/templates/${template.slug}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: template.title,
+      description: template.excerpt,
+      url: templateUrl,
+      inLanguage: template.language || "en",
+      datePublished: new Date(template.publishedAt).toISOString(),
+      publisher: {
+        "@type": "Organization",
+        name: "oDesigns",
+        url: BASE_URL,
+      },
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: BASE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Templates",
+          item: `${BASE_URL}/templates`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: template.title,
+          item: templateUrl,
+        },
+      ],
+    },
+  ];
 
   // Server-fetched structured data from Convex DB (not user input)
   const structuredData = JSON.stringify(jsonLd);

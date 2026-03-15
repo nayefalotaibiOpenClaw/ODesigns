@@ -7,7 +7,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import {
   Loader2, Users, CreditCard, TrendingUp, Cpu, DollarSign, UserPlus,
   LayoutGrid, FileText, ChevronDown, ChevronUp, RotateCcw, CalendarPlus,
-  Ban, Zap, X, Check, Save, Plus,
+  Ban, Zap, X, Check, Save, Plus, Star,
 } from "lucide-react";
 import { useLocale } from "@/lib/i18n/context";
 import type { TranslationKey } from "@/lib/i18n/types";
@@ -571,6 +571,23 @@ export default function AdminOverviewPage() {
         <StatCard label={t("admin.posts")} value={overview.totalPosts.toLocaleString()} icon={FileText} accent="bg-orange-600/20" />
         <StatCard label={t("admin.aiTokens30d")} value={`${(overview.totalAiTokens30d / 1000).toFixed(0)}k`} icon={Zap} accent="bg-blue-600/20" />
       </div>
+
+      {/* Featured Posts Link */}
+      <a
+        href="/admin/featured"
+        className="flex items-center justify-between px-5 py-4 bg-white dark:bg-neutral-900/60 border border-slate-200 dark:border-neutral-800/50 rounded-2xl hover:border-slate-300 dark:hover:border-neutral-700 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-amber-500/20 rounded-xl flex items-center justify-center">
+            <Star className="w-4.5 h-4.5 text-amber-500" />
+          </div>
+          <div>
+            <span className="text-sm font-bold text-slate-800 dark:text-neutral-200">Featured Posts</span>
+            <p className="text-[11px] text-slate-400 dark:text-neutral-500">Manage showcase posts on marketing pages</p>
+          </div>
+        </div>
+        <ChevronDown className="w-4 h-4 text-slate-400 -rotate-90 group-hover:translate-x-1 transition-transform" />
+      </a>
 
       {/* Users + Activity */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
