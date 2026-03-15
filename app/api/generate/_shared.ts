@@ -310,7 +310,7 @@ export function buildContextAssetsSection(contextAssets?: ContextAsset[]): strin
         lines.push('- USE AS: <MockupFrame id="mockup" src={url} /> — feature prominently');
         break;
       case 'product':
-        lines.push('- USE AS: Hero product image with drop-shadow, positioned creatively');
+        lines.push('- USE AS: Transparent PNG (background already removed). Use <img> with object-contain and filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.3))". Make it large and prominent on a solid/gradient background.');
         break;
       case 'logo':
         lines.push('- USE AS: Pass to PostHeader via logoUrl prop');

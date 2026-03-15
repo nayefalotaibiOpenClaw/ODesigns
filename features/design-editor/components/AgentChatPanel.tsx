@@ -723,15 +723,7 @@ export default function AgentChatPanel({
                 </div>
               )}
             </div>
-            <select
-              value={generateModel}
-              onChange={(e) => setGenerateModel(e.target.value)}
-              className="h-7 px-2 rounded-full bg-slate-100 dark:bg-neutral-800 text-[10px] font-bold text-slate-500 dark:text-neutral-400 border-none outline-none cursor-pointer hover:text-slate-700 dark:hover:text-neutral-200 transition-colors"
-            >
-              <option value="gemini-3.1-flash-lite-preview">Flash Lite</option>
-              <option value="gemini-3-flash-preview">Flash</option>
-              <option value="gemini-3.1-pro-preview">Pro</option>
-            </select>
+            {/* Model dropdown hidden — defaults to Flash Lite */}
             {/* Switch to Quick mode */}
             <button
               onClick={onSwitchToQuick}
@@ -764,15 +756,14 @@ export default function AgentChatPanel({
             {/* Style selector */}
             <div className="hidden sm:flex items-center bg-slate-100 dark:bg-neutral-800 rounded-full p-0.5 ml-1">
               {([
-                { v: 5 as const, label: "C", title: "Classic" },
-                { v: 4 as const, label: "W", title: "Wild" },
-                { v: 7 as const, label: "AG", title: "App Store Guided" },
+                { v: 4 as const, label: "Social Media", title: "Social Media" },
+                { v: 7 as const, label: "App Store Preview", title: "App Store Preview" },
               ]).map(({ v, label, title }) => (
                 <button
                   key={v}
                   onClick={() => setGenerateVersion(v)}
                   title={title}
-                  className={`w-7 h-7 rounded-full text-[10px] font-bold transition-colors ${
+                  className={`px-2.5 h-7 rounded-full text-[10px] font-bold transition-colors whitespace-nowrap ${
                     generateVersion === v
                       ? "bg-white dark:bg-neutral-700 text-slate-900 dark:text-white shadow-sm"
                       : "text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"

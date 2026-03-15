@@ -68,7 +68,7 @@ const isWide = ratio === '16:9' || ratio === '4:3';
 Each asset has a type and AI analysis — use these to decide WHERE to place the image:
 - **background** → full-bleed \`<img>\` behind content (add gradient overlay for readability)
 - **iphone/ipad/desktop/screenshot** → inside \`<MockupFrame id="mockup" src={url} />\`
-- **product** → transparent PNG, use as \`<img>\` with drop-shadow directly in the design
+- **product** → these are **transparent PNGs** (background already removed). Use \`<img>\` with \`object-contain\` (NOT object-cover), apply \`filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.3))"\` for a floating effect. Make them large and prominent — they look best on solid/gradient backgrounds, not on busy images.
 - **logo** → small brand mark in header/corner
 
 ## DESIGN FREEDOM
