@@ -98,6 +98,7 @@ export default function V0Original() {
   const { t } = useLocale();
 
   const allFeatured = useQuery(api.featuredPosts.list, {});
+  const siteSettings = useQuery(api.admin.getSiteSettings, {});
 
   const { socialPosts, appStorePosts } = useMemo(() => {
     if (!allFeatured || allFeatured.length === 0) {
@@ -398,7 +399,7 @@ export default function V0Original() {
             transition={{ duration: 0.6 }}
           >
             <LandingVideo
-              src="https://sx9xlieiiotawvld.public.blob.vercel-storage.com/videos/newmain.mp4"
+              src={siteSettings?.landingVideo1 || "https://sx9xlieiiotawvld.public.blob.vercel-storage.com/videos/newmainvideoe30.mp4"}
               placeholderText={t("landing.demoVideoPlaceholder")}
             />
           </motion.div>
@@ -637,7 +638,7 @@ export default function V0Original() {
             transition={{ duration: 0.6 }}
           >
             <LandingVideo
-              src="https://sx9xlieiiotawvld.public.blob.vercel-storage.com/videos/newsocielmedia30.mp4"
+              src={siteSettings?.landingVideo2 || "https://sx9xlieiiotawvld.public.blob.vercel-storage.com/videos/newsocielmedia30.mp4"}
               placeholderText={t("landing.demoVideoPlaceholder")}
             />
           </motion.div>

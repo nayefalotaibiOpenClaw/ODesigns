@@ -631,4 +631,12 @@ export default defineSchema({
     .index("by_workspace_status", ["workspaceId", "status"])
     .index("by_slug", ["slug"])
     .index("by_user", ["userId"]),
+
+  // ─── Site Settings (admin-managed key-value) ───────
+  siteSettings: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["key"]),
 });

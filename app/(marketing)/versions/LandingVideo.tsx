@@ -23,6 +23,19 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
   const [hasEnded, setHasEnded] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const hasEndedRef = useRef(false);
+
+  // Keep ref in sync for IntersectionObserver closure
+  useEffect(() => {
+    hasEndedRef.current = hasEnded;
+  }, [hasEnded]);
+
+  // Cleanup hideTimer on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, []);
 
   // Autoplay when video scrolls into view
   useEffect(() => {
@@ -31,7 +44,7 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && v.paused && !hasEnded) {
+        if (entry.isIntersecting && v.paused && !hasEndedRef.current) {
           v.play().then(() => setIsPlaying(true)).catch(() => {});
         } else if (!entry.isIntersecting && !v.paused) {
           v.pause();
@@ -43,7 +56,7 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
 
     observer.observe(v);
     return () => observer.disconnect();
-  }, [src, hasEnded]);
+  }, [src]);
 
   // Video event listeners
   useEffect(() => {
@@ -122,13 +135,14 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
     const el = containerRef.current;
     if (!el) return;
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(() => {});
     } else {
-      el.requestFullscreen();
+      el.requestFullscreen().catch(() => {});
     }
   }, []);
 
   const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     const v = videoRef.current;
     const bar = progressRef.current;
     if (!v || !bar) return;
@@ -169,7 +183,6 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
       onMouseLeave={() => isPlaying && setShowControls(false)}
       onClick={togglePlay}
     >
-      {/* Video */}
       <video
         ref={videoRef}
         muted
@@ -201,7 +214,7 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
         )}
       </AnimatePresence>
 
-      {/* Bottom controls — only on hover/tap, minimal & transparent */}
+      {/* Bottom controls */}
       <AnimatePresence>
         {(showControls || !isPlaying) && isLoaded && !hasEnded && (
           <motion.div
@@ -212,18 +225,15 @@ export default function LandingVideo({ src, placeholderText }: LandingVideoProps
             className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-3 pt-16 bg-gradient-to-t from-black/50 to-transparent"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Progress bar */}
             <div
               ref={progressRef}
               className="w-full h-1 bg-white/20 rounded-full mb-3 cursor-pointer group/bar relative hover:h-1.5 transition-all"
               onClick={handleProgressClick}
             >
-              {/* Buffered */}
               <div
                 className="absolute inset-y-0 left-0 bg-white/20 rounded-full"
                 style={{ width: `${buffered}%` }}
               />
-              {/* Progress */}
               <div
                 className="absolute inset-y-0 left-0 bg-white rounded-full"
                 style={{ width: `${progress}%` }}
